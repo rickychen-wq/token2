@@ -271,11 +271,110 @@ button.row:active{background:rgba(63,199,255,.06)}
 .toast.good{border-color:rgba(75,227,143,.45);color:#C8F7DB}
 .gate-mode .toast{top:calc(18px + var(--safe-t))}
 
+
+/* ---------- 本季資產 ---------- */
+.money{font-family:var(--ui);font-weight:700;color:var(--gold);letter-spacing:.01em;text-shadow:0 0 6px rgba(255,211,122,.5),0 0 30px rgba(255,211,122,.26)}
+.asset{
+  border-radius:8px;padding:18px 20px 16px;
+  background:radial-gradient(420px 220px at 0% 0%,rgba(255,211,122,.08),transparent 70%),linear-gradient(160deg,var(--glass),var(--glass2));
+  border:1px solid var(--edge);
+}
+.asset-top{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;color:var(--faint)}
+.rank{color:var(--faint)}
+.rank b{font-family:var(--ui);font-weight:700;font-size:17px;color:var(--cy-hi);margin:0 1px}
+.asset .money{font-size:50px;line-height:1.08;margin-top:2px}
+.breakdown{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.breakdown div{min-width:0;padding:8px 10px 9px;border-radius:5px;background:rgba(3,8,18,.5);border:1px solid var(--edge-soft)}
+.breakdown span{display:block;font-size:11.5px;color:var(--faint)}
+.breakdown b{display:block;font-family:var(--ui);font-weight:700;font-size:18px;color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.breakdown b.debt{color:#FF8FA3}
+.breakdown b.gold{color:var(--gold)}
+.sheet-bd{grid-template-columns:repeat(2,1fr);margin:0 0 14px}
+.asset-foot{display:flex;flex-wrap:wrap;gap:4px 12px;justify-content:space-between;margin-top:16px;font-size:12.5px;color:var(--faint)}
+.asset-foot b{font-family:var(--ui);font-weight:700;font-size:15px;color:var(--cy-hi);margin-left:4px}
+.asset .track{margin-top:10px}
+
+.skel{min-height:190px}
+.skel-line{height:12px;border-radius:3px;margin-bottom:14px;background:linear-gradient(90deg,rgba(63,199,255,.06),rgba(63,199,255,.14),rgba(63,199,255,.06));background-size:200% 100%;animation:shimmer 1.3s linear infinite}
+.skel-line.w40{width:40%}.skel-line.w70{width:70%}.skel-line.big{height:46px;width:60%;margin:14px 0 22px}
+@keyframes shimmer{to{background-position:-200% 0}}
+
+/* ---------- 每日獎勵 ---------- */
+.daily{
+  display:flex;align-items:center;gap:14px;margin-top:12px;border-radius:8px;padding:14px 16px;
+  background:linear-gradient(160deg,var(--glass),var(--glass2));border:1px solid var(--edge);
+  transition:border-color .2s,box-shadow .2s;
+}
+.daily.ready{border-color:rgba(75,227,143,.5);box-shadow:0 0 28px rgba(75,227,143,.12)}
+.daily.done{opacity:.72}
+.daily-k{flex:1;min-width:0}
+.daily-k h3{font-size:15px;font-weight:700}
+.daily-k h3 .plus{font-family:var(--ui);font-size:17px;color:var(--grn);margin-left:4px}
+.daily-k p{font-size:12.5px;color:var(--faint);margin-top:1px}
+.pips{display:flex;gap:5px;margin-top:8px}
+.pips i{width:24px;height:5px;border-radius:3px;background:rgba(63,199,255,.14)}
+.pips i.on{background:var(--cy);box-shadow:0 0 8px rgba(63,199,255,.8)}
+.btn.sm{flex:none;width:auto;min-height:42px;padding:0 18px;font-size:14px;letter-spacing:.06em}
+.daily.ready .btn.sm{background:linear-gradient(135deg,#B5F7D0,var(--grn) 55%,#23B96A);color:#03170B;box-shadow:0 6px 22px rgba(75,227,143,.3)}
+
+/* ---------- 銀行 ---------- */
+.lbl{font-size:12.5px;color:var(--faint)}
+.vault{
+  position:relative;overflow:hidden;border-radius:8px;padding:20px;
+  background:radial-gradient(440px 240px at 100% 0%,rgba(63,199,255,.16),transparent 70%),linear-gradient(160deg,var(--glass),var(--glass2));
+  border:1px solid var(--edge);box-shadow:0 20px 50px rgba(0,0,0,.45),inset 0 1px 0 rgba(168,238,255,.12);
+}
+.vault::before{content:'';position:absolute;left:12%;right:12%;top:-1px;height:1px;background:linear-gradient(90deg,transparent,var(--edge-hot),transparent)}
+.vault .bal{font-family:var(--ui);font-weight:700;font-size:50px;line-height:1.08;color:var(--cy-hi);text-shadow:0 0 28px rgba(63,199,255,.5)}
+.rate-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{display:inline-flex;align-items:center;gap:5px;min-height:28px;padding:3px 11px;border-radius:14px;font-size:12.5px;color:var(--dim);background:rgba(3,8,18,.5);border:1px solid var(--edge-soft)}
+.chip b{font-family:var(--ui);font-weight:700;font-size:14.5px;color:var(--cy-hi)}
+.vault-next{display:flex;align-items:flex-end;justify-content:space-between;margin-top:18px;padding-top:14px;border-top:1px solid var(--edge-soft);min-height:60px}
+.vault-next small{display:block;font-size:12px;color:var(--faint)}
+.vault-next .cd{font-family:var(--ui);font-weight:700;font-size:24px;color:var(--fg);letter-spacing:.04em;font-variant-numeric:tabular-nums}
+.vault-next .est{font-family:var(--ui);font-weight:700;font-size:24px;color:var(--grn);text-align:right}
+.vault-next div:last-child small{text-align:right}
+.two{display:flex;gap:10px;margin-top:16px}
+.two .btn{flex:1}
+.note-s{font-size:12.5px;color:var(--faint);margin-top:12px;line-height:1.65}
+
+.loan{
+  border-radius:8px;padding:18px 20px 20px;
+  background:linear-gradient(160deg,var(--glass),var(--glass2));border:1px solid var(--edge);
+}
+.loan.owe{border-color:rgba(255,92,121,.36);background:radial-gradient(380px 200px at 100% 0%,rgba(255,92,121,.1),transparent 70%),linear-gradient(160deg,var(--glass),var(--glass2))}
+.loan-top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.loan .owed{font-family:var(--ui);font-weight:700;font-size:36px;line-height:1.1;color:var(--fg)}
+.loan.owe .owed{color:#FF8FA3;text-shadow:0 0 22px rgba(255,92,121,.35)}
+.loan .count{font-size:13px;color:var(--dim);padding-bottom:5px;white-space:nowrap}
+.loan p{font-size:13px;color:var(--dim);margin:10px 0 16px;line-height:1.65}
+
+/* ---------- 名單、流水帳、表單 ---------- */
+.pl-net{font-family:var(--ui);font-weight:700;font-size:15px;color:var(--gold)}
+.pl-net.debt{color:#FF8FA3}
+.led .row{align-items:flex-start}
+.led .amt{flex:none;text-align:right;font-family:var(--ui);font-weight:700;font-size:16px;line-height:1.3}
+.led .amt small{display:block;font-family:var(--tc);font-weight:400;font-size:11.5px;color:var(--faint)}
+.led .amt.up{color:var(--grn)}
+.led .amt.dn{color:#FF8FA3}
+.led .amt.mv{color:var(--dim)}
+.amt-in{font-family:var(--ui)!important;font-weight:700;font-size:24px!important;color:var(--gold)!important;letter-spacing:.02em}
+.limit{font-size:12.5px;color:var(--faint);margin:-6px 0 12px}
+.quick{display:flex;gap:8px;margin:0 0 16px}
+.quick button{flex:1;height:38px;border-radius:5px;font-family:var(--ui);font-weight:700;font-size:15px;color:var(--cy-hi);border:1px solid var(--edge);background:rgba(63,199,255,.06)}
+.quick button:active{background:rgba(63,199,255,.16)}
+.fld-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.fld-grid .fld input{height:46px}
+.fld-grid label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
 @media (max-width:360px){
   .gate .mark{font-size:34px}
   .cell{height:100px;font-size:64px}
   .season-cd{font-size:24px}
   .id-name h1{font-size:21px}
+  .asset .money,.vault .bal{font-size:42px}
+  .breakdown b{font-size:16px}
+  .fld-grid{grid-template-columns:1fr}
 }
 @media (min-width:700px){
   .sheet{bottom:auto;top:50%;border-radius:12px;border-bottom:1px solid var(--edge);transform:translateY(-40%) scale(.97);opacity:0;transition:transform .22s,opacity .22s}
@@ -335,6 +434,7 @@ button.row:active{background:rgba(63,199,255,.06)}
 
   <div class="views">
     <section id="vHome" class="view"></section>
+    <section id="vBank" class="view" hidden></section>
     <section id="vMe" class="view" hidden></section>
   </div>
 
@@ -342,6 +442,10 @@ button.row:active{background:rgba(63,199,255,.06)}
     <button class="tab on" data-tab="home" aria-label="大廳">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 2.8 20 7.4v9.2L12 21.2 4 16.6V7.4Z"/><path d="M12 8.2 15.3 10v4L12 15.8 8.7 14v-4Z"/></svg>
       <span>大廳</span>
+    </button>
+    <button class="tab" data-tab="bank" aria-label="銀行">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="M3.5 9.2 12 4l8.5 5.2"/><path d="M5.5 10v7.5M9.8 10v7.5M14.2 10v7.5M18.5 10v7.5"/><path d="M3.5 20h17"/></svg>
+      <span>銀行</span>
     </button>
     <button class="tab" data-tab="me" aria-label="我的">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20.2c1.3-3.6 4.2-5.4 7.5-5.4s6.2 1.8 7.5 5.4"/></svg>
@@ -483,6 +587,10 @@ var S = {
   player: null,        // players/{pid} 即時資料
   cfg: null,           // config/app
   roster: [],          // 主辦用：全部玩家
+  sid: null,           // 本季 ID，例如 2026-W38
+  acc: null,           // 我的本季帳戶
+  accounts: [],        // 本季所有帳戶（排名、利率）
+  seasonUnsub: null,
   tab: 'home',
   unsubs: [],
   tick: null
@@ -672,6 +780,68 @@ $('gateForm').addEventListener('submit', function (ev) {
 });
 
 /* =====================================================================
+   經濟規則（跟伺服器 core/econ.js 同一套，只用來顯示；真正判定在伺服器）
+   ===================================================================== */
+var ECON_DEF = {
+  startingMoney: 5000, loanUnit: 2000, loanRepayAt: 3000, borrowBelow: 1000, bankKeep: 2000,
+  interestMin: 0.001, interestMax: 0.006, dailyAmount: 500, dailyHands: 3
+};
+var PERIOD = 3 * 3600000;
+
+function econ() {
+  var e = (S.cfg && S.cfg.econ) || {}, o = {};
+  Object.keys(ECON_DEF).forEach(function (k) { o[k] = typeof e[k] === 'number' ? e[k] : ECON_DEF[k]; });
+  return o;
+}
+function periodStart(ms) { return Math.floor((ms + TW) / PERIOD) * PERIOD - TW; }
+function sidOf(ms) {
+  var r = seasonRange(ms);
+  var y = new Date(r.start + TW + 3 * DAY).getUTCFullYear();
+  return y + '-W' + String(isoWeek(ms)).padStart(2, '0');
+}
+function twDay(ms) {
+  var d = new Date(ms + TW);
+  return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d.getUTCDate()).padStart(2, '0');
+}
+function twClock(ms) {
+  var d = new Date(ms + TW);
+  return (d.getUTCMonth() + 1) + '/' + d.getUTCDate() + ' ' +
+    String(d.getUTCHours()).padStart(2, '0') + ':' + String(d.getUTCMinutes()).padStart(2, '0');
+}
+function hms(ms) {
+  var s = Math.max(0, Math.floor(ms / 1000));
+  return String(Math.floor(s / 3600)).padStart(2, '0') + ':' + String(Math.floor(s % 3600 / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+}
+function inPlayOf(a) {
+  var t = 0;
+  Object.keys((a && a.inPlay) || {}).forEach(function (g) { t += (a.inPlay[g] && a.inPlay[g].amount) || 0; });
+  return t;
+}
+function maxDeposit(a, c) {
+  if (!a || a.loans > 0) return 0;
+  return Math.max(0, Math.min(a.wallet, a.wallet + inPlayOf(a) - c.bankKeep));
+}
+function canBorrow(a, c) {
+  return !!a && a.wallet + a.bank.balance + inPlayOf(a) < c.borrowBelow;
+}
+
+/* 本季排名與利率 */
+function rankTable() {
+  var c = econ(), list = S.accounts.slice().sort(function (a, b) { return b.net - a.net; });
+  var n = list.length, out = {}, rank = 0, prev = null;
+  list.forEach(function (a, i) {
+    if (a.net !== prev) { rank = i + 1; prev = a.net; }
+    var rate = n <= 1 ? c.interestMin : c.interestMin + (c.interestMax - c.interestMin) * (rank - 1) / (n - 1);
+    out[a.pid] = { rank: rank, total: n, rate: rate };
+  });
+  return out;
+}
+function pct(rate) {
+  var v = rate * 100;
+  return (v >= 1 ? v.toFixed(2) : v.toFixed(3)).replace(/0+$/, '').replace(/\.$/, '') + '%';
+}
+
+/* =====================================================================
    主畫面
    ===================================================================== */
 function enterApp(profile) {
@@ -693,7 +863,7 @@ function enterApp(profile) {
 
   S.unsubs.push(db.collection('config').doc('app').onSnapshot(function (d) {
     S.cfg = d.exists ? d.data() : null;
-    if (S.tab === 'me') render();
+    render();
   }, function () {}));
 
   if (profile.role === 'admin') {
@@ -706,15 +876,51 @@ function enterApp(profile) {
     }, function () {}));
   }
 
+  openSeason();
+
   clearInterval(S.tick);
-  S.tick = setInterval(function () { if (S.tab === 'home') paintSeason(); }, 20000);
-  switchTab('home');
+  S.tick = setInterval(function () {
+    if (!S.me) return;
+    if (sidOf(Date.now()) !== S.sid) { openSeason(); return; }
+    if (S.tab === 'home') paintSeason();
+    else if (S.tab === 'bank') paintVaultClock();
+  }, 1000);
+  switchTab(S.tab || 'home');
+}
+
+/* 訂閱本季帳戶。跨季（週一 00:00）時會自動重新訂閱 */
+function openSeason() {
+  if (S.seasonUnsub) { try { S.seasonUnsub(); } catch (e) {} }
+  S.sid = sidOf(Date.now());
+  S.accounts = [];
+  S.acc = null;
+  var sid = S.sid;
+  call('econAccount').then(function (r) {
+    if (S.sid !== sid || !S.me) return;
+    if (!S.acc && r && r.account) { S.acc = r.account; render(); }
+  }).catch(function (e) { if (S.me) toast(e.message, 'bad'); });
+
+  S.seasonUnsub = db.collection('seasons').doc(sid).collection('accounts').onSnapshot(function (q) {
+    if (S.sid !== sid) return;
+    var list = [], mine = null;
+    q.forEach(function (d) {
+      var a = d.data();
+      list.push(a);
+      if (a.pid === S.me.pid) mine = a;
+    });
+    S.accounts = list;
+    if (mine) S.acc = mine;
+    render();
+  }, function () {});
 }
 
 function endSession() {
   S.unsubs.splice(0).forEach(function (u) { try { u(); } catch (e) {} });
+  if (S.seasonUnsub) { try { S.seasonUnsub(); } catch (e) {} S.seasonUnsub = null; }
   clearInterval(S.tick);
   S.me = null; S.player = null; S.cfg = null; S.roster = [];
+  S.acc = null; S.accounts = []; S.sid = null; S.tab = 'home';
+  _last = {};
   closeSheet();
   showGate();
 }
@@ -732,6 +938,7 @@ function switchTab(t) {
   S.tab = t;
   document.querySelectorAll('.tab').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === t); });
   $('vHome').hidden = t !== 'home';
+  $('vBank').hidden = t !== 'bank';
   $('vMe').hidden = t !== 'me';
   window.scrollTo(0, 0);
   render(true);
@@ -741,19 +948,25 @@ var _last = {};
 function render(force) {
   if (!S.me) return;
   if (S.tab === 'home') renderHome(force);
+  else if (S.tab === 'bank') renderBank(force);
   else renderMe(force);
 }
 
 function put(id, html, force) {
-  if (!force && _last[id] === html) return;
+  if (!force && _last[id] === html) return false;
   _last[id] = html;
   $(id).innerHTML = html;
+  return true;
+}
+
+function loadingCard() {
+  return '<div class="asset skel"><div class="skel-line w40"></div><div class="skel-line big"></div><div class="skel-line w70"></div></div>';
 }
 
 /* ---------- 大廳 ---------- */
 function renderHome(force) {
   var p = S.player || { name: S.me.name, pid: S.me.pid, role: S.me.role, stats: {} };
-  var st = p.stats || {};
+  var st = p.stats || {}, a = S.acc, c = econ();
   var h = '';
 
   h += '<div class="idcard"><div class="id-row">' + hexAvatar(p.name, 72) +
@@ -764,18 +977,57 @@ function renderHome(force) {
     '<div class="id-stats">' +
       '<div><b>' + fmt(st.points) + '</b><span>歷史積分</span></div>' +
       '<div><b>' + fmt(st.champions) + '</b><span>冠軍</span></div>' +
-      '<div><b>' + fmt(st.seasonsPlayed) + '</b><span>參與季數</span></div>' +
+      '<div><b>' + fmt(st.peakNet) + '</b><span>歷史最高</span></div>' +
     '</div></div>';
 
   h += '<div class="sec-h"><h2>本季</h2><span>週日結算</span></div>';
-  h += '<div class="season" id="seasonBox"></div>';
+  if (!a) {
+    h += loadingCard();
+  } else {
+    var rk = rankTable()[a.pid];
+    h += '<div class="asset">' +
+      '<div class="asset-top"><span>本季資產</span>' +
+        (rk ? '<span class="rank">第 <b>' + rk.rank + '</b> 名　共 ' + rk.total + ' 人</span>' : '') + '</div>' +
+      '<div class="money">' + fmt(a.net) + '</div>' +
+      '<div class="breakdown">' +
+        '<div><span>錢包</span><b>' + fmt(a.wallet) + '</b></div>' +
+        '<div><span>銀行</span><b>' + fmt(a.bank.balance) + '</b></div>' +
+        '<div><span>借款</span><b' + (a.loans ? ' class="debt">' + fmt(c.loanUnit) + ' × ' + a.loans : '>0') + '</b></div>' +
+      '</div>' +
+      '<div id="seasonBox"></div>' +
+    '</div>';
+  }
+
+  if (a) {
+    var today = twDay(Date.now());
+    var d = a.daily && a.daily.day === today ? a.daily : { hands: 0, claimed: false };
+    var need = c.dailyHands, done = Math.min(d.hands, need), ready = !d.claimed && d.hands >= need;
+    var pips = '';
+    for (var i = 0; i < need; i++) pips += '<i' + (i < done ? ' class="on"' : '') + '></i>';
+    h += '<div class="daily' + (ready ? ' ready' : '') + (d.claimed ? ' done' : '') + '">' +
+      '<div class="daily-k"><h3>每日獎勵 <span class="plus">+' + fmt(c.dailyAmount) + '</span></h3>' +
+      '<p>' + (d.claimed ? '今天領過了，明天 00:00 重置'
+        : need === 0 ? '今天可以直接領'
+        : '今天打了 ' + d.hands + ' / ' + need + ' 手') + '</p>' +
+      (need > 0 ? '<div class="pips">' + pips + '</div>' : '') + '</div>' +
+      '<button class="btn sm' + (ready ? '' : ' ghost') + '" id="claimBtn"' + (ready ? '' : ' disabled') + '>' +
+        (d.claimed ? '已領取' : '領取') + '</button></div>';
+  }
 
   h += '<div class="sec-h"><h2>遊戲</h2></div>';
   h += '<div class="game"><div class="game-bg">♠</div>' +
     '<div class="game-suit">♠</div>' +
     '<div class="game-txt"><h3>德州撲克<span class="tag cy">建置中</span></h3><p>完成後從這裡入座</p></div></div>';
 
-  put('vHome', h, force);
+  if (put('vHome', h, force)) {
+    var cb = $('claimBtn');
+    if (cb) cb.onclick = function () {
+      busy(cb, true);
+      call('econClaimDaily').then(function () {
+        toast('領到 ' + fmt(econ().dailyAmount), 'good');
+      }).catch(function (e) { busy(cb, false); toast(e.message, 'bad'); });
+    };
+  }
   paintSeason();
 }
 
@@ -785,23 +1037,88 @@ function paintSeason() {
   var now = Date.now(), r = seasonRange(now);
   var left = Math.max(0, r.end - now);
   var d = Math.floor(left / DAY), hh = Math.floor(left % DAY / 3600000), mm = Math.floor(left % 3600000 / 60000);
-  var cd = d > 0
-    ? d + '<em>天</em>' + hh + '<em>小時</em>'
-    : hh + '<em>小時</em>' + mm + '<em>分</em>';
-  var pct = Math.min(100, (now - r.start) / (7 * DAY) * 100);
-  var names = ['一', '二', '三', '四', '五', '六', '日'];
-  var days = names.map(function (n, i) { return '<span' + (i === r.dow ? ' class="now"' : '') + '>' + n + '</span>'; }).join('');
+  var cd = d > 0 ? d + ' 天 ' + hh + ' 小時' : hh + ' 小時 ' + mm + ' 分';
+  var pctW = Math.min(100, (now - r.start) / (7 * DAY) * 100);
+  var html = '<div class="asset-foot"><span>距離結算 <b>' + cd + '</b></span>' +
+    '<span>第 ' + isoWeek(now) + ' 週　' + twDate(r.start) + ' – ' + twDate(r.end - 1) + '</span></div>' +
+    '<div class="track"><i style="width:' + pctW.toFixed(2) + '%"></i></div>';
+  if (box.innerHTML !== html) box.innerHTML = html;
+}
 
-  box.innerHTML =
-    '<div class="season-top">' +
-      '<div class="season-left"><small>距離結算</small><div class="season-cd">' + cd + '</div></div>' +
-      '<div class="season-wk">第 ' + isoWeek(now) + ' 週<small>' + twDate(r.start) + ' – ' + twDate(r.end - 1) + '</small></div>' +
+/* ---------- 銀行 ---------- */
+function renderBank(force) {
+  var a = S.acc, c = econ(), h = '';
+  if (!a) { put('vBank', loadingCard(), force); return; }
+  var rk = rankTable()[a.pid] || { rank: 1, total: 1, rate: c.interestMin };
+
+  h += '<div class="vault">' +
+    '<div class="lbl">銀行存款</div>' +
+    '<div class="bal">' + fmt(a.bank.balance) + '</div>' +
+    '<div class="rate-row">' +
+      '<span class="chip">每 3 小時 <b>' + pct(rk.rate) + '</b></span>' +
+      '<span class="chip">第 <b>' + rk.rank + '</b> 名，排名越後面利率越高</span>' +
     '</div>' +
-    '<div class="track"><i style="width:' + pct.toFixed(2) + '%"></i></div>' +
-    '<div class="days">' + days + '</div>';
+    '<div class="vault-next" id="vaultClock"></div>' +
+    '<div class="two">' +
+      '<button class="btn" data-b="dep"' + (maxDeposit(a, c) > 0 ? '' : ' disabled') + '>存款</button>' +
+      '<button class="btn ghost" data-b="wd"' + (a.bank.balance > 0 ? '' : ' disabled') + '>提款</button>' +
+    '</div>' +
+    '<p class="note-s">' + (a.loans > 0 ? '還有借款沒還清，暫時不能存款。'
+      : '存完之後，手上（錢包加牌桌）至少要留 ' + fmt(c.bankKeep) + '。目前最多可存 ' + fmt(maxDeposit(a, c)) + '。') + '</p>' +
+  '</div>';
+
+  var owe = a.loans * c.loanUnit, can = canBorrow(a, c);
+  h += '<div class="sec-h"><h2>借款</h2><span>不計利息</span></div>';
+  h += '<div class="loan' + (a.loans ? ' owe' : '') + '">' +
+    '<div class="loan-top"><div><div class="lbl">未還借款</div>' +
+      '<div class="owed">' + fmt(owe) + '</div></div>' +
+      '<div class="count">' + (a.loans ? fmt(c.loanUnit) + ' × ' + a.loans + ' 筆' : '沒有借款') + '</div></div>' +
+    '<p>' + (a.loans
+      ? '錢包達到 ' + fmt(c.loanRepayAt) + ' 時，會自動還一筆 ' + fmt(c.loanUnit) + '。'
+      : '錢包、銀行、牌桌加起來低於 ' + fmt(c.borrowBelow) + ' 時，可以借 ' + fmt(c.loanUnit) + ' 繼續玩。') + '</p>' +
+    '<button class="btn' + (can ? ' danger' : ' ghost') + '" data-b="borrow"' + (can ? '' : ' disabled') + '>' +
+      (can ? '借 ' + fmt(c.loanUnit) : '低於 ' + fmt(c.borrowBelow) + ' 才能借') + '</button>' +
+  '</div>';
+
+  h += '<div class="sec-h"><h2>規則</h2></div><div class="grp">' +
+    '<div class="row"><span class="k">計息時間<small>每天 00、03、06、09、12、15、18、21 點，睡覺也會算</small></span></div>' +
+    '<div class="row"><span class="k">利率<small>第一名 ' + pct(c.interestMin) + '，最後一名 ' + pct(c.interestMax) + '，中間依排名分配</small></span></div>' +
+    '<div class="row"><span class="k">計息基準<small>用這 3 小時內存款的最低餘額計算，快計息才存進來的不算</small></span></div>' +
+  '</div>';
+
+  if (put('vBank', h, force)) {
+    $('vBank').querySelectorAll('[data-b]').forEach(function (b) {
+      b.onclick = function () {
+        var k = b.getAttribute('data-b');
+        if (k === 'dep') sheetDeposit();
+        else if (k === 'wd') sheetWithdraw();
+        else sheetBorrow();
+      };
+    });
+  }
+  paintVaultClock();
+}
+
+function paintVaultClock() {
+  var el = $('vaultClock'), a = S.acc;
+  if (!el || !a) return;
+  var now = Date.now(), P = periodStart(now), next = P + PERIOD;
+  var rk = rankTable()[a.pid] || { rate: econ().interestMin };
+  var base = a.bank.periodKey >= P ? a.bank.periodMin : a.bank.balance;
+  var est = Math.floor(Math.max(0, base) * rk.rate);
+  var d = new Date(next + TW);
+  var html = '<div><small>下次計息 ' + String(d.getUTCHours()).padStart(2, '0') + ':00</small>' +
+    '<div class="cd">' + hms(next - now) + '</div></div>' +
+    '<div><small>預估利息</small><div class="est">+' + fmt(est) + '</div></div>';
+  if (el.innerHTML !== html) el.innerHTML = html;
 }
 
 /* ---------- 我的 ---------- */
+function accOf(pid) {
+  for (var i = 0; i < S.accounts.length; i++) if (S.accounts[i].pid === pid) return S.accounts[i];
+  return null;
+}
+
 function renderMe(force) {
   var me = S.me, h = '';
   var isAdmin = me.role === 'admin';
@@ -819,6 +1136,8 @@ function renderMe(force) {
       '<div class="row"><span class="k">開放註冊<small>開啟時，任何人都能用沒被用過的編號自己註冊</small></span>' +
       '<button class="switch" role="switch" id="regSwitch" aria-checked="' + open + '" aria-label="開放註冊"></button></div>' +
       '<button class="row" data-act="create"><span class="k">開帳號<small>先建好編號和名字，本人第一次登入時自己設密碼</small></span><span class="chev">›</span></button>' +
+      '<button class="row" data-act="econ"><span class="k">經濟設定<small>起始資金、借款、銀行、利率、每日獎勵</small></span><span class="chev">›</span></button>' +
+      '<button class="row" data-act="interest"><span class="k">補算利息<small>排程沒跑到時使用，同一個時段只會算一次</small></span><span class="chev">›</span></button>' +
     '</div>';
 
     h += '<div class="sec-h"><h2>名單</h2><span>' + S.roster.length + ' 人</span></div><div class="grp">';
@@ -826,16 +1145,17 @@ function renderMe(force) {
     S.roster.forEach(function (p) {
       var tag = p.role === 'admin' ? '<span class="tag gold">主辦</span>'
         : p.claimed ? '' : '<span class="tag warn">待設密碼</span>';
+      var ac = accOf(p.pid);
       h += '<button class="row" data-pl="' + esc(p.pid) + '">' +
         '<span class="pl-no">' + esc(p.pid) + '</span>' +
         '<span class="k pl-name"><b>' + esc(p.name) + '</b>' + tag + '</span>' +
+        '<span class="pl-net' + (ac && ac.loans ? ' debt' : '') + '">' + (ac ? fmt(ac.net) : '—') + '</span>' +
         '<span class="chev">›</span></button>';
     });
     h += '</div>';
   }
 
-  put('vMe', h, force);
-  bindMe();
+  if (put('vMe', h, force)) bindMe();
 }
 
 function bindMe() {
@@ -846,6 +1166,8 @@ function bindMe() {
       if (a === 'pw') sheetChangePw();
       else if (a === 'logout') sheetLogout();
       else if (a === 'create') sheetCreate();
+      else if (a === 'econ') sheetEcon();
+      else if (a === 'interest') sheetInterest();
     };
   });
   root.querySelectorAll('[data-pl]').forEach(function (b) {
@@ -970,20 +1292,197 @@ function findRoster(pid) {
 function sheetPlayer(pid) {
   var p = findRoster(pid);
   if (!p) return;
-  var self = pid === S.me.pid;
-  var h = '<div class="who" style="margin-bottom:18px">' + hexAvatar(p.name, 48) +
+  var self = pid === S.me.pid, ac = accOf(pid), c = econ();
+  var h = '<div class="who" style="margin-bottom:16px">' + hexAvatar(p.name, 48) +
     '<div><b>' + esc(p.name) + '</b><br><span>#' + esc(p.pid) + '　' +
-    (p.role === 'admin' ? '主辦' : p.claimed ? '已設密碼' : '等待本人設定密碼') + '</span></div></div>' +
-    '<div class="grp">' +
+    (p.role === 'admin' ? '主辦' : p.claimed ? '已設密碼' : '等待本人設定密碼') + '</span></div></div>';
+  h += ac
+    ? '<div class="breakdown sheet-bd">' +
+        '<div><span>本季資產</span><b class="gold">' + fmt(ac.net) + '</b></div>' +
+        '<div><span>錢包</span><b>' + fmt(ac.wallet) + '</b></div>' +
+        '<div><span>銀行</span><b>' + fmt(ac.bank.balance) + '</b></div>' +
+        '<div><span>借款</span><b' + (ac.loans ? ' class="debt">' + fmt(c.loanUnit) + ' × ' + ac.loans : '>0') + '</b></div>' +
+      '</div>'
+    : '<p class="desc">本季還沒有帳戶，調整資產時會自動用起始資金建立。</p>';
+  h += '<div class="grp">' +
+      '<button class="row" data-p="adjust"><span class="k">調整資產<small>增加或扣除錢包裡的錢，會記在流水帳</small></span><span class="chev">›</span></button>' +
+      '<button class="row" data-p="ledger"><span class="k">流水帳<small>本季最近 40 筆，只有主辦看得到</small></span><span class="chev">›</span></button>' +
       '<button class="row" data-p="rename"><span class="k">改名</span><span class="chev">›</span></button>' +
       (self ? '' : '<button class="row red" data-p="reset"><span class="k">重設密碼<small>他的登入會失效，下次進來要重新設密碼</small></span></button>') +
     '</div>' +
     '<div class="acts" style="margin-top:14px"><button class="btn ghost" type="button" data-close>關閉</button></div>';
   openSheet(h, function (sh) {
     sh.querySelector('[data-close]').onclick = closeSheet;
+    sh.querySelector('[data-p=adjust]').onclick = function () { sheetAdjust(p); };
+    sh.querySelector('[data-p=ledger]').onclick = function () { sheetLedger(p); };
     sh.querySelector('[data-p=rename]').onclick = function () { sheetRename(p); };
     var r = sh.querySelector('[data-p=reset]');
     if (r) r.onclick = function () { sheetReset(p); };
+  });
+}
+
+/* 金額輸入：只留數字，旁邊可放快捷按鈕 */
+function amountField(id, label, quick, limitText) {
+  var q = (quick || []).map(function (x) {
+    return '<button type="button" data-q="' + x.v + '">' + x.t + '</button>';
+  }).join('');
+  return '<div class="fld"><label for="' + id + '">' + label + '</label>' +
+    '<input id="' + id + '" class="amt-in" inputmode="numeric" autocomplete="off" placeholder="0"></div>' +
+    (limitText ? '<p class="limit">' + limitText + '</p>' : '') +
+    (q ? '<div class="quick">' + q + '</div>' : '');
+}
+
+function bindAmount(id, sign) {
+  var el = $(id);
+  if (!el) return;
+  el.addEventListener('input', function () {
+    var neg = sign && /^\s*-/.test(el.value);
+    var digits = el.value.replace(/\D/g, '').replace(/^0+(?=\d)/, '').slice(0, 9);
+    el.value = (neg ? '-' : '') + digits;
+  });
+  document.querySelectorAll('#sheet [data-q]').forEach(function (b) {
+    b.onclick = function () { el.value = b.getAttribute('data-q'); el.focus(); };
+  });
+}
+
+/* 快捷金額：只列出比上限小的固定金額，最後一顆是「全部」 */
+function quickAmounts(fixed, max, allText) {
+  if (max <= 0) return [];
+  var out = fixed.filter(function (v) { return v < max; }).map(function (v) { return { v: v, t: fmt(v) }; });
+  out.push({ v: max, t: allText });
+  return out;
+}
+
+function readAmount(id) {
+  var v = $(id).value.trim();
+  return /^-?\d+$/.test(v) ? parseInt(v, 10) : NaN;
+}
+
+function sheetDeposit() {
+  var a = S.acc, c = econ(), max = maxDeposit(a, c);
+  var quick = quickAmounts([1000, 5000], max, '全部可存');
+  formSheet('存款', '', amountField('sAmt', '存入金額', quick, '錢包 ' + fmt(a.wallet) + '，最多可存 ' + fmt(max)),
+    '存入銀行', '', function () {
+      var n = readAmount('sAmt');
+      if (!(n > 0)) { toast('要輸入金額', 'bad'); return null; }
+      if (n > max) { toast('最多只能存 ' + fmt(max), 'bad'); return null; }
+      return call('econDeposit', { amount: n }).then(function () { return '已存入 ' + fmt(n); });
+    });
+  bindAmount('sAmt');
+}
+
+function sheetWithdraw() {
+  var a = S.acc, bal = a.bank.balance;
+  var quick = quickAmounts([1000, 5000], bal, '全部');
+  formSheet('提款', '領出來的錢會回到錢包。', amountField('sAmt', '提款金額', quick, '銀行裡有 ' + fmt(bal)),
+    '領出', '', function () {
+      var n = readAmount('sAmt');
+      if (!(n > 0)) { toast('要輸入金額', 'bad'); return null; }
+      if (n > bal) { toast('銀行裡只有 ' + fmt(bal), 'bad'); return null; }
+      return call('econWithdraw', { amount: n }).then(function () { return '已領出 ' + fmt(n); });
+    });
+  bindAmount('sAmt');
+}
+
+function sheetBorrow() {
+  var c = econ(), a = S.acc;
+  formSheet('借 ' + fmt(c.loanUnit) + '？',
+    '不計利息。錢包達到 ' + fmt(c.loanRepayAt) + ' 時，系統會自動還一筆 ' + fmt(c.loanUnit) + '。' +
+    (a.loans ? '借完之後總共欠 ' + fmt((a.loans + 1) * c.loanUnit) + '。' : ''),
+    '', '借款', 'danger', function () {
+      return call('econBorrow').then(function () { return '已借 ' + fmt(c.loanUnit); });
+    });
+}
+
+function sheetAdjust(p) {
+  var ac = accOf(p.pid);
+  formSheet('調整 ' + esc(p.name) + ' 的資產',
+    '正數是增加，負數是扣除（例如 -500）。' + (ac ? '目前錢包 ' + fmt(ac.wallet) + '。' : ''),
+    amountField('sAmt', '金額', [{ v: 500, t: '+500' }, { v: 2000, t: '+2,000' }, { v: -500, t: '-500' }]) +
+    fld('sNote', '備註（選填）', 'text', ' maxlength="60" autocomplete="off" placeholder="例如：活動獎勵"'),
+    '確認調整', '', function () {
+      var n = readAmount('sAmt');
+      if (!n) { toast('要輸入非零的金額', 'bad'); return null; }
+      return call('adminAdjust', { pid: p.pid, delta: n, note: $('sNote').value.trim() })
+        .then(function () { return (n > 0 ? '已增加 ' : '已扣除 ') + fmt(Math.abs(n)); });
+    });
+  bindAmount('sAmt', true);
+}
+
+var LEDGER_TXT = {
+  start: '起始資金', borrow: '借款', repay: '自動還款', deposit: '存入銀行', withdraw: '從銀行領出',
+  daily: '每日獎勵', admin: '主辦調整', interest: '利息'
+};
+
+function sheetLedger(p) {
+  openSheet('<h3>' + esc(p.name) + ' 的流水帳</h3><p class="desc">本季最近 40 筆</p>' +
+    '<div class="grp led" id="ledBox"><div class="empty">讀取中…</div></div>' +
+    '<div class="acts" style="margin-top:14px"><button class="btn ghost" type="button" data-close>關閉</button></div>',
+    function (sh) {
+      sh.querySelector('[data-close]').onclick = closeSheet;
+      call('adminLedger', { pid: p.pid }).then(function (r) {
+        var box = $('ledBox');
+        if (!box) return;
+        if (!r.rows.length) { box.innerHTML = '<div class="empty">本季還沒有紀錄</div>'; return; }
+        box.innerHTML = r.rows.map(function (x) {
+          var label = LEDGER_TXT[x.type] || x.type;
+          if (x.type === 'interest' && x.rank) label += '（第 ' + x.rank + ' 名 ' + pct(x.rate) + '）';
+          var sub = twClock(x.at) + (x.note ? '　' + esc(x.note) : '') + (x.by && x.by !== p.pid && x.by !== 'system' ? '　by #' + esc(x.by) : '');
+          var bankMove = x.type === 'deposit' || x.type === 'withdraw';
+          return '<div class="row"><span class="k">' + label + '<small>' + sub + '</small></span>' +
+            '<span class="amt ' + (bankMove ? 'mv' : x.amount >= 0 ? 'up' : 'dn') + '">' +
+            (x.amount > 0 ? '+' : '') + fmt(x.amount) + '<small>錢包 ' + fmt(x.wallet) + '</small></span></div>';
+        }).join('');
+      }).catch(function (e) {
+        var box = $('ledBox');
+        if (box) box.innerHTML = '<div class="empty">' + esc(e.message) + '</div>';
+      });
+    });
+}
+
+function sheetEcon() {
+  var c = econ();
+  function num(id, label, v, help) {
+    return '<div class="fld"><label for="' + id + '">' + label + '</label><input id="' + id + '" inputmode="decimal" autocomplete="off" value="' + v + '">' +
+      (help ? '<div class="help">' + help + '</div>' : '') + '</div>';
+  }
+  var pv = function (x) { return String(Math.round(x * 100000) / 1000); };
+  formSheet('經濟設定', '改完立刻生效。起始資金只影響之後新建的帳戶。',
+    '<div class="fld-grid">' +
+      num('eStart', '每季起始資金', c.startingMoney) +
+      num('eKeep', '存款後手上至少留', c.bankKeep) +
+      num('eUnit', '每筆借款', c.loanUnit) +
+      num('eRepay', '自動還款門檻', c.loanRepayAt) +
+      num('eBelow', '低於多少可以借', c.borrowBelow) +
+      num('eDaily', '每日獎勵', c.dailyAmount) +
+      num('eHands', '每日需打手數', c.dailyHands, '設 0 可以直接領') +
+      '<div></div>' +
+      num('eMin', '第一名利率 %', pv(c.interestMin), '每 3 小時') +
+      num('eMax', '最後一名利率 %', pv(c.interestMax), '每 3 小時') +
+    '</div>',
+    '儲存設定', '', function () {
+      var ints = { eStart: 'startingMoney', eKeep: 'bankKeep', eUnit: 'loanUnit', eRepay: 'loanRepayAt', eBelow: 'borrowBelow', eDaily: 'dailyAmount', eHands: 'dailyHands' };
+      var patch = {}, bad = null;
+      Object.keys(ints).forEach(function (id) {
+        var v = $(id).value.trim();
+        if (!/^\d+$/.test(v)) bad = bad || id; else patch[ints[id]] = parseInt(v, 10);
+      });
+      ['eMin', 'eMax'].forEach(function (id) {
+        var v = $(id).value.trim();
+        if (!/^\d*\.?\d+$/.test(v)) bad = bad || id; else patch[id === 'eMin' ? 'interestMin' : 'interestMax'] = parseFloat(v) / 100;
+      });
+      if (bad) { toast('數字格式不對', 'bad'); $(bad).focus(); return null; }
+      if (patch.interestMin > patch.interestMax) { toast('第一名利率不能比最後一名高', 'bad'); return null; }
+      return call('adminSetEcon', patch).then(function () { return '設定已儲存'; });
+    });
+}
+
+function sheetInterest() {
+  formSheet('補算利息', '結算上一個 3 小時時段的利息。排程已經算過的話不會重複發放。', '', '補算', '', function () {
+    return call('adminRunInterest').then(function (r) {
+      if (r.skipped) return '這個時段已經算過了';
+      return r.total > 0 ? '已發放利息 ' + fmt(r.total) + '（' + r.count + ' 人）' : '已結算，這個時段沒有利息可發';
+    });
   });
 }
 
