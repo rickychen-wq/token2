@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#04070F">
+<title>Token</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800&family=Rajdhani:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#04070F; --deep:#070D1A;
+  --glass:rgba(12,26,46,.64); --glass2:rgba(16,34,58,.5);
+  --edge:rgba(88,190,255,.24); --edge-soft:rgba(88,190,255,.12); --edge-hot:rgba(120,220,255,.72);
+  --cy:#3FC7FF; --cy-hi:#A8EEFF; --gold:#FFD37A; --red:#FF5C79; --grn:#4BE38F;
+  --fg:#DCEEF8; --dim:#93AEC2; --faint:#6B869A;
+  --dsp:'Orbitron',sans-serif; --ui:'Rajdhani',sans-serif; --tc:'Noto Sans TC',sans-serif;
+  --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  background:var(--void);color:var(--fg);font-family:var(--tc);font-size:15px;line-height:1.55;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(880px 520px at 50% -10%,rgba(63,199,255,.17),transparent 62%),
+    radial-gradient(620px 460px at 100% 30%,rgba(63,199,255,.06),transparent 60%),
+    radial-gradient(560px 420px at 0% 85%,rgba(63,199,255,.05),transparent 62%);
+}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--cy);outline-offset:2px}
+
+/* ---------- 共用 ---------- */
+.mark{display:inline-flex;align-items:baseline;gap:8px;font-family:var(--dsp);font-weight:800;letter-spacing:.14em;color:var(--fg)}
+.mark .t{text-shadow:0 0 28px rgba(63,199,255,.55)}
+.mark .v{font-weight:700;font-size:.42em;letter-spacing:.08em;color:var(--cy);text-shadow:0 0 14px rgba(63,199,255,.8)}
+
+.btn{
+  position:relative;display:flex;align-items:center;justify-content:center;gap:10px;
+  width:100%;min-height:52px;padding:0 18px;border-radius:4px;
+  font-family:var(--tc);font-weight:700;font-size:15px;letter-spacing:.12em;color:#04121C;
+  background:linear-gradient(135deg,var(--cy-hi),var(--cy) 55%,#1FA5DE);
+  box-shadow:0 8px 28px rgba(63,199,255,.28),inset 0 1px 0 rgba(255,255,255,.55);
+  transition:transform .1s,opacity .2s,filter .2s;
+}
+.btn:active{transform:scale(.985)}
+.btn:disabled{opacity:.38;filter:saturate(.4);cursor:default}
+.btn.ghost{background:rgba(63,199,255,.07);color:var(--cy-hi);border:1px solid var(--edge);box-shadow:none}
+.btn.danger{background:linear-gradient(135deg,#FF9AAE,var(--red) 55%,#D1284A);color:#1C0309;box-shadow:0 8px 28px rgba(255,92,121,.26)}
+.btn.busy{color:transparent!important;pointer-events:none}
+.btn.busy::after{
+  content:'';position:absolute;left:50%;top:50%;width:20px;height:20px;margin:-10px 0 0 -10px;
+  border-radius:50%;border:2px solid rgba(4,18,28,.25);border-top-color:#04121C;animation:spin .7s linear infinite;
+}
+.btn.ghost.busy::after{border-color:rgba(168,238,255,.2);border-top-color:var(--cy-hi)}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.fld{margin-bottom:14px}
+.fld label{display:block;font-size:12.5px;color:var(--dim);margin-bottom:7px;letter-spacing:.06em}
+.fld input{
+  width:100%;height:50px;padding:0 14px;border-radius:4px;font-size:16px;
+  background:rgba(3,8,18,.72);border:1px solid var(--edge);color:var(--fg);
+  transition:border-color .15s,box-shadow .15s;
+}
+.fld input::placeholder{color:#4A6275}
+.fld input:focus{outline:none;border-color:var(--edge-hot);box-shadow:0 0 0 3px rgba(63,199,255,.12)}
+.fld .help{font-size:12px;color:var(--faint);margin-top:6px}
+
+/* ---------- 啟動畫面 ---------- */
+.boot{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;background:var(--void)}
+.boot .mark{font-size:34px;animation:breathe 1.8s ease-in-out infinite}
+.boot-bar{width:120px;height:2px;border-radius:2px;background:var(--edge-soft);overflow:hidden;position:relative}
+.boot-bar::after{content:'';position:absolute;top:0;bottom:0;width:40%;background:var(--cy);box-shadow:0 0 10px var(--cy);animation:slide 1.1s ease-in-out infinite}
+.boot-msg{font-size:13px;color:var(--faint);min-height:20px;text-align:center;padding:0 24px}
+@keyframes breathe{50%{opacity:.55}}
+@keyframes slide{from{left:-40%}to{left:100%}}
+
+/* ---------- 登入 ---------- */
+.gate{position:relative;z-index:1;min-height:100%;display:flex;justify-content:center;padding:calc(64px + var(--safe-t)) 22px calc(40px + var(--safe-b))}
+.gate-in{width:100%;max-width:380px}
+.gate .mark{font-size:40px}
+.gate-lead{margin:30px 0 14px;color:var(--dim);font-size:14px;letter-spacing:.06em}
+
+.pid{position:relative;display:flex;gap:14px;cursor:text}
+.pid input{position:absolute;inset:0;width:100%;height:100%;opacity:0;font-size:16px;caret-color:transparent;z-index:2}
+.cell{
+  position:relative;flex:1;height:116px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--ui);font-weight:700;font-size:74px;color:var(--cy-hi);
+  background:linear-gradient(170deg,rgba(14,30,52,.75),rgba(4,10,20,.78));
+  border:1px solid var(--edge);
+  box-shadow:inset 0 1px 0 rgba(168,238,255,.1);
+  transition:border-color .18s,box-shadow .18s;
+}
+.cell.fill{text-shadow:0 0 22px rgba(63,199,255,.8),0 0 4px rgba(168,238,255,.9)}
+.pid.focus .cell.cur{border-color:var(--edge-hot);box-shadow:0 0 0 1px rgba(120,220,255,.35),0 0 30px rgba(63,199,255,.22),inset 0 1px 0 rgba(168,238,255,.14)}
+.pid.focus .cell.cur::after{content:'';position:absolute;left:30%;right:30%;bottom:22px;height:3px;border-radius:2px;background:var(--cy);box-shadow:0 0 10px var(--cy);animation:blink 1s steps(1) infinite}
+.pid.ok .cell{border-color:rgba(120,220,255,.5)}
+@keyframes blink{50%{opacity:0}}
+
+.gate-status{min-height:48px;display:flex;align-items:center;margin:16px 0 6px;font-size:14px;color:var(--dim);line-height:1.6}
+.gate-status.warn{color:#FFB3C1}
+.who{display:flex;align-items:center;gap:12px}
+.who b{font-size:17px;color:var(--fg)}
+.who span{color:var(--faint);font-size:13px}
+
+.reveal{display:grid;grid-template-rows:0fr;transition:grid-template-rows .28s ease}
+.reveal.on{grid-template-rows:1fr}
+.reveal>div{overflow:hidden;visibility:hidden;transition:visibility 0s .28s}
+.reveal.on>div{visibility:visible;transition:none}
+.reveal .pad{padding-top:10px}
+.gate-foot{margin-top:28px;text-align:center;font-size:12px;color:#4A6275}
+
+/* ---------- 六角頭像 ---------- */
+.hex{position:relative;flex:none;display:flex;align-items:center;justify-content:center}
+.hex svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.hex .ch{position:relative;font-weight:700;color:var(--cy-hi);line-height:1}
+
+/* ---------- 主框架 ---------- */
+.app{position:relative;z-index:1;min-height:100%;display:flex;flex-direction:column}
+.top{
+  position:sticky;top:0;z-index:5;
+  padding:calc(12px + var(--safe-t)) 18px 12px;
+  background:linear-gradient(180deg,rgba(4,7,15,.94),rgba(4,7,15,.78));
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--edge-soft);
+}
+.top-in{max-width:488px;margin:0 auto;display:flex;align-items:center;justify-content:space-between}
+.top .mark{font-size:18px}
+.top-me{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--dim)}
+.top-me b{font-family:var(--ui);font-weight:700;font-size:15px;color:var(--cy-hi);letter-spacing:.04em}
+
+.views{flex:1;width:100%;max-width:520px;margin:0 auto;padding:18px 16px calc(96px + var(--safe-b))}
+.view{animation:viewIn .22s ease-out}
+@keyframes viewIn{from{opacity:0;transform:translateY(6px)}}
+
+.tabs{
+  position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;justify-content:center;
+  padding-bottom:var(--safe-b);background:rgba(5,10,20,.94);border-top:1px solid var(--edge-soft);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+}
+.tabs-in{display:flex;width:100%;max-width:520px}
+.tab{flex:1;height:62px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--faint);position:relative;transition:color .18s}
+.tab svg{width:22px;height:22px}
+.tab span{font-size:11px;letter-spacing:.12em}
+.tab.on{color:var(--cy-hi)}
+.tab.on svg{filter:drop-shadow(0 0 8px rgba(63,199,255,.85))}
+.tab.on::before{content:'';position:absolute;top:-1px;left:32%;right:32%;height:2px;background:var(--cy);box-shadow:0 0 12px var(--cy)}
+
+.sec-h{display:flex;align-items:baseline;justify-content:space-between;margin:26px 2px 10px}
+.sec-h h2{font-size:15px;font-weight:700;letter-spacing:.08em}
+.sec-h span{font-size:12px;color:var(--faint)}
+
+/* ---------- 玩家卡 ---------- */
+.idcard{
+  position:relative;overflow:hidden;border-radius:8px;padding:22px 20px 0;
+  background:
+    radial-gradient(420px 220px at 100% 0%,rgba(63,199,255,.16),transparent 70%),
+    linear-gradient(160deg,var(--glass),var(--glass2));
+  border:1px solid var(--edge);
+  box-shadow:0 20px 50px rgba(0,0,0,.5),inset 0 1px 0 rgba(168,238,255,.12);
+}
+.idcard::before{content:'';position:absolute;left:12%;right:12%;top:-1px;height:1px;background:linear-gradient(90deg,transparent,var(--edge-hot),transparent)}
+.idcard::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(115deg,transparent 38%,rgba(168,238,255,.16) 50%,transparent 62%);
+  background-size:260% 100%;animation:sheen 7s ease-in-out infinite;
+}
+@keyframes sheen{0%,72%{background-position:150% 0}100%{background-position:-60% 0}}
+.id-row{display:flex;align-items:center;gap:16px}
+.id-name{min-width:0}
+.id-name h1{font-size:24px;font-weight:700;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.id-meta{display:flex;align-items:center;gap:8px;margin-top:4px}
+.id-no{font-family:var(--ui);font-weight:700;font-size:16px;color:var(--cy);letter-spacing:.06em}
+.tag{display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:3px;font-size:11px;font-weight:700;letter-spacing:.08em}
+.tag.gold{color:#2A1A00;background:linear-gradient(135deg,#FFE7B0,var(--gold));box-shadow:0 0 12px rgba(255,211,122,.35)}
+.tag.cy{color:var(--cy-hi);background:rgba(63,199,255,.1);border:1px solid var(--edge)}
+.tag.warn{color:#FFD5A0;background:rgba(255,190,90,.08);border:1px solid rgba(255,190,90,.3)}
+.id-stats{display:grid;grid-template-columns:repeat(3,1fr);margin:20px -20px 0;border-top:1px solid var(--edge-soft)}
+.id-stats div{padding:13px 4px 14px;text-align:center}
+.id-stats div+div{border-left:1px solid var(--edge-soft)}
+.id-stats b{display:block;font-family:var(--ui);font-weight:700;font-size:26px;line-height:1.15;color:var(--gold);text-shadow:0 0 16px rgba(255,211,122,.35)}
+.id-stats span{font-size:11.5px;color:var(--faint);letter-spacing:.06em}
+
+/* ---------- 本季 ---------- */
+.season{
+  border-radius:8px;padding:18px 20px;
+  background:linear-gradient(160deg,var(--glass),var(--glass2));border:1px solid var(--edge);
+}
+.season-top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.season-left small{display:block;font-size:12px;color:var(--faint)}
+.season-cd{font-family:var(--dsp);font-weight:700;font-size:28px;line-height:1.2;color:var(--cy-hi);text-shadow:0 0 20px rgba(63,199,255,.45);white-space:nowrap}
+.season-cd em{font-style:normal;font-family:var(--tc);font-size:13px;font-weight:500;color:var(--dim);margin:0 8px 0 3px;text-shadow:none}
+.season-wk{font-weight:700;font-size:14px;color:var(--dim);text-align:right;white-space:nowrap}
+.season-wk small{display:block;font-family:var(--tc);font-weight:400;font-size:12px;color:var(--faint);letter-spacing:0}
+.track{position:relative;height:4px;margin-top:16px;border-radius:2px;background:rgba(63,199,255,.1)}
+.track i{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:linear-gradient(90deg,#1FA5DE,var(--cy));box-shadow:0 0 12px rgba(63,199,255,.6)}
+.days{display:grid;grid-template-columns:repeat(7,1fr);margin-top:8px;font-size:11px;color:var(--faint);text-align:center}
+.days span.now{color:var(--cy-hi);font-weight:700}
+
+/* ---------- 遊戲入口 ---------- */
+.game{
+  position:relative;overflow:hidden;display:flex;align-items:center;gap:16px;
+  border-radius:8px;padding:18px;min-height:104px;
+  background:linear-gradient(135deg,rgba(18,40,66,.7),rgba(8,16,30,.8));border:1px solid var(--edge);
+}
+.game-suit{
+  flex:none;width:64px;height:64px;border-radius:6px;display:flex;align-items:center;justify-content:center;
+  font-size:38px;color:var(--cy-hi);background:rgba(63,199,255,.08);border:1px solid var(--edge);
+  text-shadow:0 0 20px rgba(63,199,255,.7);
+}
+.game-txt{flex:1;min-width:0}
+.game-txt h3{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:700}
+.game-txt p{font-size:13px;color:var(--faint);margin-top:2px}
+.game-bg{position:absolute;right:-18px;bottom:-40px;font-size:150px;line-height:1;color:rgba(63,199,255,.05);pointer-events:none}
+
+/* ---------- 列表群組 ---------- */
+.grp{border-radius:8px;overflow:hidden;background:linear-gradient(160deg,var(--glass),var(--glass2));border:1px solid var(--edge)}
+.row{display:flex;align-items:center;gap:12px;width:100%;min-height:54px;padding:10px 16px;text-align:left;border-bottom:1px solid var(--edge-soft)}
+.row:last-child{border-bottom:0}
+button.row:active{background:rgba(63,199,255,.06)}
+.row .k{flex:1;min-width:0}
+.row .k small{display:block;font-size:12px;color:var(--faint);line-height:1.5;margin-top:1px}
+.row .v{color:var(--dim);font-family:var(--ui);font-weight:600;font-size:15px}
+.row .chev{color:var(--faint);font-size:18px;line-height:1}
+.row.red .k{color:var(--red)}
+.pl-name{display:flex;align-items:center;gap:8px;min-width:0}
+.pl-name b{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pl-no{font-family:var(--ui);font-weight:700;font-size:16px;color:var(--cy);letter-spacing:.04em;flex:none;width:26px}
+
+.switch{position:relative;flex:none;width:52px;height:30px;border-radius:15px;background:rgba(120,150,175,.22);border:1px solid var(--edge-soft);transition:background .2s,border-color .2s}
+.switch::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#C9D9E5;transition:transform .22s cubic-bezier(.3,1.4,.5,1),background .2s}
+.switch[aria-checked=true]{background:rgba(63,199,255,.35);border-color:var(--edge-hot)}
+.switch[aria-checked=true]::after{transform:translateX(22px);background:var(--cy-hi);box-shadow:0 0 12px var(--cy)}
+.switch:disabled{opacity:.5}
+
+.empty{padding:26px 16px;text-align:center;font-size:13px;color:var(--faint)}
+
+/* ---------- 底部面板 ---------- */
+.sheet-bg{position:fixed;inset:0;z-index:40;background:rgba(1,3,8,.66);opacity:0;transition:opacity .2s}
+.sheet-bg.on{opacity:1}
+.sheet{
+  position:fixed;left:0;right:0;bottom:0;z-index:41;margin:0 auto;max-width:520px;
+  padding:10px 20px calc(22px + var(--safe-b));border-radius:14px 14px 0 0;
+  background:linear-gradient(180deg,#0D1C31,#070F1D);border:1px solid var(--edge);border-bottom:0;
+  box-shadow:0 -20px 60px rgba(0,0,0,.6);transform:translateY(105%);transition:transform .26s cubic-bezier(.2,.9,.3,1);
+  max-height:88vh;overflow-y:auto;
+}
+.sheet.on{transform:none}
+.sheet-grip{width:40px;height:4px;border-radius:2px;background:rgba(140,180,210,.3);margin:0 auto 14px}
+.sheet h3{font-size:18px;font-weight:700;margin-bottom:6px}
+.sheet .desc{font-size:13.5px;color:var(--dim);margin-bottom:18px}
+.sheet .acts{display:flex;gap:10px;margin-top:6px}
+.sheet .acts .btn{flex:1}
+
+/* ---------- 提示 ---------- */
+.toast{
+  position:fixed;left:50%;top:calc(66px + var(--safe-t));z-index:60;transform:translate(-50%,-10px);
+  max-width:calc(100vw - 32px);width:max-content;padding:12px 18px;border-radius:6px;
+  font-size:14px;text-align:center;background:rgba(11,24,42,.97);border:1px solid var(--edge);
+  box-shadow:0 14px 40px rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;
+}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.toast.bad{border-color:rgba(255,92,121,.55);color:#FFC7D1}
+.toast.good{border-color:rgba(75,227,143,.45);color:#C8F7DB}
+.gate-mode .toast{top:calc(18px + var(--safe-t))}
+
+@media (max-width:360px){
+  .gate .mark{font-size:34px}
+  .cell{height:100px;font-size:64px}
+  .season-cd{font-size:24px}
+  .id-name h1{font-size:21px}
+}
+@media (min-width:700px){
+  .sheet{bottom:auto;top:50%;border-radius:12px;border-bottom:1px solid var(--edge);transform:translateY(-40%) scale(.97);opacity:0;transition:transform .22s,opacity .22s}
+  .sheet.on{transform:translateY(-50%);opacity:1}
+  .sheet-grip{display:none}
+}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body class="gate-mode">
+
+<div id="boot" class="boot">
+  <div class="mark"><span class="t">TOKEN</span><span class="v">2.0</span></div>
+  <div class="boot-bar"></div>
+  <div class="boot-msg" id="bootMsg"></div>
+</div>
+
+<main id="gate" class="gate" hidden>
+  <div class="gate-in">
+    <div class="mark"><span class="t">TOKEN</span><span class="v">2.0</span></div>
+    <p class="gate-lead">輸入你的編號</p>
+
+    <label class="pid" id="pidBox">
+      <input id="pid" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" aria-label="兩位數編號">
+      <span class="cell"></span><span class="cell"></span>
+    </label>
+
+    <div class="gate-status" id="gateStatus" aria-live="polite"></div>
+
+    <div class="reveal" id="gateReveal">
+      <div><form class="pad" id="gateForm" novalidate>
+        <div class="fld" id="fName">
+          <label for="gName">名字</label>
+          <input id="gName" maxlength="12" placeholder="桌上會顯示這個名字" autocomplete="off">
+        </div>
+        <div class="fld" id="fPw">
+          <label for="gPw" id="lPw">密碼</label>
+          <input id="gPw" type="password" autocomplete="current-password">
+        </div>
+        <div class="fld" id="fPw2">
+          <label for="gPw2">再輸入一次密碼</label>
+          <input id="gPw2" type="password" autocomplete="new-password">
+        </div>
+        <button class="btn" id="gateBtn" type="submit">進入</button>
+      </form></div>
+    </div>
+
+    <p class="gate-foot">忘記密碼請找主辦重設</p>
+  </div>
+</main>
+
+<div id="app" class="app" hidden>
+  <header class="top"><div class="top-in">
+    <div class="mark"><span class="t">TOKEN</span><span class="v">2.0</span></div>
+    <div class="top-me"><span id="topName"></span><b id="topPid"></b></div>
+  </div></header>
+
+  <div class="views">
+    <section id="vHome" class="view"></section>
+    <section id="vMe" class="view" hidden></section>
+  </div>
+
+  <nav class="tabs"><div class="tabs-in">
+    <button class="tab on" data-tab="home" aria-label="大廳">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 2.8 20 7.4v9.2L12 21.2 4 16.6V7.4Z"/><path d="M12 8.2 15.3 10v4L12 15.8 8.7 14v-4Z"/></svg>
+      <span>大廳</span>
+    </button>
+    <button class="tab" data-tab="me" aria-label="我的">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20.2c1.3-3.6 4.2-5.4 7.5-5.4s6.2 1.8 7.5 5.4"/></svg>
+      <span>我的</span>
+    </button>
+  </div></nav>
+</div>
+
+<div class="sheet-bg" id="sheetBg" hidden></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" hidden></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-functions-compat.js"></script>
+<script>
+(function () {
+'use strict';
+
+/* =====================================================================
+   設定
+   ===================================================================== */
+var FB_CONFIG = {
+  apiKey: "AIzaSyDJ-NRfp17PUpSdYG_JzN0xARc13z5rOwo",
+  authDomain: "my-gacha-game-f7663.firebaseapp.com",
+  projectId: "my-gacha-game-f7663",
+  storageBucket: "my-gacha-game-f7663.firebasestorage.app",
+  messagingSenderId: "1035192644413",
+  appId: "1:1035192644413:web:20e2bee12da85d58cf8b54"
+};
+var REGION = 'asia-east1';
+
+/* =====================================================================
+   小工具
+   ===================================================================== */
+function $(id) { return document.getElementById(id); }
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+function fmt(n) { return String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+var LS = {
+  get: function (k, d) { try { var v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+};
+
+function toast(msg, kind) {
+  var el = $('toast');
+  el.textContent = msg;
+  el.className = 'toast on' + (kind ? ' ' + kind : '');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(function () { el.className = 'toast'; }, 3000);
+}
+
+function busy(btn, on) {
+  if (!btn) return;
+  btn.classList.toggle('busy', !!on);
+  btn.disabled = !!on;
+}
+
+/* 六角頭像：用名字第一個字 */
+var _hexId = 0;
+function hexAvatar(name, size) {
+  var ch = Array.from(String(name || '?'))[0] || '?';
+  var fs = Math.round(size * 0.4);
+  var gid = 'hg' + (++_hexId);   // 每個頭像自己的漸層 id，避免引用到被隱藏的那一份
+  return '<div class="hex" style="width:' + size + 'px;height:' + size + 'px">' +
+    '<svg viewBox="0 0 100 100" aria-hidden="true">' +
+      '<defs><linearGradient id="' + gid + '" x1="0" y1="0" x2="1" y2="1">' +
+        '<stop offset="0" stop-color="#1A3A5E"/><stop offset="1" stop-color="#081322"/>' +
+      '</linearGradient></defs>' +
+      '<polygon points="50,3 91,26.5 91,73.5 50,97 9,73.5 9,26.5" fill="url(#' + gid + ')" stroke="rgba(120,220,255,.75)" stroke-width="2.2"/>' +
+      '<polygon points="50,12 83,31 83,69 50,88 17,69 17,31" fill="none" stroke="rgba(88,190,255,.2)" stroke-width="1.2"/>' +
+    '</svg>' +
+    '<span class="ch" style="font-size:' + fs + 'px;text-shadow:0 0 ' + Math.round(size / 5) + 'px rgba(63,199,255,.7)">' + esc(ch) + '</span></div>';
+}
+
+/* ---------- 台灣時間、本季 ---------- */
+var TW = 8 * 3600000, DAY = 86400000;
+function seasonRange(ms) {
+  var tw = new Date(ms + TW);
+  var dow = (tw.getUTCDay() + 6) % 7;
+  var start = Date.UTC(tw.getUTCFullYear(), tw.getUTCMonth(), tw.getUTCDate()) - dow * DAY - TW;
+  return { start: start, end: start + 7 * DAY, dow: dow };
+}
+function isoWeek(ms) {
+  var r = seasonRange(ms);
+  var thu = new Date(r.start + TW + 3 * DAY);
+  var y = thu.getUTCFullYear();
+  var jan4 = new Date(Date.UTC(y, 0, 4));
+  var jan4Mon = Date.UTC(y, 0, 4) - ((jan4.getUTCDay() + 6) % 7) * DAY;
+  var thuDay = Date.UTC(thu.getUTCFullYear(), thu.getUTCMonth(), thu.getUTCDate());
+  return Math.round((thuDay - 3 * DAY - jan4Mon) / (7 * DAY)) + 1;
+}
+function twDate(ms) { var d = new Date(ms + TW); return (d.getUTCMonth() + 1) + '/' + d.getUTCDate(); }
+
+/* =====================================================================
+   Firebase
+   ===================================================================== */
+firebase.initializeApp(FB_CONFIG);
+var auth = firebase.auth();
+var db = firebase.firestore();
+var fns = firebase.app().functions(REGION);
+
+// 本機模擬器：網址加 ?emu=1
+if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && /[?&]emu=1/.test(location.search)) {
+  auth.useEmulator('http://127.0.0.1:9099');
+  db.useEmulator('127.0.0.1', 8080);
+  fns.useEmulator('127.0.0.1', 5001);
+}
+
+var EXPIRED = { 'session-expired': 1, 'no-session': 1, 'no-auth': 1 };
+
+/* 呼叫 Cloud Function，錯誤統一整理成中文 */
+function call(name, data) {
+  return fns.httpsCallable(name)(data || {}).then(function (r) { return r.data; }, function (e) {
+    var code = (e && e.code) || '';
+    var err = new Error((e && e.message) || '連線失敗');
+    err.reason = (e && e.details && e.details.reason) || null;
+    err.code = code;
+    if (code === 'functions/not-found') err.message = '伺服器功能還沒部署';
+    else if (code === 'functions/unavailable' || code === 'functions/deadline-exceeded') err.message = '連線逾時，檢查網路再試一次';
+    else if (code === 'functions/internal' && !err.reason && /^internal$/i.test(err.message)) err.message = '連不上伺服器，稍後再試';
+    if (err.reason && EXPIRED[err.reason] && S.me) {
+      endSession();
+      toast(err.message, 'bad');
+    }
+    throw err;
+  });
+}
+
+/* =====================================================================
+   狀態
+   ===================================================================== */
+var S = {
+  me: null,            // { pid, name, role }
+  player: null,        // players/{pid} 即時資料
+  cfg: null,           // config/app
+  roster: [],          // 主辦用：全部玩家
+  tab: 'home',
+  unsubs: [],
+  tick: null
+};
+
+/* =====================================================================
+   啟動
+   ===================================================================== */
+var authUser = null, authWait = [], started = false;
+
+function bootMsg(t) { $('bootMsg').textContent = t || ''; }
+
+auth.onAuthStateChanged(function (u) {
+  authUser = u;
+  if (!u) {
+    auth.signInAnonymously().catch(function (e) {
+      var msg = e && (e.code === 'auth/operation-not-allowed' || e.code === 'auth/admin-restricted-operation')
+        ? 'Firebase 的匿名登入沒有開啟'
+        : '連不上伺服器，檢查網路後重新整理';
+      bootMsg(msg);
+      if (started) toast(msg, 'bad');
+    });
+    return;
+  }
+  authWait.splice(0).forEach(function (f) { f(u); });
+  if (!started) { started = true; startup(u); }
+});
+
+function whenAuth() {
+  return authUser ? Promise.resolve(authUser) : new Promise(function (r) { authWait.push(r); });
+}
+
+function startup(u) {
+  u.getIdTokenResult().then(function (t) {
+    if (!t.claims.pid) return showGate();
+    bootMsg('');
+    return call('authSession').then(enterApp, function (e) {
+      if (!EXPIRED[e.reason]) toast(e.message, 'bad');
+      showGate();
+    });
+  }).catch(function () { showGate(); });
+}
+
+/* =====================================================================
+   登入頁
+   ===================================================================== */
+var G = { mode: 'idle', pid: '', player: null, seq: 0 };
+
+function showGate() {
+  $('boot').hidden = true;
+  $('app').hidden = true;
+  $('gate').hidden = false;
+  document.body.className = 'gate-mode';
+  var last = LS.get('lastPid', '');
+  var input = $('pid');
+  if (!input.value && /^\d{2}$/.test(last)) input.value = last;
+  $('gPw').value = ''; $('gPw2').value = '';
+  paintCells();
+  onPid();
+}
+
+function paintCells() {
+  var v = $('pid').value, cells = document.querySelectorAll('.cell');
+  for (var i = 0; i < 2; i++) {
+    cells[i].textContent = v[i] || '';
+    cells[i].classList.toggle('fill', !!v[i]);
+    cells[i].classList.toggle('cur', i === v.length);
+  }
+  $('pidBox').classList.toggle('ok', v.length === 2);
+}
+
+$('pid').addEventListener('input', function () {
+  var v = this.value.replace(/\D/g, '').slice(0, 2);
+  if (v !== this.value) this.value = v;
+  paintCells();
+  onPid();
+  if (v.length === 2) setTimeout(function () { var f = firstField(); if (f && G.mode !== 'closed') f.focus(); }, 60);
+});
+$('pid').addEventListener('focus', function () { $('pidBox').classList.add('focus'); paintCells(); });
+$('pid').addEventListener('blur', function () { $('pidBox').classList.remove('focus'); });
+
+function firstField() {
+  if (!$('fName').hidden) return $('gName');
+  if (!$('fPw').hidden) return $('gPw');
+  return null;
+}
+
+function setStatus(html, warn) {
+  var el = $('gateStatus');
+  el.innerHTML = html;
+  el.classList.toggle('warn', !!warn);
+}
+
+function setMode(mode) {
+  G.mode = mode;
+  var f = { name: false, pw: false, pw2: false, show: false, label: '密碼', btn: '進入', ac: 'current-password' };
+  if (mode === 'login') { f.pw = true; f.show = true; f.btn = '登入'; }
+  else if (mode === 'claim') { f.pw = f.pw2 = true; f.show = true; f.label = '設一組密碼'; f.btn = '設定密碼並進入'; f.ac = 'new-password'; }
+  else if (mode === 'register') { f.name = f.pw = f.pw2 = true; f.show = true; f.label = '設一組密碼'; f.btn = '註冊'; f.ac = 'new-password'; }
+  else if (mode === 'bootstrap') { f.name = f.pw = f.pw2 = true; f.show = true; f.label = '設一組密碼'; f.btn = '建立主辦帳號'; f.ac = 'new-password'; }
+  $('fName').hidden = !f.name;
+  $('fPw').hidden = !f.pw;
+  $('fPw2').hidden = !f.pw2;
+  $('lPw').textContent = f.label;
+  $('gPw').setAttribute('autocomplete', f.ac);
+  $('gPw').placeholder = f.pw2 ? '至少 4 碼' : '';
+  $('gateBtn').textContent = f.btn;
+  $('gateReveal').classList.toggle('on', f.show);
+}
+
+function onPid() {
+  var v = $('pid').value;
+  var seq = ++G.seq;
+  if (v.length < 2) {
+    G.player = null;
+    setMode('idle');
+    setStatus('兩位數字，例如 07');
+    return;
+  }
+  setMode('idle');
+  setStatus('查詢中…');
+  whenAuth().then(function () {
+    return Promise.all([
+      db.collection('players').doc(v).get(),
+      db.collection('config').doc('app').get()
+    ]);
+  }).then(function (r) {
+    if (seq !== G.seq) return;
+    var p = r[0].exists ? r[0].data() : null, cfg = r[1].exists ? r[1].data() : null;
+    G.pid = v; G.player = p;
+    if (p && p.claimed) {
+      setMode('login');
+      setStatus('<div class="who">' + hexAvatar(p.name, 40) + '<div><b>' + esc(p.name) + '</b><br><span>輸入密碼登入</span></div></div>');
+    } else if (p) {
+      setMode('claim');
+      setStatus('<div class="who">' + hexAvatar(p.name, 40) + '<div><b>' + esc(p.name) + '</b><br><span>主辦幫你開好帳號了，設一組密碼就能進入</span></div></div>');
+    } else if (!cfg) {
+      setMode('bootstrap');
+      setStatus('目前還沒有任何帳號，第一個註冊的人會成為主辦。');
+    } else if (cfg.registrationOpen) {
+      setMode('register');
+      setStatus('這個編號還沒人用，填好就是你的。');
+    } else {
+      setMode('closed');
+      setStatus('這個編號還沒開通，請找主辦開帳號。', true);
+    }
+  }).catch(function () {
+    if (seq !== G.seq) return;
+    setMode('idle');
+    setStatus('連不上伺服器，檢查網路後再輸入一次。', true);
+  });
+}
+
+$('gateForm').addEventListener('submit', function (ev) {
+  ev.preventDefault();
+  var mode = G.mode, pid = G.pid, btn = $('gateBtn');
+  if (btn.disabled || ['login', 'claim', 'register', 'bootstrap'].indexOf(mode) < 0) return;
+  var name = $('gName').value.trim(), pw = $('gPw').value, pw2 = $('gPw2').value;
+
+  if ((mode === 'register' || mode === 'bootstrap') && !name) { toast('要填名字', 'bad'); return $('gName').focus(); }
+  if (!pw) { toast('要打密碼', 'bad'); return $('gPw').focus(); }
+  if (mode !== 'login') {
+    if (pw.length < 4) { toast('密碼至少 4 碼', 'bad'); return $('gPw').focus(); }
+    if (pw !== pw2) { toast('兩次密碼不一樣', 'bad'); return $('gPw2').focus(); }
+  }
+
+  var fn = mode === 'login' ? 'authLogin' : mode === 'claim' ? 'authSetPassword' : 'authRegister';
+  var data = { pid: pid, pw: pw };
+  if (mode === 'register' || mode === 'bootstrap') data.name = name;
+
+  busy(btn, true);
+  whenAuth().then(function () { return call(fn, data); }).then(function (profile) {
+    return authUser.getIdToken(true).then(function () { return profile; });
+  }).then(function (profile) {
+    LS.set('lastPid', pid);
+    $('gPw').value = ''; $('gPw2').value = ''; $('gName').value = '';
+    busy(btn, false);
+    enterApp(profile);
+    if (mode === 'bootstrap') toast('你是主辦了，到「我的」可以管理帳號', 'good');
+  }).catch(function (e) {
+    busy(btn, false);
+    toast(e.message, 'bad');
+    if (e.reason === 'bad-password') { $('gPw').value = ''; $('gPw').focus(); }
+    // 狀態可能已經變了（例如別人剛搶先註冊、註冊被關掉），重新查一次
+    if (['taken', 'closed', 'already-claimed', 'needs-password', 'not-found'].indexOf(e.reason) >= 0) onPid();
+  });
+});
+
+/* =====================================================================
+   主畫面
+   ===================================================================== */
+function enterApp(profile) {
+  S.me = profile;
+  $('boot').hidden = true;
+  $('gate').hidden = true;
+  $('app').hidden = false;
+  document.body.className = '';
+  paintTop();
+
+  S.unsubs.push(db.collection('players').doc(profile.pid).onSnapshot(function (d) {
+    if (!d.exists) return;
+    S.player = d.data();
+    S.me.name = S.player.name;
+    S.me.role = S.player.role;
+    paintTop();
+    render();
+  }, function () {}));
+
+  S.unsubs.push(db.collection('config').doc('app').onSnapshot(function (d) {
+    S.cfg = d.exists ? d.data() : null;
+    if (S.tab === 'me') render();
+  }, function () {}));
+
+  if (profile.role === 'admin') {
+    S.unsubs.push(db.collection('players').onSnapshot(function (q) {
+      var list = [];
+      q.forEach(function (d) { list.push(d.data()); });
+      list.sort(function (a, b) { return a.pid < b.pid ? -1 : 1; });
+      S.roster = list;
+      if (S.tab === 'me') render();
+    }, function () {}));
+  }
+
+  clearInterval(S.tick);
+  S.tick = setInterval(function () { if (S.tab === 'home') paintSeason(); }, 20000);
+  switchTab('home');
+}
+
+function endSession() {
+  S.unsubs.splice(0).forEach(function (u) { try { u(); } catch (e) {} });
+  clearInterval(S.tick);
+  S.me = null; S.player = null; S.cfg = null; S.roster = [];
+  closeSheet();
+  showGate();
+}
+
+function paintTop() {
+  $('topName').textContent = S.me.name;
+  $('topPid').textContent = '#' + S.me.pid;
+}
+
+document.querySelectorAll('.tab').forEach(function (b) {
+  b.addEventListener('click', function () { switchTab(b.getAttribute('data-tab')); });
+});
+
+function switchTab(t) {
+  S.tab = t;
+  document.querySelectorAll('.tab').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === t); });
+  $('vHome').hidden = t !== 'home';
+  $('vMe').hidden = t !== 'me';
+  window.scrollTo(0, 0);
+  render(true);
+}
+
+var _last = {};
+function render(force) {
+  if (!S.me) return;
+  if (S.tab === 'home') renderHome(force);
+  else renderMe(force);
+}
+
+function put(id, html, force) {
+  if (!force && _last[id] === html) return;
+  _last[id] = html;
+  $(id).innerHTML = html;
+}
+
+/* ---------- 大廳 ---------- */
+function renderHome(force) {
+  var p = S.player || { name: S.me.name, pid: S.me.pid, role: S.me.role, stats: {} };
+  var st = p.stats || {};
+  var h = '';
+
+  h += '<div class="idcard"><div class="id-row">' + hexAvatar(p.name, 72) +
+    '<div class="id-name"><h1>' + esc(p.name) + '</h1><div class="id-meta">' +
+    '<span class="id-no">#' + esc(p.pid) + '</span>' +
+    (p.role === 'admin' ? '<span class="tag gold">主辦</span>' : '') +
+    '</div></div></div>' +
+    '<div class="id-stats">' +
+      '<div><b>' + fmt(st.points) + '</b><span>歷史積分</span></div>' +
+      '<div><b>' + fmt(st.champions) + '</b><span>冠軍</span></div>' +
+      '<div><b>' + fmt(st.seasonsPlayed) + '</b><span>參與季數</span></div>' +
+    '</div></div>';
+
+  h += '<div class="sec-h"><h2>本季</h2><span>週日結算</span></div>';
+  h += '<div class="season" id="seasonBox"></div>';
+
+  h += '<div class="sec-h"><h2>遊戲</h2></div>';
+  h += '<div class="game"><div class="game-bg">♠</div>' +
+    '<div class="game-suit">♠</div>' +
+    '<div class="game-txt"><h3>德州撲克<span class="tag cy">建置中</span></h3><p>完成後從這裡入座</p></div></div>';
+
+  put('vHome', h, force);
+  paintSeason();
+}
+
+function paintSeason() {
+  var box = $('seasonBox');
+  if (!box) return;
+  var now = Date.now(), r = seasonRange(now);
+  var left = Math.max(0, r.end - now);
+  var d = Math.floor(left / DAY), hh = Math.floor(left % DAY / 3600000), mm = Math.floor(left % 3600000 / 60000);
+  var cd = d > 0
+    ? d + '<em>天</em>' + hh + '<em>小時</em>'
+    : hh + '<em>小時</em>' + mm + '<em>分</em>';
+  var pct = Math.min(100, (now - r.start) / (7 * DAY) * 100);
+  var names = ['一', '二', '三', '四', '五', '六', '日'];
+  var days = names.map(function (n, i) { return '<span' + (i === r.dow ? ' class="now"' : '') + '>' + n + '</span>'; }).join('');
+
+  box.innerHTML =
+    '<div class="season-top">' +
+      '<div class="season-left"><small>距離結算</small><div class="season-cd">' + cd + '</div></div>' +
+      '<div class="season-wk">第 ' + isoWeek(now) + ' 週<small>' + twDate(r.start) + ' – ' + twDate(r.end - 1) + '</small></div>' +
+    '</div>' +
+    '<div class="track"><i style="width:' + pct.toFixed(2) + '%"></i></div>' +
+    '<div class="days">' + days + '</div>';
+}
+
+/* ---------- 我的 ---------- */
+function renderMe(force) {
+  var me = S.me, h = '';
+  var isAdmin = me.role === 'admin';
+
+  h += '<div class="sec-h" style="margin-top:4px"><h2>帳號</h2></div><div class="grp">' +
+    '<div class="row"><span class="k">名字</span><span class="v">' + esc(me.name) + '</span></div>' +
+    '<div class="row"><span class="k">編號</span><span class="v">#' + esc(me.pid) + '</span></div>' +
+    '<button class="row" data-act="pw"><span class="k">改密碼<small>改完之後，其他裝置都要重新登入</small></span><span class="chev">›</span></button>' +
+    '<button class="row red" data-act="logout"><span class="k">登出</span></button>' +
+  '</div>';
+
+  if (isAdmin) {
+    var open = !!(S.cfg && S.cfg.registrationOpen);
+    h += '<div class="sec-h"><h2>主辦</h2></div><div class="grp">' +
+      '<div class="row"><span class="k">開放註冊<small>開啟時，任何人都能用沒被用過的編號自己註冊</small></span>' +
+      '<button class="switch" role="switch" id="regSwitch" aria-checked="' + open + '" aria-label="開放註冊"></button></div>' +
+      '<button class="row" data-act="create"><span class="k">開帳號<small>先建好編號和名字，本人第一次登入時自己設密碼</small></span><span class="chev">›</span></button>' +
+    '</div>';
+
+    h += '<div class="sec-h"><h2>名單</h2><span>' + S.roster.length + ' 人</span></div><div class="grp">';
+    if (!S.roster.length) h += '<div class="empty">還沒有玩家</div>';
+    S.roster.forEach(function (p) {
+      var tag = p.role === 'admin' ? '<span class="tag gold">主辦</span>'
+        : p.claimed ? '' : '<span class="tag warn">待設密碼</span>';
+      h += '<button class="row" data-pl="' + esc(p.pid) + '">' +
+        '<span class="pl-no">' + esc(p.pid) + '</span>' +
+        '<span class="k pl-name"><b>' + esc(p.name) + '</b>' + tag + '</span>' +
+        '<span class="chev">›</span></button>';
+    });
+    h += '</div>';
+  }
+
+  put('vMe', h, force);
+  bindMe();
+}
+
+function bindMe() {
+  var root = $('vMe');
+  root.querySelectorAll('[data-act]').forEach(function (b) {
+    b.onclick = function () {
+      var a = b.getAttribute('data-act');
+      if (a === 'pw') sheetChangePw();
+      else if (a === 'logout') sheetLogout();
+      else if (a === 'create') sheetCreate();
+    };
+  });
+  root.querySelectorAll('[data-pl]').forEach(function (b) {
+    b.onclick = function () { sheetPlayer(b.getAttribute('data-pl')); };
+  });
+  var sw = $('regSwitch');
+  if (sw) sw.onclick = function () {
+    var next = sw.getAttribute('aria-checked') !== 'true';
+    sw.setAttribute('aria-checked', String(next));
+    sw.disabled = true;
+    call('adminSetRegistration', { open: next }).then(function () {
+      toast(next ? '已開放註冊' : '已關閉註冊', 'good');
+    }).catch(function (e) {
+      sw.setAttribute('aria-checked', String(!next));
+      toast(e.message, 'bad');
+    }).then(function () { sw.disabled = false; });
+  };
+}
+
+/* =====================================================================
+   底部面板
+   ===================================================================== */
+function openSheet(html, onReady) {
+  var bg = $('sheetBg'), sh = $('sheet');
+  sh.innerHTML = '<div class="sheet-grip"></div>' + html;
+  bg.hidden = false; sh.hidden = false;
+  requestAnimationFrame(function () { bg.classList.add('on'); sh.classList.add('on'); });
+  if (onReady) onReady(sh);
+  var first = sh.querySelector('input');
+  if (first) setTimeout(function () { first.focus(); }, 280);
+}
+
+function closeSheet() {
+  var bg = $('sheetBg'), sh = $('sheet');
+  if (sh.hidden) return;
+  bg.classList.remove('on'); sh.classList.remove('on');
+  setTimeout(function () { if (!sh.classList.contains('on')) { bg.hidden = true; sh.hidden = true; sh.innerHTML = ''; } }, 260);
+}
+
+$('sheetBg').addEventListener('click', closeSheet);
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeSheet(); });
+
+function acts(primary, kind) {
+  return '<div class="acts"><button class="btn ghost" type="button" data-close>取消</button>' +
+    '<button class="btn' + (kind ? ' ' + kind : '') + '" type="submit">' + primary + '</button></div>';
+}
+
+/* 表單型面板：submit 回傳 Promise，成功就關閉 */
+function formSheet(title, desc, fields, primary, kind, submit) {
+  var h = '<form novalidate><h3>' + title + '</h3>' + (desc ? '<p class="desc">' + desc + '</p>' : '') + fields + acts(primary, kind) + '</form>';
+  openSheet(h, function (sh) {
+    var form = sh.querySelector('form'), btn = form.querySelector('[type=submit]');
+    form.querySelector('[data-close]').onclick = closeSheet;
+    form.onsubmit = function (ev) {
+      ev.preventDefault();
+      if (btn.disabled) return;
+      var p = submit(form);
+      if (!p) return;
+      busy(btn, true);
+      p.then(function (msg) {
+        busy(btn, false);
+        closeSheet();
+        if (msg) toast(msg, 'good');
+      }, function (e) {
+        busy(btn, false);
+        if (e && e.message) toast(e.message, 'bad');
+      });
+    };
+  });
+}
+
+function fld(id, label, type, extra) {
+  return '<div class="fld"><label for="' + id + '">' + label + '</label><input id="' + id + '" type="' + (type || 'text') + '"' + (extra || '') + '></div>';
+}
+
+function sheetChangePw() {
+  formSheet('改密碼', '改完之後，其他裝置上的登入都會失效。',
+    fld('sOld', '目前的密碼', 'password', ' autocomplete="current-password"') +
+    fld('sNew', '新密碼', 'password', ' autocomplete="new-password" placeholder="至少 4 碼"') +
+    fld('sNew2', '再輸入一次新密碼', 'password', ' autocomplete="new-password"'),
+    '改密碼', '', function () {
+      var o = $('sOld').value, n = $('sNew').value, n2 = $('sNew2').value;
+      if (!o) { toast('要打目前的密碼', 'bad'); return null; }
+      if (n.length < 4) { toast('新密碼至少 4 碼', 'bad'); return null; }
+      if (n !== n2) { toast('兩次新密碼不一樣', 'bad'); return null; }
+      return call('authChangePassword', { oldPw: o, newPw: n })
+        .then(function () { return authUser.getIdToken(true); })
+        .then(function () { return '密碼已更新'; });
+    });
+}
+
+function sheetLogout() {
+  formSheet('登出', '下次進來要重新輸入編號和密碼。', '', '登出', 'danger', function () {
+    return call('authLogout').catch(function () {}).then(function () {
+      return auth.signOut();
+    }).then(function () {
+      endSession();
+      return '已登出';
+    });
+  });
+}
+
+function sheetCreate() {
+  formSheet('開帳號', '建好之後，本人輸入這個編號就會被要求設定密碼。',
+    fld('sPid', '編號', 'text', ' inputmode="numeric" maxlength="2" placeholder="兩位數字" autocomplete="off"') +
+    fld('sName', '名字', 'text', ' maxlength="12" autocomplete="off"'),
+    '開帳號', '', function () {
+      var pid = $('sPid').value.trim(), name = $('sName').value.trim();
+      if (!/^\d{2}$/.test(pid)) { toast('編號要是兩位數字', 'bad'); return null; }
+      if (!name) { toast('要填名字', 'bad'); return null; }
+      return call('adminCreatePlayer', { pid: pid, name: name }).then(function () {
+        return '已開好 #' + pid + ' ' + name;
+      });
+    });
+}
+
+function findRoster(pid) {
+  for (var i = 0; i < S.roster.length; i++) if (S.roster[i].pid === pid) return S.roster[i];
+  return null;
+}
+
+function sheetPlayer(pid) {
+  var p = findRoster(pid);
+  if (!p) return;
+  var self = pid === S.me.pid;
+  var h = '<div class="who" style="margin-bottom:18px">' + hexAvatar(p.name, 48) +
+    '<div><b>' + esc(p.name) + '</b><br><span>#' + esc(p.pid) + '　' +
+    (p.role === 'admin' ? '主辦' : p.claimed ? '已設密碼' : '等待本人設定密碼') + '</span></div></div>' +
+    '<div class="grp">' +
+      '<button class="row" data-p="rename"><span class="k">改名</span><span class="chev">›</span></button>' +
+      (self ? '' : '<button class="row red" data-p="reset"><span class="k">重設密碼<small>他的登入會失效，下次進來要重新設密碼</small></span></button>') +
+    '</div>' +
+    '<div class="acts" style="margin-top:14px"><button class="btn ghost" type="button" data-close>關閉</button></div>';
+  openSheet(h, function (sh) {
+    sh.querySelector('[data-close]').onclick = closeSheet;
+    sh.querySelector('[data-p=rename]').onclick = function () { sheetRename(p); };
+    var r = sh.querySelector('[data-p=reset]');
+    if (r) r.onclick = function () { sheetReset(p); };
+  });
+}
+
+function sheetRename(p) {
+  formSheet('改名', '#' + esc(p.pid) + ' 目前叫「' + esc(p.name) + '」。',
+    fld('sRename', '新名字', 'text', ' maxlength="12" autocomplete="off" value="' + esc(p.name) + '"'),
+    '改名', '', function () {
+      var name = $('sRename').value.trim();
+      if (!name) { toast('要填名字', 'bad'); return null; }
+      if (name === p.name) { closeSheet(); return null; }
+      return call('adminRenamePlayer', { pid: p.pid, name: name }).then(function () { return '已改名為 ' + name; });
+    });
+}
+
+function sheetReset(p) {
+  formSheet('重設 ' + esc(p.name) + ' 的密碼？', '他目前的登入會立刻失效，下次輸入 #' + esc(p.pid) + ' 時要重新設定密碼。', '',
+    '重設密碼', 'danger', function () {
+      return call('adminResetPassword', { pid: p.pid }).then(function () { return '已重設，請他重新設定密碼'; });
+    });
+}
+
+})();
+</script>
+</body>
+</html>

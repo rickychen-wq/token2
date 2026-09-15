@@ -1,0 +1,21 @@
+rules_version = '2';
+
+// 開發版規則：登入的人可以讀，前端完全不能寫（所有寫入都走 Cloud Functions）
+// 最終版會再把底牌等不能讀的地方細分出來
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+
+    match /config/{doc} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /players/{pid} {
+      allow read: if signedIn();
+      allow write: if false;
+      // players/{pid}/private/** 沒有任何 match，所以前端讀寫全擋（密碼雜湊放這裡）
+    }
+  }
+}
