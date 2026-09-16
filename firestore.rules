@@ -20,6 +20,22 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // 德州：牌桌公開；每個人只讀得到自己的底牌；整副牌（secret）完全不開放
+    match /games/poker/tables/{tid} {
+      allow read: if signedIn();
+      allow write: if false;
+
+      match /live/{doc} {
+        allow read: if signedIn();
+        allow write: if false;
+      }
+
+      match /holes/{pid} {
+        allow read: if signedIn() && request.auth.token.pid == pid;
+        allow write: if false;
+      }
+    }
+
     match /seasons/{sid} {
       allow read: if signedIn();
       allow write: if false;

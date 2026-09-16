@@ -13,12 +13,18 @@ setGlobalOptions({ region: 'asia-east1', maxInstances: 10, memory: '256MiB' });
 const { AppError } = require('./core/util');
 const { createAuth } = require('./core/auth');
 const { createEconomy } = require('./core/economy');
+const { createPoker } = require('./games/poker');
+const { createSeason } = require('./core/season');
+const { createShop } = require('./core/shop');
 
 const db = admin.firestore();
 const now = () => Date.now();
 
 const A = createAuth({ db, auth: admin.auth(), now });
 const EC = createEconomy({ db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin });
+const PK = createPoker({ db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin });
+const SH = createShop({ db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin });
+const SE = createSeason({ db, now, requireAdmin: A.requireAdmin, runInterest: EC.runInterest, closeTables: PK.closeSeason });
 
 /* 把自訂錯誤轉成前端讀得到的 HttpsError，其他錯誤不外洩細節 */
 function wrap(fn) {
@@ -58,6 +64,41 @@ exports.adminAdjust = wrap(EC.adminAdjust);
 exports.adminSetEcon = wrap(EC.adminSetEcon);
 exports.adminLedger = wrap(EC.adminLedger);
 exports.adminRunInterest = wrap(EC.adminRunInterest);
+
+/* ---------- 德州 ---------- */
+exports.pokerSit = wrap(PK.sit);
+exports.pokerRebuy = wrap(PK.rebuy);
+exports.pokerLeave = wrap(PK.leave);
+exports.pokerSitout = wrap(PK.sitout);
+exports.pokerAct = wrap(PK.act);
+exports.pokerTick = wrap(PK.tick);
+exports.adminPokerStart = wrap(PK.adminStart);
+exports.adminPokerAbort = wrap(PK.adminAbort);
+exports.adminPokerSettings = wrap(PK.adminSettings);
+exports.pokerEmote = wrap(PK.emote);
+exports.adminPokerKick = wrap(PK.adminKick);
+
+/* ---------- 商店 ---------- */
+exports.shopBuy = wrap(SH.buy);
+exports.shopEquip = wrap(SH.equip);
+exports.shopRename = wrap(SH.rename);
+exports.adminGrant = wrap(SH.adminGrant);
+
+/* ---------- 季 ---------- */
+exports.adminSettleSeason = wrap(SE.adminSettle);
+exports.adminLockSeason = wrap(SE.adminLock);
+exports.adminUnlockSeason = wrap(SE.adminUnlock);
+exports.adminSeasonConfig = wrap(SE.adminSeasonConfig);
+
+/* 週日 23:00 鎖定：不能開新的一手、不能帶入 */
+exports.seasonLock = onSchedule({ schedule: '0 23 * * 0', timeZone: 'Asia/Taipei', retryCount: 3 }, async () => {
+  logger.info('season lock', await SE.lock(Date.now()));
+});
+
+/* 週一 00:00 結算剛結束的那一季 */
+exports.seasonSettle = onSchedule({ schedule: '1 0 * * 1', timeZone: 'Asia/Taipei', retryCount: 5 }, async () => {
+  logger.info('season settle', await SE.settleEnded(Date.now()));
+});
 
 /* 每 3 小時計息：台灣時間 00、03、06…21 點 */
 exports.econInterest = onSchedule({ schedule: '0 */3 * * *', timeZone: 'Asia/Taipei', retryCount: 3 }, async () => {

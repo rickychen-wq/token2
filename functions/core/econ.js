@@ -13,14 +13,21 @@ const DEFAULTS = {
   interestMin: 0.001,    // 第一名每 3 小時利率
   interestMax: 0.006,    // 最後一名每 3 小時利率
   dailyAmount: 500,      // 每日獎勵
-  dailyHands: 3          // 當天要打幾手才能領
+  dailyHands: 3,         // 當天要打幾手才能領
+  rankMinHands: 20,      // 本季至少打幾手才計入排名和積分
+  starPer1: 100,         // 淨資產在門檻以內，每多少換 1 星幣
+  starTier: 10000,       // 門檻
+  starPer2: 500,         // 超過門檻的部分，每多少換 1 星幣
+  starCap: 300,          // 一季最多換幾顆
+  starMinHands: 20       // 本季至少打幾手才能換星幣
 };
 
 const LIMITS = {
   startingMoney: [0, 1000000], loanUnit: [1, 1000000], loanRepayAt: [1, 10000000],
   borrowBelow: [0, 1000000], bankKeep: [0, 1000000],
   interestMin: [0, 0.1], interestMax: [0, 0.1],
-  dailyAmount: [0, 1000000], dailyHands: [0, 100]
+  dailyAmount: [0, 1000000], dailyHands: [0, 100], rankMinHands: [0, 10000],
+  starPer1: [1, 1000000], starTier: [0, 100000000], starPer2: [1, 1000000], starCap: [0, 100000], starMinHands: [0, 10000]
 };
 
 const PERIOD = 3 * 3600 * 1000;
@@ -234,10 +241,18 @@ function applyInterest(acc, P, rate) {
   return interest;
 }
 
+/* 本季淨資產 → 星幣 */
+function starsFor(net, cfg) {
+  if (!(net > 0)) return 0;
+  const a = Math.min(net, cfg.starTier) / cfg.starPer1;
+  const b = Math.max(0, net - cfg.starTier) / cfg.starPer2;
+  return Math.min(cfg.starCap, Math.floor(a + b));
+}
+
 function fmt(n) { return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
 
 module.exports = {
   DEFAULTS, PERIOD, cfgOf, cleanEconPatch, cleanAmount, twDay, periodStart,
   newAccount, inPlayTotal, computeNet, refresh, rollDaily, recordHands, maxDeposit,
-  autoRepay, borrow, deposit, withdraw, claimDaily, adminAdjust, rankRates, applyInterest
+  autoRepay, borrow, deposit, withdraw, claimDaily, adminAdjust, rankRates, applyInterest, starsFor
 };

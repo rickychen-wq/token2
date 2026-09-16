@@ -142,6 +142,8 @@ function createEconomy({ db, now, requireSession, requireAdmin }) {
     return db.runTransaction(async (tx) => {
       const run = await tx.get(runRef);
       if (run.exists) return { period: P, sid, skipped: true, total: run.data().total, count: run.data().count };
+      const sSnap = await tx.get(seasonRef(sid));
+      if (sSnap.exists && sSnap.data().status === 'closed') return { period: P, sid, skipped: true, total: 0, count: 0 };
       const cfgSnap = await tx.get(cfgRef());
       const accSnap = await tx.get(seasonRef(sid).collection('accounts'));
       const plSnap = await tx.get(db.collection('players'));
