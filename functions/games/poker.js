@@ -6,7 +6,8 @@ const { AppError, seasonId } = require('../core/util');
 const E = require('../core/econ');
 const H = require('./holdem');
 const C = require('./cards');
-const { BASIC_EMOTES, byId } = require('../core/catalog');
+const { BASIC_EMOTES, merge } = require('../core/catalog');
+const byId = merge(null);
 
 const DEFAULT_SETTINGS = {
   seatCount: 9, sb: 25, bb: 50, buyInMax: 5000,
@@ -423,7 +424,33 @@ function createPoker({ db, now, requireSession, requireAdmin }) {
       });
     },
 
-    /* ---------- 主辦 ---------- */
+    /* 換座位卡：兩手之間跟桌上的人換位子；對方也有卡的話，自動用掉對方的卡擋下 */
+    async swapSeat(req) {
+      const s = await requireSession(req);
+      const target = String((req.data && req.data.pid) || '');
+      if (target === s.pid) throw new AppError('不能跟自己換', 'self');
+      return run(async (ctx) => {
+        const st = ctx.st, i = seatOf(st, s.pid), j = seatOf(st, target);
+        if (i < 0) throw new AppError('你要先入座', 'not-seated');
+        if (j < 0) throw new AppError('對方不在桌上', 'not-seated');
+        if (st.hand.phase !== 'idle') throw new AppError('只能在兩手之間換座位', 'in-hand');
+        const me = await ctx.player(s.pid), other = await ctx.player(target);
+        const mine = (me.items && me.items.card_seat) || 0;
+        if (mine <= 0) throw new AppError('你沒有換座位卡', 'no-card');
+        ctx.patchPlayer(s.pid, { items: Object.assign({}, me.items, { card_seat: mine - 1 }) });
+        const theirs = (other && other.items && other.items.card_seat) || 0;
+        if (theirs > 0) {
+          ctx.patchPlayer(target, { items: Object.assign({}, other.items, { card_seat: theirs - 1 }) });
+          st.log = (st.log || []).concat([{ t: ctx.t, text: st.seats[j].name + ' 用換座位卡擋下了 ' + st.seats[i].name }]).slice(-30);
+          return { blocked: true };
+        }
+        const tmp = st.seats[i]; st.seats[i] = st.seats[j]; st.seats[j] = tmp;
+        st.log = (st.log || []).concat([{ t: ctx.t, text: st.seats[j].name + ' 和 ' + st.seats[i].name + ' 換了座位' }]).slice(-30);
+        return { blocked: false };
+      });
+    },
+
+    /* ---------- 管理員 ---------- */
     async adminKick(req) {
       await requireAdmin(req);
       const pid = req.data && String(req.data.pid);

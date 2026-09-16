@@ -567,6 +567,122 @@ button.game:active{transform:scale(.99)}
 .seat-av{position:absolute;left:50%;top:-15px;transform:translateX(-50%);line-height:0}
 .seat .dealer{top:6px}
 
+/* ---------- v6：頭像、橫幅、卡背、商店、包包、信箱 ---------- */
+.pav{position:relative;flex:none;display:inline-flex;align-items:center;justify-content:center;overflow:hidden;vertical-align:middle;
+  background:linear-gradient(145deg,#1A3A5E,#081322);border:1.5px solid rgba(120,220,255,.55);box-shadow:0 4px 14px rgba(0,0,0,.45)}
+.pav img{width:100%;height:100%;object-fit:cover;display:block;user-select:none;-webkit-user-drag:none}
+.pav-ch{font-weight:700;color:#A8EEFF;text-shadow:0 0 12px rgba(63,199,255,.7);line-height:1}
+.pav.t1{border-color:rgba(168,238,255,.6)}
+.pav.t2{border:2px solid #FFD37A;box-shadow:0 0 16px rgba(255,211,122,.45),0 4px 14px rgba(0,0,0,.45)}
+.pav.t4{border:2px solid #FF6BD8;box-shadow:0 0 20px rgba(255,107,216,.5),0 4px 14px rgba(0,0,0,.45);animation:godGlow 2.4s ease-in-out infinite}
+@keyframes godGlow{50%{box-shadow:0 0 34px rgba(255,107,216,.8),0 4px 14px rgba(0,0,0,.45)}}
+.pav-crown,.pav svg{display:none}
+
+.banner{position:relative;width:100%;aspect-ratio:3/1;border-radius:10px 10px 0 0;background-size:cover;background-position:center;overflow:hidden}
+.banner.def{background:radial-gradient(40% 70% at 50% 50%,rgba(63,199,255,.22),transparent 70%),linear-gradient(160deg,#10223A,#060C18)}
+.banner::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,7,15,0) 55%,rgba(4,7,15,.55))}
+.banner-av{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:1;line-height:0}
+.idcard{padding:0}
+.idcard .id-row{padding:12px 18px 0;justify-content:center;text-align:center}
+.idcard .id-name{display:flex;flex-direction:column;align-items:center}
+.idcard .id-meta{justify-content:center}
+.idcard .id-stats{margin:14px 0 0}
+.id-no.vanity{color:var(--gold);text-shadow:0 0 12px rgba(255,211,122,.5)}
+.sheet.flush{padding-top:10px}
+.sheet.flush .banner{border-radius:10px}
+.prof-id{text-align:center;margin-top:8px}
+.prof-name{font-size:21px;font-weight:700}
+.prof-meta{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:4px}
+
+.backs{position:absolute;left:50%;top:-6px;transform:translate(-50%,-100%);display:flex;gap:2px;z-index:0;pointer-events:none}
+.cb{width:15px;height:22px;border-radius:2px;background-size:cover;background-position:center;border:1px solid rgba(255,255,255,.55);box-shadow:0 2px 6px rgba(0,0,0,.5)}
+.cb.b2{transform:rotate(10deg) translateX(-3px)}
+.cb.def{background:repeating-linear-gradient(45deg,#1B3A60 0 3px,#0B1B30 3px 6px);border-color:rgba(120,220,255,.55)}
+.seat .backs + .sc{}
+
+.chips{display:flex;gap:6px;overflow-x:auto;margin:14px 0 10px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chips button{flex:none;height:34px;padding:0 14px;border-radius:17px;font-size:13.5px;color:var(--dim);border:1px solid var(--edge-soft);background:rgba(3,8,18,.5)}
+.chips button.on{color:#04121C;font-weight:700;background:linear-gradient(135deg,var(--cy-hi),var(--cy));border-color:transparent}
+.chips.small{margin-top:-2px}
+.chips.small button{height:28px;font-size:12.5px;padding:0 12px}
+.shop-grid{grid-template-columns:repeat(3,1fr)}
+.shop-card{position:relative}
+.shop-card.span2{grid-column:span 3;flex-direction:row;justify-content:flex-start;gap:12px;padding:10px 12px;text-align:left}
+.shop-card.span2 .shop-prev{height:auto}
+.shop-card.span2 .shop-name{flex:1}
+.shop-card.off{opacity:.5}
+.shop-prev{height:74px}
+.shop-tag{position:absolute;top:6px;left:6px;z-index:1;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:700;color:#1A1204;background:var(--gold)}
+.thumb{overflow:hidden;border-radius:10px;background:#081322;flex:none}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb.sq{border:1px solid rgba(120,220,255,.35)}
+.thumb.wide{border-radius:6px;border:1px solid var(--edge)}
+.thumb.tall{border-radius:5px;border:1px solid rgba(255,255,255,.4)}
+.thumb.item{border-radius:12px;box-shadow:0 0 0 1px var(--rc,var(--edge)),0 0 18px color-mix(in srgb,var(--rc,#3FC7FF) 35%,transparent)}
+.def-bg{background:linear-gradient(160deg,#10223A,#060C18)}
+.info-card{border-radius:8px;padding:12px 14px;margin-bottom:12px;background:linear-gradient(160deg,var(--glass),var(--glass2));border:1px solid var(--edge)}
+.info-card b{font-size:14px}
+.info-card p{font-size:12.5px;color:var(--dim);margin:4px 0 8px;line-height:1.65}
+.odds{display:flex;flex-wrap:wrap;gap:6px}
+.odds span{font-size:12px;font-weight:700;padding:2px 8px;border-radius:10px;color:var(--rc);border:1px solid color-mix(in srgb,var(--rc) 50%,transparent);background:color-mix(in srgb,var(--rc) 10%,transparent)}
+.desc.center,h3.center{text-align:center}
+.dn{color:#FF8FA3}
+.up{color:var(--grn)}
+
+.bag-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.bag-item{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border-radius:8px;background:rgba(3,8,18,.5);border:1px solid color-mix(in srgb,var(--rc) 45%,transparent);min-width:0}
+.bag-item:active{transform:scale(.97)}
+.bag-n{position:absolute;top:4px;right:6px;font-family:var(--ui);font-weight:700;font-size:13px;color:var(--fg);text-shadow:0 1px 4px #000}
+.bag-name{font-size:11px;color:var(--dim);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.key-pick{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.key-pick button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:8px;background:rgba(3,8,18,.55);border:1px solid color-mix(in srgb,var(--rc) 55%,transparent)}
+.key-pick span{font-size:12.5px;font-weight:700}
+.key-pick small{font-size:10.5px;color:#FFD5A0}
+
+.closet-item.wide{width:104px}
+.open-fx{position:relative;height:300px;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:12px;
+  background:radial-gradient(circle at 50% 50%,color-mix(in srgb,var(--rc) 35%,transparent),transparent 65%),#050A14}
+.fx-ring{position:absolute;width:180px;height:180px;border-radius:50%;border:2px solid var(--rc);box-shadow:0 0 40px var(--rc);opacity:0;animation:fxRing 1.2s ease-out .55s forwards}
+.fx-rays{position:absolute;inset:-40%;background:repeating-conic-gradient(from 0deg,color-mix(in srgb,var(--rc) 30%,transparent) 0 8deg,transparent 8deg 24deg);opacity:0;animation:fxRays 6s linear .7s infinite}
+.fx-chest{position:absolute;animation:fxShake .6s ease-in-out,fxOut .35s ease-in .6s forwards}
+.fx-prize{position:relative;opacity:0;transform:scale(.5);animation:fxIn .5s cubic-bezier(.2,1.5,.4,1) .8s forwards;text-align:center}
+.prize-stars{font-family:var(--ui);font-weight:700;font-size:48px;color:var(--gold);text-shadow:0 0 30px rgba(255,211,122,.8)}
+@keyframes fxShake{0%,100%{transform:rotate(0)}20%{transform:rotate(-8deg) scale(1.05)}40%{transform:rotate(8deg) scale(1.08)}60%{transform:rotate(-6deg) scale(1.1)}80%{transform:rotate(5deg) scale(1.12)}}
+@keyframes fxOut{to{transform:scale(1.6);opacity:0;filter:brightness(3)}}
+@keyframes fxIn{to{opacity:1;transform:scale(1)}}
+@keyframes fxRing{0%{opacity:1;transform:scale(.3)}100%{opacity:0;transform:scale(1.8)}}
+@keyframes fxRays{0%{opacity:.9;transform:rotate(0)}100%{opacity:.9;transform:rotate(360deg)}}
+
+.top-r{display:flex;align-items:center;gap:10px}
+.bell{position:relative;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%;color:var(--cy-hi);border:1px solid var(--edge-soft);background:rgba(63,199,255,.06)}
+.bell svg{width:20px;height:20px}
+.badge{position:absolute;top:-4px;right:-4px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;font-family:var(--ui);font-weight:700;font-size:11px;line-height:17px;color:#fff;background:var(--red);box-shadow:0 0 10px rgba(255,92,121,.7)}
+.announce{position:sticky;top:61px;z-index:4;padding:0 12px;margin-top:8px}
+.announce-in{max-width:496px;margin:0 auto;display:flex;align-items:flex-start;gap:8px;padding:9px 10px 9px 12px;border-radius:8px;font-size:13.5px;line-height:1.6;
+  color:#FFE7B0;background:linear-gradient(135deg,rgba(255,211,122,.14),rgba(255,211,122,.05));border:1px solid rgba(255,211,122,.4);backdrop-filter:blur(8px)}
+.announce-in span:nth-child(2){flex:1;white-space:pre-wrap;word-break:break-word}
+.announce-in button{flex:none;width:24px;height:24px;border-radius:50%;color:#FFE7B0;opacity:.7}
+.mail-list{display:flex;flex-direction:column;gap:8px}
+.mail{border-radius:8px;padding:12px 14px;background:linear-gradient(160deg,var(--glass),var(--glass2));border:1px solid var(--edge)}
+.mail.got{opacity:.65}
+.mail-h{display:flex;justify-content:space-between;gap:10px}
+.mail-h b{font-size:15px}
+.mail-h span{flex:none;font-size:11.5px;color:var(--faint)}
+.mail p{font-size:13px;color:var(--dim);margin-top:4px;white-space:pre-wrap}
+.mail-rw{margin-top:8px;padding:6px 10px;border-radius:5px;font-size:13px;font-weight:700;color:var(--gold);background:rgba(255,211,122,.08);border:1px solid rgba(255,211,122,.25)}
+.mail-f{display:flex;align-items:center;gap:8px;margin-top:10px}
+.mail-f small{flex:1;font-size:11.5px;color:var(--faint)}
+.ta{width:100%;padding:10px 12px;border-radius:4px;font-size:15px;color:var(--fg);background:rgba(3,8,18,.72);border:1px solid var(--edge);resize:vertical;font-family:inherit}
+.ta.mono{font-family:ui-monospace,Menlo,monospace;font-size:12px}
+.fld-grid.three{grid-template-columns:repeat(3,1fr)}
+.adm-cat .row{gap:10px}
+.adm-cat .nm1{font-weight:500}
+.fld input[type=datetime-local]{color-scheme:dark}
+.fld-grid>*{min-width:0}
+.fld input,.fld .sel,.fld .ta{min-width:0;max-width:100%}
+.sheet{overflow-x:hidden}
+
 @media (max-width:360px){
   .gate .mark{font-size:34px}
   .cell{height:100px;font-size:64px}
@@ -622,15 +738,22 @@ button.game:active{transform:scale(.99)}
       </form></div>
     </div>
 
-    <p class="gate-foot">忘記密碼請找主辦重設</p>
+    <p class="gate-foot">忘記密碼請找管理員重設</p>
   </div>
 </main>
 
 <div id="app" class="app" hidden>
   <header class="top"><div class="top-in">
     <div class="mark"><span class="t">TOKEN</span><span class="v">2.0</span></div>
-    <div class="top-me"><span id="topName"></span><b id="topPid"></b></div>
+    <div class="top-r">
+      <button class="bell" id="mailBtn" aria-label="信箱">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="m4 7 8 6 8-6"/></svg>
+        <span class="badge" id="mailBadge" hidden></span>
+      </button>
+      <div class="top-me"><span id="topName"></span><b id="topPid"></b></div>
+    </div>
   </div></header>
+  <div class="announce" id="announce" hidden><div class="announce-in"><span class="ann-ic">📢</span><span id="annText"></span><button id="annClose" aria-label="關閉公告">✕</button></div></div>
 
   <div class="views">
     <section id="vHome" class="view"></section>
@@ -919,7 +1042,7 @@ function setMode(mode) {
   if (mode === 'login') { f.pw = true; f.show = true; f.btn = '登入'; }
   else if (mode === 'claim') { f.pw = f.pw2 = true; f.show = true; f.label = '設一組密碼'; f.btn = '設定密碼並進入'; f.ac = 'new-password'; }
   else if (mode === 'register') { f.name = f.pw = f.pw2 = true; f.show = true; f.label = '設一組密碼'; f.btn = '註冊'; f.ac = 'new-password'; }
-  else if (mode === 'bootstrap') { f.name = f.pw = f.pw2 = true; f.show = true; f.label = '設一組密碼'; f.btn = '建立主辦帳號'; f.ac = 'new-password'; }
+  else if (mode === 'bootstrap') { f.name = f.pw = f.pw2 = true; f.show = true; f.label = '設一組密碼'; f.btn = '建立管理員帳號'; f.ac = 'new-password'; }
   $('fName').hidden = !f.name;
   $('fPw').hidden = !f.pw;
   $('fPw2').hidden = !f.pw2;
@@ -955,16 +1078,16 @@ function onPid() {
       setStatus('<div class="who">' + playerAvatar(p, 40) + '<div><b>' + esc(p.name) + '</b><br><span>輸入密碼登入</span></div></div>');
     } else if (p) {
       setMode('claim');
-      setStatus('<div class="who">' + hexAvatar(p.name, 40) + '<div><b>' + esc(p.name) + '</b><br><span>主辦幫你開好帳號了，設一組密碼就能進入</span></div></div>');
+      setStatus('<div class="who">' + hexAvatar(p.name, 40) + '<div><b>' + esc(p.name) + '</b><br><span>管理員幫你開好帳號了，設一組密碼就能進入</span></div></div>');
     } else if (!cfg) {
       setMode('bootstrap');
-      setStatus('目前還沒有任何帳號，第一個註冊的人會成為主辦。');
+      setStatus('目前還沒有任何帳號，第一個註冊的人會成為管理員。');
     } else if (cfg.registrationOpen) {
       setMode('register');
       setStatus('這個編號還沒人用，填好就是你的。');
     } else {
       setMode('closed');
-      setStatus('這個編號還沒開通，請找主辦開帳號。', true);
+      setStatus('這個編號還沒開通，請找管理員開帳號。', true);
     }
   }).catch(function () {
     if (seq !== G.seq) return;
@@ -998,7 +1121,7 @@ $('gateForm').addEventListener('submit', function (ev) {
     $('gPw').value = ''; $('gPw2').value = ''; $('gName').value = '';
     busy(btn, false);
     enterApp(profile);
-    if (mode === 'bootstrap') toast('你是主辦了，到「我的」可以管理帳號', 'good');
+    if (mode === 'bootstrap') toast('你是管理員了，到「我的」可以管理帳號', 'good');
   }).catch(function (e) {
     busy(btn, false);
     toast(e.message, 'bad');
@@ -1014,7 +1137,7 @@ $('gateForm').addEventListener('submit', function (ev) {
 var ECON_DEF = {
   startingMoney: 5000, loanUnit: 2000, loanRepayAt: 3000, borrowBelow: 1000, bankKeep: 2000,
   interestMin: 0.001, interestMax: 0.006, dailyAmount: 500, dailyHands: 3, rankMinHands: 20,
-  starPer1: 100, starTier: 10000, starPer2: 500, starCap: 300, starMinHands: 20
+  starPer: 100, starCap: 0, starMinHands: 20
 };
 var PERIOD = 3 * 3600000;
 
@@ -1071,80 +1194,87 @@ function pct(rate) {
   return (v >= 1 ? v.toFixed(2) : v.toFixed(3)).replace(/0+$/, '').replace(/\.$/, '') + '%';
 }
 
-/* 商品目錄：跟伺服器 functions/core/catalog.js 同一份，改的時候兩邊要一起改 */
-var CATALOG = [{"id":"av_wolf","type":"avatar","name":"霜狼","price":120,"art":{"c1":"#8FE3FF","c2":"#1A4A7E","glyph":"狼"}},{"id":"av_flame","type":"avatar","name":"赤焰","price":120,"art":{"c1":"#FFB38A","c2":"#8A2330","glyph":"焰"}},{"id":"av_star","type":"avatar","name":"星塵","price":150,"art":{"c1":"#E3D1FF","c2":"#3F2A7A","glyph":"星"}},{"id":"av_shadow","type":"avatar","name":"暗影","price":150,"art":{"c1":"#9AA7B8","c2":"#12161F","glyph":"影"}},{"id":"av_mecha","type":"avatar","name":"機甲","price":200,"art":{"c1":"#B9FFD9","c2":"#135A45","glyph":"甲"}},{"id":"av_dragon","type":"avatar","name":"龍瞳","price":300,"art":{"c1":"#FFE7A3","c2":"#7A4A0C","glyph":"龍"}},{"id":"fr_cyan","type":"frame","name":"青光框","price":80,"art":{"color":"#3FC7FF"}},{"id":"fr_gold","type":"frame","name":"黃金框","price":200,"art":{"color":"#FFD37A"}},{"id":"fr_volt","type":"frame","name":"紫電框","price":250,"art":{"color":"#B983FF","anim":true}},{"id":"fr_champion","type":"frame","name":"冠軍框","price":null,"limited":true,"desc":"拿下正式季冠軍自動獲得","art":{"color":"#FFD37A","anim":true,"crown":true}},{"id":"fr_launch","type":"frame","name":"開服紀念框","price":null,"limited":true,"desc":"主辦發放的限定框","art":{"color":"#4BE38F","anim":true}},{"id":"bg_aurora","type":"bg","name":"極光","price":100,"art":{"g":"linear-gradient(160deg,#0B3B4A 0%,#136F63 45%,#3A2A6E 100%)"}},{"id":"bg_neon","type":"bg","name":"霓虹賭城","price":150,"art":{"g":"linear-gradient(150deg,#2A0A3A 0%,#7A1450 50%,#0E2A5A 100%)"}},{"id":"bg_nebula","type":"bg","name":"星雲","price":180,"art":{"g":"radial-gradient(circle at 30% 30%,#5B3FA8 0%,#1B1340 45%,#060814 100%)"}},{"id":"bg_hall","type":"bg","name":"冠軍殿堂","price":null,"limited":true,"desc":"主辦發放的限定背景","art":{"g":"linear-gradient(160deg,#3A2A08 0%,#8A6A1C 50%,#2A1C04 100%)"}},{"id":"em_taunt","type":"emote","name":"嘲諷包","price":120,"list":["就這？","謝謝老闆","你在怕","穩了"]},{"id":"em_drama","type":"emote","name":"戲劇包","price":120,"list":["我的天","心臟不好","這也能跟？","再來一把"]},{"id":"rename","type":"consumable","name":"改名卡","price":60,"desc":"使用後可以改一次名字"}];
+/* 商品目錄預設值：由伺服器 functions/core/catalog.js 產生。後台的修改會從 config/catalog 蓋上來 */
+var DEFAULT_ITEMS = [{"id":"av_f01","type":"avatar","sub":"female","tier":1,"name":"翠影書記","price":120,"onSale":true,"img":"assets/av/f01.webp"},{"id":"av_f02","type":"avatar","sub":"female","tier":1,"name":"夜藍蝶結","price":120,"onSale":true,"img":"assets/av/f02.webp"},{"id":"av_f03","type":"avatar","sub":"female","tier":1,"name":"碧潮少女","price":120,"onSale":true,"img":"assets/av/f03.webp"},{"id":"av_f04","type":"avatar","sub":"female","tier":1,"name":"緋月魔女","price":120,"onSale":true,"img":"assets/av/f04.webp"},{"id":"av_f05","type":"avatar","sub":"female","tier":1,"name":"銀羽紫瞳","price":120,"onSale":true,"img":"assets/av/f05.webp"},{"id":"av_f06","type":"avatar","sub":"female","tier":1,"name":"櫻粉惡魔","price":120,"onSale":true,"img":"assets/av/f06.webp"},{"id":"av_f07","type":"avatar","sub":"female","tier":1,"name":"赤焰千金","price":120,"onSale":true,"img":"assets/av/f07.webp"},{"id":"av_f08","type":"avatar","sub":"female","tier":1,"name":"紫夜吟遊","price":120,"onSale":true,"img":"assets/av/f08.webp"},{"id":"av_f09","type":"avatar","sub":"female","tier":1,"name":"金輝學姊","price":120,"onSale":true,"img":"assets/av/f09.webp"},{"id":"av_f10","type":"avatar","sub":"female","tier":1,"name":"月光白雪","price":120,"onSale":true,"img":"assets/av/f10.webp"},{"id":"av_m01","type":"avatar","sub":"male","tier":1,"name":"白髮緋瞳","price":120,"onSale":true,"img":"assets/av/m01.webp"},{"id":"av_m02","type":"avatar","sub":"male","tier":1,"name":"赤髮狂狼","price":120,"onSale":true,"img":"assets/av/m02.webp"},{"id":"av_m03","type":"avatar","sub":"male","tier":1,"name":"藍夜寡言","price":120,"onSale":true,"img":"assets/av/m03.webp"},{"id":"av_m04","type":"avatar","sub":"male","tier":1,"name":"翡翠騎士","price":120,"onSale":true,"img":"assets/av/m04.webp"},{"id":"av_m05","type":"avatar","sub":"male","tier":1,"name":"紫魅學長","price":120,"onSale":true,"img":"assets/av/m05.webp"},{"id":"av_m06","type":"avatar","sub":"male","tier":1,"name":"金獅貴公子","price":120,"onSale":true,"img":"assets/av/m06.webp"},{"id":"av_m07","type":"avatar","sub":"male","tier":1,"name":"銀月劍士","price":120,"onSale":true,"img":"assets/av/m07.webp"},{"id":"av_m08","type":"avatar","sub":"male","tier":1,"name":"雙色惡魔","price":120,"onSale":true,"img":"assets/av/m08.webp"},{"id":"av_m09","type":"avatar","sub":"male","tier":1,"name":"黑夜低語","price":120,"onSale":true,"img":"assets/av/m09.webp"},{"id":"av_m10","type":"avatar","sub":"male","tier":1,"name":"碧影刺客","price":120,"onSale":true,"img":"assets/av/m10.webp"},{"id":"av_e01","type":"avatar","sub":"meme","tier":1,"name":"就很爽","price":10,"onSale":true,"img":"assets/av/e01.webp"},{"id":"av_e02","type":"avatar","sub":"meme","tier":1,"name":"嫌棄臉","price":10,"onSale":true,"img":"assets/av/e02.webp"},{"id":"av_e03","type":"avatar","sub":"meme","tier":1,"name":"你很棒","price":10,"onSale":true,"img":"assets/av/e03.webp"},{"id":"av_e04","type":"avatar","sub":"meme","tier":1,"name":"墨鏡大佬","price":10,"onSale":true,"img":"assets/av/e04.webp"},{"id":"av_e05","type":"avatar","sub":"meme","tier":1,"name":"側眼瞄","price":10,"onSale":true,"img":"assets/av/e05.webp"},{"id":"av_e06","type":"avatar","sub":"meme","tier":1,"name":"仰望天空","price":10,"onSale":true,"img":"assets/av/e06.webp"},{"id":"av_e07","type":"avatar","sub":"meme","tier":1,"name":"已躺平","price":10,"onSale":true,"img":"assets/av/e07.webp"},{"id":"av_e08","type":"avatar","sub":"meme","tier":1,"name":"金鍊奶茶哥","price":10,"onSale":true,"img":"assets/av/e08.webp"},{"id":"av_e09","type":"avatar","sub":"meme","tier":1,"name":"奶茶大","price":10,"onSale":true,"img":"assets/av/e09.webp"},{"id":"av_e10","type":"avatar","sub":"meme","tier":1,"name":"人生就是爽","price":10,"onSale":true,"img":"assets/av/e10.webp"},{"id":"av_u01","type":"avatar","sub":"ur","tier":2,"name":"深淵藍焰守護者","price":500,"onSale":false,"img":"assets/av/u01.webp"},{"id":"av_u02","type":"avatar","sub":"ur","tier":2,"name":"銀翼機甲王牌","price":500,"onSale":false,"img":"assets/av/u02.webp"},{"id":"av_u03","type":"avatar","sub":"ur","tier":2,"name":"太陽女帝","price":500,"onSale":false,"img":"assets/av/u03.webp"},{"id":"av_u04","type":"avatar","sub":"ur","tier":2,"name":"月下紫晶女王","price":500,"onSale":false,"img":"assets/av/u04.webp"},{"id":"av_u05","type":"avatar","sub":"ur","tier":2,"name":"赤焰鬼角","price":500,"onSale":false,"img":"assets/av/u05.webp"},{"id":"av_x01","type":"avatar","sub":"god","tier":4,"name":"終焉神域","price":null,"onSale":false,"img":"assets/av/x01.webp"},{"id":"bg_01","type":"bg","tier":1,"name":"極光冰城","price":450,"onSale":true,"img":"assets/bg/g01.webp"},{"id":"bg_02","type":"bg","tier":1,"name":"聖環殘殿","price":450,"onSale":true,"img":"assets/bg/g02.webp"},{"id":"bg_03","type":"bg","tier":1,"name":"鎏金天庭","price":450,"onSale":true,"img":"assets/bg/g03.webp"},{"id":"bg_04","type":"bg","tier":1,"name":"月下神社","price":450,"onSale":true,"img":"assets/bg/g04.webp"},{"id":"bg_05","type":"bg","tier":1,"name":"深淵聖殿","price":450,"onSale":true,"img":"assets/bg/g05.webp"},{"id":"bg_06","type":"bg","tier":1,"name":"星環遺跡","price":450,"onSale":true,"img":"assets/bg/g06.webp"},{"id":"bg_07","type":"bg","tier":1,"name":"黑洞幻境","price":450,"onSale":true,"img":"assets/bg/g07.webp"},{"id":"bg_08","type":"bg","tier":1,"name":"紫晶王國","price":450,"onSale":true,"img":"assets/bg/g08.webp"},{"id":"bg_09","type":"bg","tier":1,"name":"血月魔環","price":450,"onSale":true,"img":"assets/bg/g09.webp"},{"id":"bg_10","type":"bg","tier":1,"name":"機甲遺城","price":450,"onSale":true,"img":"assets/bg/g10.webp"},{"id":"bk_01","type":"back","tier":3,"name":"白羽神性","price":null,"onSale":false,"img":"assets/back/b01.webp"},{"id":"bk_02","type":"back","tier":3,"name":"赤月終焉","price":null,"onSale":false,"img":"assets/back/b02.webp"},{"id":"bk_03","type":"back","tier":3,"name":"深海幻夢","price":null,"onSale":false,"img":"assets/back/b03.webp"},{"id":"bk_04","type":"back","tier":3,"name":"神之救贖","price":null,"onSale":false,"img":"assets/back/b04.webp"},{"id":"bk_05","type":"back","tier":3,"name":"狂亂終局","price":null,"onSale":false,"img":"assets/back/b05.webp"},{"id":"bk_06","type":"back","tier":3,"name":"虛無無限","price":null,"onSale":false,"img":"assets/back/b06.webp"},{"id":"em_taunt","type":"emote","name":"嘲諷包","price":30,"onSale":true,"list":["就這？","謝謝老闆","你在怕","穩了"]},{"id":"em_drama","type":"emote","name":"戲劇包","price":30,"onSale":true,"list":["我的天","心臟不好","這也能跟？","再來一把"]},{"id":"card_rename","type":"card","sub":"rename","name":"星輝改名卡","price":30,"onSale":true,"img":"assets/item/c01.webp","desc":"改一次名字"},{"id":"card_seat","type":"card","sub":"seat","name":"星界換座位卡","price":10,"onSale":true,"img":"assets/item/c02.webp","desc":"兩手之間跟桌上任何人換位子，對方有卡的話會被擋下"},{"id":"card_vanity","type":"card","sub":"vanity","name":"全新身份卡","price":100,"onSale":true,"img":"assets/item/c05.webp","desc":"設定 1 到 7 位數的靚號，顯示在牌桌、排行榜和個人頁"},{"id":"card_wild","type":"card","sub":"wild","name":"萬象隨心","price":null,"onSale":false,"img":"assets/item/c04.webp","desc":"功能尚未開放"},{"id":"key_1","type":"key","rarity":1,"name":"稀有鑰匙・冰霜星輝","price":5,"onSale":true,"img":"assets/item/k01.webp"},{"id":"chest_1","type":"chest","rarity":1,"name":"稀有寶箱・秘境藍晶","price":null,"onSale":false,"img":"assets/item/ch01.webp","rewards":[{"kind":"stars","min":20,"max":40,"weight":1}]},{"id":"key_2","type":"key","rarity":2,"name":"極稀有鑰匙・月影紫晶","price":10,"onSale":true,"img":"assets/item/k02.webp"},{"id":"chest_2","type":"chest","rarity":2,"name":"極稀有寶箱・月影紫晶","price":null,"onSale":false,"img":"assets/item/ch02.webp","rewards":[{"kind":"stars","min":40,"max":80,"weight":1}]},{"id":"key_3","type":"key","rarity":3,"name":"史詩鑰匙・血月煉獄","price":20,"onSale":true,"img":"assets/item/k03.webp"},{"id":"chest_3","type":"chest","rarity":3,"name":"史詩寶箱・血月惡魔","price":null,"onSale":false,"img":"assets/item/ch03.webp","rewards":[{"kind":"stars","min":80,"max":150,"weight":1}]},{"id":"key_4","type":"key","rarity":4,"name":"傳奇鑰匙・星穹王座","price":35,"onSale":true,"img":"assets/item/k07.webp"},{"id":"chest_4","type":"chest","rarity":4,"name":"傳奇寶箱・霜晶王座","price":null,"onSale":false,"img":"assets/item/ch05.webp","rewards":[{"kind":"stars","min":150,"max":250,"weight":1}]},{"id":"key_5","type":"key","rarity":5,"name":"神話鑰匙・天界神聖","price":50,"onSale":true,"img":"assets/item/k04.webp"},{"id":"chest_5","type":"chest","rarity":5,"name":"神話寶箱・天界璀璨","price":null,"onSale":false,"img":"assets/item/ch04.webp","rewards":[{"kind":"stars","min":250,"max":400,"weight":1}]},{"id":"key_6","type":"key","rarity":6,"name":"神秘鑰匙・宇宙星辰","price":null,"onSale":false,"img":"assets/item/k06.webp"},{"id":"chest_6","type":"chest","rarity":6,"name":"神秘寶箱・星界深淵","price":null,"onSale":false,"img":"assets/item/ch06.webp","rewards":[{"kind":"stars","min":400,"max":700,"weight":1}]},{"id":"key_7","type":"key","rarity":7,"name":"管理員鑰匙・熔火龍王","price":null,"onSale":false,"img":"assets/item/k05.webp"},{"id":"chest_7","type":"chest","rarity":7,"name":"管理員寶箱・熔岩龍焰","price":null,"onSale":false,"img":"assets/item/ch07.webp","rewards":[{"kind":"stars","min":700,"max":1000,"weight":1}]}];
 var BASIC_EMOTES = ["👍","😂","😮","😡","🤡","🔥","🙏","😭"];
-var ITEM = {};
-CATALOG.forEach(function (x) { ITEM[x.id] = x; });
+var EDITABLE = ["name","price","onSale","tier","desc","stock","perUser","startAt","endAt","salvage","rewards","sub"];
+var RARITY = ["","稀有","極稀有","史詩","傳奇","神話","神秘","管理員"];
+var ITEM = {}, CATALOG = [], SOLD = {};
+function rebuildItems(doc) {
+  var o = (doc && doc.items) || {};
+  SOLD = (doc && doc.sold) || {};
+  ITEM = {}; CATALOG = [];
+  DEFAULT_ITEMS.forEach(function (d) {
+    var x = Object.assign({}, d);
+    if (o[d.id]) EDITABLE.forEach(function (k) { if (o[d.id][k] !== undefined) x[k] = o[d.id][k]; });
+    ITEM[x.id] = x; CATALOG.push(x);
+  });
+}
+rebuildItems(null);
+
+var STACK = { card: 1, key: 1, chest: 1 };
+var TYPE_TXT = { avatar: '頭像', bg: '背景', back: '卡背', emote: '表情包', card: '道具', key: '鑰匙', chest: '寶箱' };
+var SUB_TXT = { male: '男主', female: '女主', meme: '迷因', ur: 'UR', god: '神域' };
+var TIER_TXT = { 1: '一階', 2: '二階', 3: '三階', 4: '四階' };
+var RARITY_COLOR = ['', '#58B8FF', '#B26BFF', '#FF4D6D', '#8FE8FF', '#FFD37A', '#9D7BFF', '#FF8A3D'];
+
+function eqOf(p) { return Object.assign({ avatar: null, frame: null, bg: null, back: null }, (p && p.equipped) || {}); }
+function idOf(p) { return p ? (p.vanity || p.pid) : ''; }
+function isTextEmote(t) { return !/\p{Extended_Pictographic}/u.test(t); }
 
 /* =====================================================================
-   外觀：頭像三層（背景板、頭像、頭像框）
-   頭像用同一個六角形遮罩，框也畫在同一組座標上，大小怎麼縮都不會歪
+   外觀：頭像（圓角方形）、名片橫幅、卡背
    ===================================================================== */
-var HEX_PTS = '50,3 91,26.5 91,73.5 50,97 9,73.5 9,26.5';
-var _avId = 0;
-
-function eqOf(p) { return Object.assign({ avatar: null, frame: null, bg: null }, (p && p.equipped) || {}); }
-function frameColor(p) {
-  var f = ITEM[eqOf(p).frame];
-  return f ? f.art.color : null;
-}
-function bgStyle(p) {
-  var b = ITEM[eqOf(p).bg];
-  return b ? (b.img ? 'url(' + b.img + ') center/cover' : b.art.g) : '';
-}
-
-/* p：玩家資料（至少要有 name，equipped 可有可無）；opts.item：直接預覽某個商品 */
 function playerAvatar(p, size, opts) {
   opts = opts || {};
   var eq = eqOf(p);
   if (opts.avatar !== undefined) eq.avatar = opts.avatar;
-  if (opts.frame !== undefined) eq.frame = opts.frame;
-  var av = ITEM[eq.avatar], fr = ITEM[eq.frame];
-  var gid = 'ag' + (++_avId);
-  var name = (p && p.name) || '?';
-  var glyph = av ? av.art.glyph : (Array.from(String(name))[0] || '?');
-  var c1 = av ? av.art.c1 : '#1A3A5E', c2 = av ? av.art.c2 : '#081322';
-  var color = fr ? fr.art.color : 'rgba(120,220,255,.75)';
-  var sw = fr ? 5 : 2.4;
-  var core = av && av.img
-    ? '<image href="' + esc(av.img) + '" x="9" y="3" width="82" height="94" preserveAspectRatio="xMidYMid slice" clip-path="url(#' + gid + 'c)"/>'
-    : '<polygon points="' + HEX_PTS + '" fill="url(#' + gid + ')"/>' +
-      '<text x="50" y="52" text-anchor="middle" dominant-baseline="central" font-size="40" font-weight="700" fill="' + (av ? '#fff' : '#A8EEFF') + '" style="font-family:\'Noto Sans TC\',sans-serif">' + esc(glyph) + '</text>';
-  return '<div class="pav' + (fr && fr.art.anim ? ' anim' : '') + '" style="width:' + size + 'px;height:' + size + 'px;--fc:' + color + '">' +
-    '<svg viewBox="0 0 100 100" aria-hidden="true">' +
-      '<defs><linearGradient id="' + gid + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="' + c1 + '"/><stop offset="1" stop-color="' + c2 + '"/></linearGradient>' +
-      '<clipPath id="' + gid + 'c"><polygon points="' + HEX_PTS + '"/></clipPath></defs>' +
-      core +
-      (fr ? '' : '<polygon points="50,12 83,31 83,69 50,88 17,69 17,31" fill="none" stroke="rgba(88,190,255,.2)" stroke-width="1.2"/>') +
-      '<polygon class="pav-frame" points="' + HEX_PTS + '" fill="none" stroke="' + color + '" stroke-width="' + sw + '" stroke-linejoin="round"/>' +
-    '</svg>' +
-    (fr && fr.art.crown ? '<span class="pav-crown">♛</span>' : '') +
-  '</div>';
+  var av = ITEM[eq.avatar];
+  var r = Math.max(6, Math.round(size * 0.22));
+  var inner = av && av.img
+    ? '<img src="' + esc(av.img) + '" alt="" loading="lazy" draggable="false">'
+    : '<span class="pav-ch" style="font-size:' + Math.round(size * 0.42) + 'px">' + esc(Array.from(String((p && p.name) || '?'))[0] || '?') + '</span>';
+  var tierCls = av ? ' t' + (av.tier || 1) : '';
+  return '<div class="pav' + tierCls + (av ? '' : ' def') + '" style="width:' + size + 'px;height:' + size + 'px;border-radius:' + r + 'px">' + inner + '</div>';
 }
 
-/* 商品縮圖 */
-function itemPreview(item, size) {
-  if (item.type === 'avatar') return playerAvatar({ name: S.me.name }, size, { avatar: item.id, frame: null });
-  if (item.type === 'frame') return playerAvatar({ name: S.me.name, equipped: { avatar: eqOf(S.player).avatar } }, size, { frame: item.id });
-  if (item.type === 'bg') return '<div class="bg-swatch" style="width:' + size + 'px;height:' + size + 'px;background:' + (item.img ? 'url(' + item.img + ') center/cover' : item.art.g) + '"></div>';
-  if (item.type === 'emote') return '<div class="em-swatch" style="width:' + size + 'px;height:' + size + 'px">' + esc(item.list[0]) + '</div>';
-  return '<div class="em-swatch card" style="width:' + size + 'px;height:' + size + 'px">✎</div>';
+function bannerStyle(p) {
+  var b = ITEM[eqOf(p).bg];
+  return b && b.img ? 'background-image:url(' + b.img + ')' : '';
+}
+
+function cardBackHTML(p, cls) {
+  var b = ITEM[eqOf(p).back];
+  return '<div class="cb' + (cls ? ' ' + cls : '') + (b ? '' : ' def') + '"' + (b ? ' style="background-image:url(' + b.img + ')"' : '') + '></div>';
+}
+
+function itemThumb(it, size) {
+  if (it.type === 'avatar') return '<div class="thumb sq" style="width:' + size + 'px;height:' + size + 'px"><img src="' + it.img + '" alt="" loading="lazy"></div>';
+  if (it.type === 'bg') return '<div class="thumb wide" style="width:' + Math.round(size * 1.5) + 'px;height:' + Math.round(size / 2) + 'px"><img src="' + it.img + '" alt="" loading="lazy"></div>';
+  if (it.type === 'back') return '<div class="thumb tall" style="width:' + Math.round(size * 0.5) + 'px;height:' + Math.round(size * 1.2) + 'px"><img src="' + it.img + '" alt="" loading="lazy"></div>';
+  if (it.type === 'emote') return '<div class="em-swatch" style="width:' + size + 'px;height:' + size + 'px">' + esc(it.list[0]) + '</div>';
+  return '<div class="thumb item" style="width:' + size + 'px;height:' + size + 'px' + (it.rarity ? ';--rc:' + RARITY_COLOR[it.rarity] : '') + '"><img src="' + it.img + '" alt="" loading="lazy"></div>';
 }
 
 function ownedList(p, type) {
   var u = (p && p.unlocked) || {};
-  var key = { avatar: 'avatars', frame: 'frames', bg: 'bgs', emote: 'emotes' }[type];
+  var key = { avatar: 'avatars', frame: 'frames', bg: 'bgs', back: 'backs', emote: 'emotes' }[type];
   return Array.isArray(u[key]) ? u[key] : [];
 }
-function owns(p, item) {
-  if (item.type === 'consumable') return false;
-  return ownedList(p, item.type).indexOf(item.id) >= 0;
-}
+function owns(p, it) { return !STACK[it.type] && ownedList(p, it.type).indexOf(it.id) >= 0; }
+function countOf(p, id) { return ((p && p.items) || {})[id] || 0; }
 function myEmotes() {
   var out = BASIC_EMOTES.slice();
   ownedList(S.player, 'emote').forEach(function (id) { if (ITEM[id]) out = out.concat(ITEM[id].list); });
   return out;
+}
+function saleState(it) {
+  var t = serverNow();
+  if (!it.onSale || it.price == null) return 'off';
+  if (it.startAt && t < it.startAt) return 'soon';
+  if (it.endAt && t > it.endAt) return 'ended';
+  if (it.stock != null && (SOLD[it.id] || 0) >= it.stock) return 'soldout';
+  return 'on';
 }
 
 /* =====================================================================
@@ -1152,134 +1282,195 @@ function myEmotes() {
    ===================================================================== */
 function pctOf(a, b) { return b > 0 ? Math.round(a / b * 100) + '%' : '—'; }
 function signed(n) { return (n > 0 ? '+' : '') + fmt(n); }
+function stat(label, value, cls) {
+  return '<div class="st-cell"><span>' + label + '</span><b' + (cls ? ' class="' + cls + '"' : '') + '>' + value + '</b></div>';
+}
+
+function bannerHTML(p, avSize, extra) {
+  return '<div class="banner' + (bannerStyle(p) ? '' : ' def') + '" style="' + bannerStyle(p) + '">' +
+    '<div class="banner-av">' + playerAvatar(p, avSize) + '</div></div>' + (extra || '');
+}
 
 function sheetProfile(pid) {
   var p = S.players[pid];
   if (!p) return;
   var st = p.stats || {}, g = (p.games && p.games.poker) || {}, ac = accOf(pid), c = econ();
-  var bg = bgStyle(p);
   var board = rankRows(S.accounts.map(function (x) { return { pid: x.pid, net: x.net, hands: x.handsPlayed || 0 }; }),
     function (x) { return x.net; }, function (x) { return x.hands >= c.rankMinHands; });
   var mine = board.filter(function (x) { return x.pid === pid; })[0];
-  var fr = ITEM[eqOf(p).frame];
+  var av = ITEM[eqOf(p).avatar];
 
-  var h = '<div class="prof"' + (bg ? ' style="background:' + bg + '"' : '') + '>' +
-    '<div class="prof-shade"></div>' +
-    '<div class="prof-in">' + playerAvatar(p, 92) +
-      '<div class="prof-name">' + esc(p.name) + '</div>' +
-      '<div class="prof-meta"><span class="id-no">#' + esc(p.pid) + '</span>' +
-        (p.role === 'admin' ? '<span class="tag gold">主辦</span>' : '') +
-        (fr ? '<span class="tag cy">' + esc(fr.name) + '</span>' : '') + '</div>' +
-    '</div></div>';
+  var h = bannerHTML(p, 88) +
+    '<div class="prof-id"><div class="prof-name">' + esc(p.name) + '</div>' +
+    '<div class="prof-meta"><span class="id-no' + (p.vanity ? ' vanity' : '') + '">#' + esc(idOf(p)) + '</span>' +
+    (p.role === 'admin' ? '<span class="tag gold">管理員</span>' : '') +
+    (av ? '<span class="tag cy">' + (TIER_TXT[av.tier] || '') + '・' + esc(av.name) + '</span>' : '') + '</div></div>';
 
   h += '<div class="stat-h">本季</div><div class="stat-grid">' +
     stat('資產', ac ? fmt(ac.net) : '—', 'gold') +
     stat('名次', mine && mine._rank ? '第 ' + mine._rank + ' 名' : '未上榜') +
-    stat('手數', ac ? fmt(ac.handsPlayed || 0) : '0') +
-  '</div>';
-
+    stat('手數', ac ? fmt(ac.handsPlayed || 0) : '0') + '</div>';
   h += '<div class="stat-h">生涯</div><div class="stat-grid">' +
-    stat('歷史積分', fmt(st.points), 'gold') +
-    stat('冠軍', fmt(st.champions)) +
-    stat('前三', fmt(st.top3)) +
-    stat('最佳名次', st.bestRank ? '第 ' + st.bestRank + ' 名' : '—') +
-    stat('歷史最高', fmt(st.peakNet)) +
-    stat('最佳結算', st.bestSeasonId ? fmt(st.bestSeasonNet) : '—') +
-  '</div>';
-
+    stat('歷史積分', fmt(st.points), 'gold') + stat('冠軍', fmt(st.champions)) + stat('前三', fmt(st.top3)) +
+    stat('最佳名次', st.bestRank ? '第 ' + st.bestRank + ' 名' : '—') + stat('歷史最高', fmt(st.peakNet)) +
+    stat('最佳結算', st.bestSeasonId ? fmt(st.bestSeasonNet) : '—') + '</div>';
   h += '<div class="stat-h">德州</div><div class="stat-grid">' +
-    stat('總手數', fmt(g.hands)) +
-    stat('贏的手數', fmt(g.wins)) +
-    stat('攤牌勝率', pctOf(g.showdownWins || 0, g.showdowns || 0)) +
-    stat('全下勝率', pctOf(g.allInWins || 0, g.allIns || 0)) +
-    stat('最大底池', fmt(g.biggestPot)) +
-    stat('生涯淨贏', g.hands ? signed(g.net || 0) : '—', (g.net || 0) >= 0 ? 'up' : 'dn') +
-  '</div>';
+    stat('總手數', fmt(g.hands)) + stat('贏的手數', fmt(g.wins)) +
+    stat('攤牌勝率', pctOf(g.showdownWins || 0, g.showdowns || 0)) + stat('全下勝率', pctOf(g.allInWins || 0, g.allIns || 0)) +
+    stat('最大底池', fmt(g.biggestPot)) + stat('生涯淨贏', g.hands ? signed(g.net || 0) : '—', (g.net || 0) >= 0 ? 'up' : 'dn') + '</div>';
 
   var hist = Array.isArray(p.history) ? p.history : [];
   if (hist.length) {
     h += '<div class="stat-h">最近幾季</div><div class="grp rk-list">' + hist.slice(0, 6).map(function (x) {
       return '<div class="row"><span class="k">第 ' + parseInt(x.sid.split('-W')[1], 10) + ' 週' +
-        (x.practice ? '<small>練習季</small>' : x.stars ? '<small>+' + x.stars + ' 星幣</small>' : '') + '</span>' +
+        '<small>' + (x.practice ? '練習季' : [x.stars ? '+' + x.stars + ' 星幣' : '', x.chests && x.chests.length ? x.chests.length + ' 個寶箱' : ''].filter(Boolean).join('　')) + '</small></span>' +
         '<span class="rk-val"><b>' + (x.rank ? '第 ' + x.rank + ' 名' : '未上榜') + '</b><small>' + fmt(x.net) + '</small></span></div>';
     }).join('') + '</div>';
   }
-
   h += '<div class="acts" style="margin-top:16px">' +
     (S.me.role === 'admin' ? '<button class="btn ghost" type="button" data-manage>管理</button>' : '') +
     '<button class="btn ghost" type="button" data-close>關閉</button></div>';
-
   openSheet(h, function (sh) {
-    sh.classList.add('wide');
+    sh.classList.add('flush');
     sh.querySelector('[data-close]').onclick = closeSheet;
     var m = sh.querySelector('[data-manage]');
     if (m) m.onclick = function () { sheetPlayer(pid); };
   });
 }
 
-function stat(label, value, cls) {
-  return '<div class="st-cell"><span>' + label + '</span><b' + (cls ? ' class="' + cls + '"' : '') + '>' + value + '</b></div>';
+/* 點牌桌上的人：有換座位卡時先問要做什麼 */
+function seatTap(pid) {
+  var st = PK.st, me = mySeat();
+  var can = pid !== S.me.pid && me >= 0 && st && st.hand.phase === 'idle' && countOf(S.player, 'card_seat') > 0;
+  if (!can) return sheetProfile(pid);
+  var p = S.players[pid] || { name: pid };
+  openSheet('<div class="who" style="margin-bottom:16px">' + playerAvatar(p, 48) + '<div><b>' + esc(p.name) + '</b><br><span>#' + esc(idOf(p)) + '</span></div></div>' +
+    '<div class="grp">' +
+      '<button class="row" data-s="prof"><span class="k">查看生涯檔案</span><span class="chev">›</span></button>' +
+      '<button class="row" data-s="swap"><span class="k">使用換座位卡<small>持有 ' + countOf(S.player, 'card_seat') + ' 張；對方也有卡的話會被擋下，你的卡一樣會用掉</small></span><span class="chev">›</span></button>' +
+    '</div><div class="acts" style="margin-top:14px"><button class="btn ghost" type="button" data-close>取消</button></div>',
+    function (sh) {
+      sh.querySelector('[data-close]').onclick = closeSheet;
+      sh.querySelector('[data-s=prof]').onclick = function () { sheetProfile(pid); };
+      sh.querySelector('[data-s=swap]').onclick = function () {
+        closeSheet();
+        pcall('pokerSwapSeat', { pid: pid }).then(function (r) {
+          toast(r.blocked ? p.name + ' 用換座位卡擋下了' : '已經跟 ' + p.name + ' 換位子', r.blocked ? 'bad' : 'good');
+        }).catch(function (e) { toast(e.message, 'bad'); });
+      };
+    });
 }
 
 /* =====================================================================
-   商店與衣櫃
+   商店、包包、衣櫃
    ===================================================================== */
-var TYPE_TXT = { avatar: '頭像', frame: '頭像框', bg: '背景板', emote: '表情包', consumable: '道具' };
-
 function starsChip() {
   return '<div class="stars-card"><div><span class="lbl">星幣</span><div class="stars-val">★ ' + fmt((S.player && S.player.stars) || 0) + '</div></div>' +
-    '<p>每週結算時，本季資產會換成星幣。</p></div>';
+    '<p>每週結算時，本季資產每 ' + fmt(econ().starPer) + ' 換 1 星幣。</p></div>';
+}
+
+var SHOP = { cat: 'avatar', sub: 'all' };
+
+function shopCard(it) {
+  var p = S.player || {}, state = saleState(it), have = owns(p, it), n = countOf(p, it.id);
+  var price = state === 'soldout' ? '已售完' : state === 'ended' ? '已下架' : state === 'soon' ? '即將開賣' : '★ ' + fmt(it.price);
+  var tags = [];
+  if (it.stock != null && state === 'on') tags.push('剩 ' + (it.stock - (SOLD[it.id] || 0)));
+  if (it.endAt && state === 'on') tags.push('限時');
+  return '<button class="shop-card' + (have ? ' owned' : '') + (state !== 'on' ? ' off' : '') + (it.type === 'bg' ? ' span2' : '') + '" data-buy="' + it.id + '">' +
+    (tags.length ? '<span class="shop-tag">' + tags.join('・') + '</span>' : '') +
+    '<div class="shop-prev">' + itemThumb(it, it.type === 'bg' ? 110 : 72) + '</div>' +
+    '<div class="shop-name">' + esc(it.type === 'key' ? it.name.split('・')[0] : it.name) + '</div>' +
+    (have ? '<div class="shop-price own">已擁有</div>'
+      : '<div class="shop-price">' + price + (n ? '<small>持有 ' + n + '</small>' : '') + '</div>') +
+  '</button>';
 }
 
 function renderShop() {
-  var p = S.player || {}, h = starsChip();
-  ['avatar', 'frame', 'bg', 'emote', 'consumable'].forEach(function (type) {
-    var items = CATALOG.filter(function (x) { return x.type === type && !x.limited; });
-    if (!items.length) return;
-    h += '<div class="sec-h"><h2>' + TYPE_TXT[type] + '</h2></div><div class="shop-grid">';
-    items.forEach(function (it) {
-      var have = owns(p, it), count = it.type === 'consumable' ? ((p.items || {})[it.id] || 0) : 0;
-      h += '<button class="shop-card' + (have ? ' owned' : '') + '" data-buy="' + it.id + '">' +
-        '<div class="shop-prev">' + itemPreview(it, 64) + '</div>' +
-        '<div class="shop-name">' + esc(it.name) + '</div>' +
-        (have ? '<div class="shop-price own">已擁有</div>'
-          : '<div class="shop-price">★ ' + fmt(it.price) + (count ? '<small>持有 ' + count + '</small>' : '') + '</div>') +
-      '</button>';
+  var h = starsChip();
+  var cats = [['avatar', '頭像'], ['bg', '背景'], ['chest', '寶箱'], ['emote', '表情'], ['card', '道具']];
+  h += '<div class="chips">' + cats.map(function (c) { return '<button data-sc="' + c[0] + '" class="' + (SHOP.cat === c[0] ? 'on' : '') + '">' + c[1] + '</button>'; }).join('') + '</div>';
+  var list;
+  if (SHOP.cat === 'avatar') {
+    var subs = [['all', '全部'], ['male', '男主'], ['female', '女主'], ['meme', '迷因']];
+    if (CATALOG.some(function (x) { return x.type === 'avatar' && x.onSale && ['ur', 'god'].indexOf(x.sub) >= 0; })) subs.push(['ur', '限定']);
+    h += '<div class="chips small">' + subs.map(function (c) { return '<button data-ss="' + c[0] + '" class="' + (SHOP.sub === c[0] ? 'on' : '') + '">' + c[1] + '</button>'; }).join('') + '</div>';
+    list = CATALOG.filter(function (x) {
+      return x.type === 'avatar' && x.onSale && (SHOP.sub === 'all' || x.sub === SHOP.sub || (SHOP.sub === 'ur' && x.sub === 'god'));
     });
-    h += '</div>';
-  });
+  } else if (SHOP.cat === 'chest') {
+    var odds = (S.cfg && S.cfg.chestOdds) || [35, 30, 15, 10, 7, 3];
+    h += '<div class="info-card"><b>寶箱怎麼拿？</b><p>每週結算第 1 名 3 個、第 2 名 2 個、第 3 名 1 個，自動放進包包。開寶箱需要同階或更高階的鑰匙。</p>' +
+      '<div class="odds">' + odds.map(function (o, i) { return '<span style="--rc:' + RARITY_COLOR[i + 1] + '">' + RARITY[i + 1] + ' ' + o + '%</span>'; }).join('') + '</div></div>';
+    list = CATALOG.filter(function (x) { return (x.type === 'key' || x.type === 'chest') && x.onSale; });
+  } else {
+    list = CATALOG.filter(function (x) { return x.type === SHOP.cat && x.onSale; });
+  }
+  h += list.length ? '<div class="shop-grid">' + list.map(shopCard).join('') + '</div>' : '<div class="empty rk-empty">目前沒有販售中的商品</div>';
+  return h;
+}
+
+function renderBag() {
+  var p = S.player || {}, h = starsChip();
+  var chests = [], keys = [];
+  for (var r = 1; r <= 7; r++) {
+    if (countOf(p, 'chest_' + r)) chests.push(ITEM['chest_' + r]);
+    if (countOf(p, 'key_' + r)) keys.push(ITEM['key_' + r]);
+  }
+  function tile(it, attr) {
+    return '<button class="bag-item" ' + attr + '="' + it.id + '" style="--rc:' + (RARITY_COLOR[it.rarity] || 'var(--edge)') + '">' +
+      itemThumb(it, 64) + '<span class="bag-n">× ' + countOf(p, it.id) + '</span><span class="bag-name">' + esc(it.name.split('・')[0]) + '</span></button>';
+  }
+  h += '<div class="sec-h"><h2>寶箱</h2><span>點一下開啟</span></div>' +
+    (chests.length ? '<div class="bag-grid">' + chests.map(function (x) { return tile(x, 'data-chest'); }).join('') + '</div>' : '<div class="empty rk-empty">還沒有寶箱，每週結算前三名會拿到</div>');
+  h += '<div class="sec-h"><h2>鑰匙</h2></div>' +
+    (keys.length ? '<div class="bag-grid">' + keys.map(function (x) { return tile(x, 'data-keyinfo'); }).join('') + '</div>' : '<div class="empty rk-empty">還沒有鑰匙，可以在商店購買</div>');
+  var cards = CATALOG.filter(function (x) { return x.type === 'card' && countOf(p, x.id); });
+  h += '<div class="sec-h"><h2>道具</h2></div>' +
+    (cards.length ? '<div class="bag-grid">' + cards.map(function (x) { return tile(x, 'data-card'); }).join('') + '</div>' : '<div class="empty rk-empty">還沒有道具</div>');
   return h;
 }
 
 function renderCloset() {
   var p = S.player || {}, eq = eqOf(p), h = '';
-  h += '<div class="closet-hero"' + (bgStyle(p) ? ' style="background:' + bgStyle(p) + '"' : '') + '><div class="prof-shade"></div>' +
-    '<div class="prof-in">' + playerAvatar(p, 84) + '<div class="prof-name">' + esc(p.name || S.me.name) + '</div></div></div>';
-  ['avatar', 'frame', 'bg'].forEach(function (type) {
-    var list = ownedList(p, type).filter(function (id) { return ITEM[id]; });
-    h += '<div class="sec-h"><h2>' + TYPE_TXT[type] + '</h2><span>' + list.length + ' 個</span></div><div class="closet-row">';
-    h += '<button class="closet-item' + (!eq[type] ? ' on' : '') + '" data-eq="' + type + '" data-id="">' +
-      (type === 'bg' ? '<div class="bg-swatch def" style="width:52px;height:52px"></div>' : playerAvatar({ name: p.name, equipped: type === 'frame' ? { avatar: eq.avatar } : {} }, 52, type === 'avatar' ? { avatar: null, frame: null } : { frame: null })) +
-      '<span>預設</span></button>';
+  h += bannerHTML(p, 76, '<div class="prof-id"><div class="prof-name">' + esc(p.name || S.me.name) + '</div><div class="prof-meta"><span class="id-no' + (p.vanity ? ' vanity' : '') + '">#' + esc(idOf(p)) + '</span></div></div>');
+  [['avatar', '頭像'], ['bg', '背景'], ['back', '卡背']].forEach(function (x) {
+    var type = x[0], list = ownedList(p, type).filter(function (id) { return ITEM[id]; });
+    h += '<div class="sec-h"><h2>' + x[1] + '</h2><span>' + list.length + ' 個</span></div><div class="closet-row">';
+    var def = type === 'avatar' ? playerAvatar({ name: p.name }, 56, { avatar: null })
+      : type === 'bg' ? '<div class="thumb wide def-bg" style="width:84px;height:28px"></div>'
+      : '<div class="cb def" style="width:30px;height:44px"></div>';
+    h += '<button class="closet-item' + (!eq[type] ? ' on' : '') + (type === 'bg' ? ' wide' : '') + '" data-eq="' + type + '" data-id="">' + def + '<span>預設</span></button>';
     list.forEach(function (id) {
-      h += '<button class="closet-item' + (eq[type] === id ? ' on' : '') + '" data-eq="' + type + '" data-id="' + id + '">' +
-        itemPreview(ITEM[id], 52) + '<span>' + esc(ITEM[id].name) + '</span></button>';
+      var it = ITEM[id];
+      h += '<button class="closet-item' + (eq[type] === id ? ' on' : '') + (type === 'bg' ? ' wide' : '') + '" data-eq="' + type + '" data-id="' + id + '">' +
+        (type === 'avatar' ? itemThumb(it, 56) : type === 'bg' ? itemThumb(it, 56) : itemThumb(it, 40)) + '<span>' + esc(it.name) + '</span></button>';
     });
     h += '</div>';
   });
   var packs = ownedList(p, 'emote').filter(function (id) { return ITEM[id]; });
-  var cards = (p.items && p.items.rename) || 0;
-  h += '<div class="sec-h"><h2>道具與表情</h2></div><div class="grp">' +
-    '<button class="row" data-use="rename"' + (cards ? '' : ' disabled') + '><span class="k">改名卡<small>' + (cards ? '持有 ' + cards + ' 張，點一下使用' : '可以在商店購買') + '</small></span><span class="chev">›</span></button>' +
-    '<div class="row"><span class="k">表情包<small>基本表情' + (packs.length ? '、' + packs.map(function (id) { return ITEM[id].name; }).join('、') : '') + '</small></span></div>' +
-  '</div>';
+  h += '<div class="sec-h"><h2>表情</h2></div><div class="grp"><div class="row"><span class="k">基本表情' +
+    (packs.length ? '、' + packs.map(function (id) { return ITEM[id].name; }).join('、') : '') + '<small>牌桌上按「表情」使用</small></span></div></div>';
   return h;
 }
 
 function bindShopCloset() {
   var root = $('vMe');
-  root.querySelectorAll('[data-buy]').forEach(function (b) {
-    b.onclick = function () { sheetBuy(ITEM[b.getAttribute('data-buy')]); };
+  root.querySelectorAll('[data-sc]').forEach(function (b) { b.onclick = function () { SHOP.cat = b.getAttribute('data-sc'); SHOP.sub = 'all'; renderMe(true); }; });
+  root.querySelectorAll('[data-ss]').forEach(function (b) { b.onclick = function () { SHOP.sub = b.getAttribute('data-ss'); renderMe(true); }; });
+  root.querySelectorAll('[data-buy]').forEach(function (b) { b.onclick = function () { sheetBuy(ITEM[b.getAttribute('data-buy')]); }; });
+  root.querySelectorAll('[data-chest]').forEach(function (b) { b.onclick = function () { sheetOpenChest(ITEM[b.getAttribute('data-chest')]); }; });
+  root.querySelectorAll('[data-keyinfo]').forEach(function (b) {
+    b.onclick = function () { var it = ITEM[b.getAttribute('data-keyinfo')]; toast(it.name + '：可以開' + RARITY[it.rarity] + '以下的寶箱'); };
+  });
+  root.querySelectorAll('[data-card]').forEach(function (b) {
+    b.onclick = function () {
+      var id = b.getAttribute('data-card');
+      if (id === 'card_rename') sheetRename2();
+      else if (id === 'card_vanity') sheetVanity();
+      else if (id === 'card_seat') toast('在牌桌上，兩手之間點別人的頭像使用');
+      else toast('這張卡的功能還沒開放');
+    };
   });
   root.querySelectorAll('[data-eq]').forEach(function (b) {
     b.onclick = function () {
@@ -1290,21 +1481,82 @@ function bindShopCloset() {
         .catch(function (e) { toast(e.message, 'bad'); render(true); });
     };
   });
-  var r = root.querySelector('[data-use=rename]');
-  if (r) r.onclick = sheetRename2;
 }
 
 function sheetBuy(it) {
-  var p = S.player || {}, stars = p.stars || 0;
+  var p = S.player || {}, stars = p.stars || 0, state = saleState(it);
   if (!it) return;
-  if (owns(p, it)) { toast('你已經有了，到衣櫃穿上', ''); return; }
-  var desc = (it.desc ? it.desc + '。' : '') + '目前 ★ ' + fmt(stars) + '，買完剩 ★ ' + fmt(stars - it.price) + '。';
-  formSheet('購買' + TYPE_TXT[it.type] + '「' + esc(it.name) + '」', stars < it.price ? '星幣不夠，還差 ★ ' + fmt(it.price - stars) + '。' : desc,
-    '<div class="buy-prev">' + itemPreview(it, 96) + (it.list ? '<div class="em-list">' + it.list.map(esc).join('　') + '</div>' : '') + '</div>',
-    '★ ' + fmt(it.price) + ' 購買', '', function () {
-      if (stars < it.price) { toast('星幣不夠', 'bad'); return null; }
-      return call('shopBuy', { itemId: it.id }).then(function () { return '已購買「' + it.name + '」'; });
+  if (owns(p, it)) { toast('你已經有了，到衣櫃穿上'); return; }
+  if (state !== 'on') { toast({ soldout: '已經賣完了', ended: '已經下架了', soon: '還沒開賣', off: '目前沒有販售' }[state], 'bad'); return; }
+  var stack = !!STACK[it.type];
+  var desc = [it.desc, it.perUser != null ? '每人限購 ' + it.perUser + ' 個' : '', it.endAt ? '販售到 ' + twClock(it.endAt) : ''].filter(Boolean).join('。');
+  var body = '<div class="buy-prev">' + itemThumb(it, it.type === 'bg' ? 180 : 112) + (it.list ? '<div class="em-list">' + it.list.map(esc).join('　') + '</div>' : '') + '</div>' +
+    (desc ? '<p class="desc center">' + esc(desc) + '</p>' : '') +
+    (stack ? amountField('sQty', '數量', quickAmounts([1, 5], 10, '10'), '') : '') +
+    '<p class="desc center" id="buyTotal"></p>';
+  formSheet(esc(it.name), '', body, '購買', '', function () {
+    var q = stack ? readAmount('sQty') : 1;
+    if (!(q >= 1)) { toast('數量至少 1', 'bad'); return null; }
+    if (stars < it.price * q) { toast('星幣不夠', 'bad'); return null; }
+    return call('shopBuy', { itemId: it.id, qty: q }).then(function () { return '已購買「' + it.name + '」' + (q > 1 ? ' × ' + q : ''); });
+  });
+  function total() {
+    var q = stack ? (readAmount('sQty') || 0) : 1, cost = it.price * q;
+    $('buyTotal').innerHTML = '共 ★ ' + fmt(cost) + '　目前 ★ ' + fmt(stars) + (stars < cost ? '　<span class="dn">還差 ' + fmt(cost - stars) + '</span>' : '');
+  }
+  if (stack) { bindAmount('sQty'); $('sQty').value = 1; $('sQty').addEventListener('input', total); $('sheet').querySelectorAll('[data-q]').forEach(function (b) { b.addEventListener('click', total); }); }
+  total();
+}
+
+function sheetOpenChest(chest) {
+  var p = S.player || {};
+  var keys = [];
+  for (var r = chest.rarity; r <= 7; r++) if (countOf(p, 'key_' + r)) keys.push(ITEM['key_' + r]);
+  var rw = chest.rewards || [], tw = rw.reduce(function (a, x) { return a + (x.weight || 0); }, 0);
+  var odds = rw.map(function (x) {
+    var label = x.kind === 'stars' ? '★ ' + x.min + '～' + x.max : (ITEM[x.itemId] ? ITEM[x.itemId].name + (x.qty > 1 ? ' × ' + x.qty : '') : x.itemId);
+    return '<div class="row"><span class="k">' + esc(label) + '</span><span class="v">' + (tw ? (Math.round(x.weight / tw * 1000) / 10) + '%' : '—') + '</span></div>';
+  }).join('');
+  var h = '<div class="buy-prev">' + itemThumb(chest, 120) + '</div><h3 class="center">' + esc(chest.name) + '</h3>' +
+    '<p class="desc center">持有 ' + countOf(p, chest.id) + ' 個</p>' +
+    '<div class="stat-h">可能開出（公開機率）</div><div class="grp">' + odds + '</div>' +
+    '<div class="stat-h">選一把鑰匙</div>' +
+    (keys.length ? '<div class="key-pick">' + keys.map(function (k) {
+      return '<button type="button" data-k="' + k.rarity + '" style="--rc:' + RARITY_COLOR[k.rarity] + '">' + itemThumb(k, 48) +
+        '<span>' + RARITY[k.rarity] + '鑰匙 × ' + countOf(p, k.id) + '</span>' + (k.rarity > chest.rarity ? '<small>比寶箱高階</small>' : '') + '</button>';
+    }).join('') + '</div>' : '<div class="empty rk-empty">沒有能開這個寶箱的鑰匙，需要' + RARITY[chest.rarity] + '或更高階的鑰匙</div>') +
+    '<div class="acts" style="margin-top:14px"><button class="btn ghost" type="button" data-close>關閉</button></div>';
+  openSheet(h, function (sh) {
+    sh.querySelector('[data-close]').onclick = closeSheet;
+    sh.querySelectorAll('[data-k]').forEach(function (b) {
+      b.onclick = function () {
+        var kr = +b.getAttribute('data-k');
+        var go = function () {
+          busy(b, true);
+          call('shopOpenChest', { chest: chest.rarity, key: kr }).then(function (res) { showChestResult(chest, res); })
+            .catch(function (e) { busy(b, false); toast(e.message, 'bad'); });
+        };
+        if (kr > chest.rarity) {
+          formSheet('確定用' + RARITY[kr] + '鑰匙？', '這把鑰匙比寶箱高階，用在這裡有點可惜。', '', '確定開啟', '', function () {
+            return call('shopOpenChest', { chest: chest.rarity, key: kr }).then(function (res) { setTimeout(function () { showChestResult(chest, res); }, 280); return null; });
+          });
+        } else go();
+      };
     });
+  });
+}
+
+function showChestResult(chest, res) {
+  var it = res.itemId ? ITEM[res.itemId] : null;
+  var prize = res.kind === 'stars'
+    ? '<div class="prize-stars">★ ' + fmt(res.stars) + '</div><p class="desc center">星幣</p>'
+    : '<div class="prize-item">' + itemThumb(it, it.type === 'bg' ? 180 : 120) + '</div><p class="desc center">' + esc(it.name) + (res.qty > 1 ? ' × ' + res.qty : '') + '</p>' +
+      (res.salvage ? '<p class="desc center">已經擁有，自動換成 ★ ' + fmt(res.salvage) + '</p>' : '');
+  openSheet('<div class="open-fx" style="--rc:' + RARITY_COLOR[chest.rarity] + '"><div class="fx-ring"></div><div class="fx-rays"></div>' +
+    '<div class="fx-chest">' + itemThumb(chest, 110) + '</div><div class="fx-prize">' + prize + '</div></div>' +
+    '<div class="acts" style="margin-top:10px"><button class="btn" type="button" data-close>收下</button></div>', function (sh) {
+    sh.querySelector('[data-close]').onclick = closeSheet;
+  });
 }
 
 function sheetRename2() {
@@ -1318,17 +1570,24 @@ function sheetRename2() {
     });
 }
 
+function sheetVanity() {
+  formSheet('使用全新身份卡', '設定 1 到 7 位數的靚號，會顯示在牌桌、排行榜和個人頁。登入還是用原本的編號 #' + esc(S.me.pid) + '。',
+    fld('sVan', '靚號', 'text', ' inputmode="numeric" maxlength="7" autocomplete="off" placeholder="例如 777"'),
+    '設定', '', function () {
+      var v = $('sVan').value.trim();
+      if (!/^\d{1,7}$/.test(v)) { toast('要是 1 到 7 位數字', 'bad'); return null; }
+      return call('shopVanity', { number: v }).then(function () { return '靚號已設定為 #' + v; });
+    });
+}
+
 /* =====================================================================
    表情
    ===================================================================== */
-function isTextEmote(t) { return !/\p{Extended_Pictographic}/u.test(t); }
-
 function sheetEmote() {
   var mine = myEmotes();
-  var locked = CATALOG.filter(function (x) { return x.type === 'emote' && !owns(S.player, x); });
+  var locked = CATALOG.filter(function (x) { return x.type === 'emote' && x.onSale && !owns(S.player, x); });
   var h = '<h3>丟表情</h3><p class="desc">3 秒可以丟一次</p><div class="em-grid">' +
-    mine.map(function (t) { return '<button type="button" data-em="' + esc(t) + '"' + (isTextEmote(t) ? ' class="txt"' : '') + '>' + esc(t) + '</button>'; }).join('') +
-    '</div>' +
+    mine.map(function (t) { return '<button type="button" data-em="' + esc(t) + '"' + (isTextEmote(t) ? ' class="txt"' : '') + '>' + esc(t) + '</button>'; }).join('') + '</div>' +
     (locked.length ? '<p class="note-s">商店還有：' + locked.map(function (x) { return x.name; }).join('、') + '</p>' : '') +
     '<div class="acts" style="margin-top:14px"><button class="btn ghost" type="button" data-close>關閉</button></div>';
   openSheet(h, function (sh) {
@@ -1345,50 +1604,223 @@ function sheetEmote() {
 function paintBubbles() {
   var box = $('pkBubbles');
   if (!box) return;
-  var now = serverNow(), items = (PK.emotes && PK.emotes.items) || [], h = '';
-  var latest = {};
+  var now = serverNow(), items = (PK.emotes && PK.emotes.items) || [], h = '', latest = {};
   items.forEach(function (x) { if (now - x.at < 2800 && now - x.at > -2000) latest[x.pid] = x; });
   Object.keys(latest).forEach(function (pid) {
     var pos = PK.seatPos && PK.seatPos[pid];
     if (!pos) return;
     var x = latest[pid];
-    h += '<div class="bubble' + (isTextEmote(x.text) ? ' txt' : '') + '" style="left:' + pos.x + '%;top:' + pos.y + '%" data-k="' + x.at + '">' + esc(x.text) + '</div>';
+    h += '<div class="bubble' + (isTextEmote(x.text) ? ' txt' : '') + '" style="left:' + pos.x + '%;top:' + pos.y + '%">' + esc(x.text) + '</div>';
   });
   if (box.getAttribute('data-h') !== h) { box.setAttribute('data-h', h); box.innerHTML = h; }
 }
 
 /* =====================================================================
-   主辦：發放、季設定
+   公告與信箱
+   ===================================================================== */
+var MAIL = { list: [], claimed: {} };
+
+function paintAnnounce() {
+  var a = S.cfg && S.cfg.announce, el = $('announce');
+  var hidden = !a || LS.get('annHide', 0) === a.at;
+  el.hidden = hidden;
+  if (!hidden) $('annText').textContent = a.text;
+  if (S.tab === 'poker') { sizePoker(); renderPoker(true); }
+}
+$('annClose').addEventListener('click', function () { var a = S.cfg && S.cfg.announce; if (a) LS.set('annHide', a.at); paintAnnounce(); });
+
+function myMail() {
+  var t = serverNow();
+  return MAIL.list.filter(function (m) { return (m.all || (m.toList || []).indexOf(S.me.pid) >= 0) && (!m.expiresAt || t < m.expiresAt); });
+}
+function paintMailBadge() {
+  var n = myMail().filter(function (m) { return !MAIL.claimed[m.id]; }).length;
+  var b = $('mailBadge');
+  b.hidden = !n; b.textContent = n > 9 ? '9+' : n;
+}
+function rewardText(m) {
+  var parts = [];
+  if (m.money) parts.push('資產 ' + fmt(m.money));
+  if (m.stars) parts.push('★ ' + fmt(m.stars));
+  Object.keys(m.items || {}).forEach(function (id) { if (ITEM[id]) parts.push(ITEM[id].name + ' × ' + m.items[id]); });
+  return parts.join('、');
+}
+function sheetMail() {
+  var list = myMail();
+  var h = '<h3>信箱</h3><p class="desc">領取後獎勵會直接放進錢包、星幣或包包</p>';
+  if (!list.length) h += '<div class="empty rk-empty">目前沒有信件</div>';
+  else h += '<div class="mail-list">' + list.map(function (m) {
+    var got = !!MAIL.claimed[m.id], rw = rewardText(m);
+    return '<div class="mail' + (got ? ' got' : '') + '"><div class="mail-h"><b>' + esc(m.title) + '</b><span>' + twClock(m.at) + '</span></div>' +
+      (m.body ? '<p>' + esc(m.body) + '</p>' : '') +
+      (rw ? '<div class="mail-rw">' + esc(rw) + '</div>' : '') +
+      '<div class="mail-f"><small>' + (m.expiresAt ? twClock(m.expiresAt) + ' 到期' : '') + '</small>' +
+      (rw ? '<button class="btn sm' + (got ? ' ghost' : '') + '" data-claim="' + m.id + '"' + (got ? ' disabled' : '') + '>' + (got ? '已領取' : '領取') + '</button>' : '') +
+      (S.me.role === 'admin' ? '<button class="mini red" data-mdel="' + m.id + '">刪除</button>' : '') +
+      '</div></div>';
+  }).join('') + '</div>';
+  h += '<div class="acts" style="margin-top:14px">' + (S.me.role === 'admin' ? '<button class="btn ghost" type="button" data-send>寄信</button>' : '') +
+    '<button class="btn ghost" type="button" data-close>關閉</button></div>';
+  openSheet(h, function (sh) {
+    sh.querySelector('[data-close]').onclick = closeSheet;
+    var sd = sh.querySelector('[data-send]');
+    if (sd) sd.onclick = sheetSendMail;
+    sh.querySelectorAll('[data-claim]').forEach(function (b) {
+      b.onclick = function () {
+        busy(b, true);
+        call('mailClaim', { id: b.getAttribute('data-claim') }).then(function (r) {
+          toast('已領取' + (r.salvage ? '，重複的物品換成 ★ ' + fmt(r.salvage) : ''), 'good');
+          b.classList.remove('busy'); b.textContent = '已領取'; b.classList.add('ghost');
+        }).catch(function (e) { busy(b, false); toast(e.message, 'bad'); });
+      };
+    });
+    sh.querySelectorAll('[data-mdel]').forEach(function (b) {
+      b.onclick = function () {
+        busy(b, true);
+        call('adminDeleteMail', { id: b.getAttribute('data-mdel') }).then(function () { toast('已刪除'); sheetMail(); })
+          .catch(function (e) { busy(b, false); toast(e.message, 'bad'); });
+      };
+    });
+  });
+}
+$('mailBtn').addEventListener('click', sheetMail);
+
+function itemOptions(filter) {
+  return CATALOG.filter(filter || function () { return true; }).map(function (x) {
+    return '<option value="' + x.id + '">' + TYPE_TXT[x.type] + '：' + esc(x.name) + '</option>';
+  }).join('');
+}
+
+function sheetSendMail() {
+  formSheet('寄信', '可以只寄文字，也可以附上獎勵。',
+    fld('mTitle', '標題', 'text', ' maxlength="40" autocomplete="off" placeholder="例如 FREE 1500 FOR EVERYONE"') +
+    '<div class="fld"><label for="mBody">內容（選填）</label><textarea id="mBody" class="ta" maxlength="500" rows="3"></textarea></div>' +
+    '<div class="fld-grid">' + fld('mMoney', '本季資產', 'text', ' inputmode="numeric" placeholder="0"') + fld('mStars', '星幣', 'text', ' inputmode="numeric" placeholder="0"') + '</div>' +
+    '<div class="fld-grid"><div class="fld"><label for="mItem">物品（選填）</label><select id="mItem" class="sel"><option value="">不附物品</option>' + itemOptions() + '</select></div>' +
+    fld('mQty', '數量', 'text', ' inputmode="numeric" value="1"') + '</div>' +
+    '<div class="fld-grid">' + fld('mTo', '寄給（留空＝所有人）', 'text', ' autocomplete="off" placeholder="例如 01,12"') + fld('mDays', '幾天後過期', 'text', ' inputmode="numeric" value="7"') + '</div>',
+    '寄出', '', function () {
+      var title = $('mTitle').value.trim();
+      if (!title) { toast('要有標題', 'bad'); return null; }
+      var to = $('mTo').value.trim(), items = {};
+      if ($('mItem').value) items[$('mItem').value] = Math.max(1, parseInt($('mQty').value, 10) || 1);
+      var toList = to ? to.split(/[,，\s]+/).filter(Boolean) : null;
+      if (toList && toList.some(function (x) { return !/^\d{2}$/.test(x); })) { toast('寄給的編號要是兩位數，用逗號分開', 'bad'); return null; }
+      return call('adminSendMail', {
+        title: title, body: $('mBody').value, money: parseInt($('mMoney').value, 10) || 0, stars: parseInt($('mStars').value, 10) || 0,
+        items: items, to: toList, days: parseInt($('mDays').value, 10) || 7
+      }).then(function () { return '已寄出'; });
+    });
+}
+
+function sheetAnnounce() {
+  var a = S.cfg && S.cfg.announce;
+  formSheet('公告', '會顯示在所有人畫面最上方。清空再按發布就是撤下公告。',
+    '<div class="fld"><label for="aText">公告內容</label><textarea id="aText" class="ta" maxlength="300" rows="3">' + esc(a ? a.text : '') + '</textarea></div>',
+    '發布', '', function () {
+      var t = $('aText').value.trim();
+      return call('adminAnnounce', { text: t }).then(function () { LS.set('annHide', 0); return t ? '公告已發布' : '公告已撤下'; });
+    });
+}
+
+/* =====================================================================
+   管理員：發放、收回、商品管理、季設定
    ===================================================================== */
 function sheetGrant(p) {
-  var opts = '<option value="">不發物品</option>' + CATALOG.map(function (x) {
-    return '<option value="' + x.id + '">' + TYPE_TXT[x.type] + '：' + esc(x.name) + (x.limited ? '（限定）' : '') + '</option>';
-  }).join('');
   formSheet('發放給 ' + esc(p.name), '目前 ★ ' + fmt(p.stars || 0) + '。星幣可以填負數扣除。',
     amountField('sStars', '星幣', [{ v: 50, t: '+50' }, { v: 100, t: '+100' }, { v: -50, t: '-50' }]) +
-    '<div class="fld"><label for="sItem">物品</label><select id="sItem" class="sel">' + opts + '</select></div>',
+    '<div class="fld-grid"><div class="fld"><label for="sItem">物品</label><select id="sItem" class="sel"><option value="">不發物品</option>' + itemOptions() + '</select></div>' +
+    fld('sQty', '數量', 'text', ' inputmode="numeric" value="1"') + '</div>',
     '發放', '', function () {
       var raw = $('sStars').value.trim(), n = raw ? readAmount('sStars') : 0, item = $('sItem').value;
       if (raw && !Number.isInteger(n)) { toast('星幣要是整數', 'bad'); return null; }
       if (!n && !item) { toast('要發星幣或選一個物品', 'bad'); return null; }
-      return call('adminGrant', { pid: p.pid, stars: n, itemId: item || null }).then(function () { return '已發放'; });
+      return call('adminGrant', { pid: p.pid, stars: n, itemId: item || null, qty: Math.max(1, parseInt($('sQty').value, 10) || 1) }).then(function () { return '已發放'; });
     });
   bindAmount('sStars', true);
 }
 
+function sheetRevoke(p) {
+  var owned = CATALOG.filter(function (x) { return owns(p, x) || countOf(p, x.id) > 0; });
+  if (!owned.length) { toast('他目前沒有任何物品'); return; }
+  formSheet('收回 ' + esc(p.name) + ' 的物品', '疊加的物品一次收回 1 個。可以順便退星幣。',
+    '<div class="fld"><label for="rvItem">物品</label><select id="rvItem" class="sel">' + owned.map(function (x) {
+      return '<option value="' + x.id + '">' + TYPE_TXT[x.type] + '：' + esc(x.name) + (STACK[x.type] ? '（持有 ' + countOf(p, x.id) + '）' : '') + '</option>';
+    }).join('') + '</select></div>' + fld('rvRefund', '退還星幣', 'text', ' inputmode="numeric" value="0"'),
+    '收回', 'danger', function () {
+      return call('adminRevoke', { pid: p.pid, itemId: $('rvItem').value, refund: parseInt($('rvRefund').value, 10) || 0 }).then(function () { return '已收回'; });
+    });
+}
+
+var ADMCAT = { type: 'avatar' };
+function sheetCatalog() {
+  var types = [['avatar', '頭像'], ['bg', '背景'], ['back', '卡背'], ['key', '鑰匙'], ['chest', '寶箱'], ['card', '道具'], ['emote', '表情']];
+  var list = CATALOG.filter(function (x) { return x.type === ADMCAT.type; });
+  var h = '<h3>商品管理</h3><p class="desc">點商品可以改名字、價格、上架、限時、限量。改完所有人的商店立刻更新。</p>' +
+    '<div class="chips">' + types.map(function (t) { return '<button type="button" data-ct="' + t[0] + '" class="' + (ADMCAT.type === t[0] ? 'on' : '') + '">' + t[1] + '</button>'; }).join('') + '</div>' +
+    '<div class="grp adm-cat">' + list.map(function (x) {
+      return '<button class="row" data-ci="' + x.id + '">' + (x.img ? itemThumb(x, 38) : '<span class="em-swatch" style="width:38px;height:38px;font-size:12px">' + esc(x.list ? x.list[0] : '') + '</span>') +
+        '<span class="k"><b class="nm1">' + esc(x.name) + '</b><small>' + [x.sub ? SUB_TXT[x.sub] || x.sub : '', x.tier ? TIER_TXT[x.tier] : '', x.rarity ? RARITY[x.rarity] : '', x.stock != null ? '限量 ' + (SOLD[x.id] || 0) + '/' + x.stock : ''].filter(Boolean).join('・') + '</small></span>' +
+        '<span class="rk-val"><b>' + (x.price == null ? '—' : '★ ' + fmt(x.price)) + '</b><small class="' + (x.onSale ? 'up' : '') + '">' + (x.onSale ? '上架中' : '未上架') + '</small></span></button>';
+    }).join('') + '</div>' +
+    '<div class="acts" style="margin-top:14px"><button class="btn ghost" type="button" data-close>關閉</button></div>';
+  openSheet(h, function (sh) {
+    sh.querySelector('[data-close]').onclick = closeSheet;
+    sh.querySelectorAll('[data-ct]').forEach(function (b) { b.onclick = function () { ADMCAT.type = b.getAttribute('data-ct'); sheetCatalog(); }; });
+    sh.querySelectorAll('[data-ci]').forEach(function (b) { b.onclick = function () { sheetEditItem(ITEM[b.getAttribute('data-ci')]); }; });
+  });
+}
+
+function dtLocal(ms) { return ms ? new Date(ms + TW).toISOString().slice(0, 16) : ''; }
+function fromLocal(v) { return v ? Date.parse(v + ':00Z') - TW : null; }
+
+function sheetEditItem(it) {
+  var rw = it.type === 'chest' ? JSON.stringify(it.rewards || [], null, 1) : '';
+  var body = '<div class="buy-prev">' + (it.img ? itemThumb(it, it.type === 'bg' ? 160 : 90) : '') + '</div>' +
+    fld('eName', '名字', 'text', ' maxlength="20" autocomplete="off" value="' + esc(it.name) + '"') +
+    '<div class="fld-grid">' + fld('ePrice', '價格（留空＝不能買）', 'text', ' inputmode="numeric" value="' + (it.price == null ? '' : it.price) + '"') +
+    '<div class="fld"><label for="eSale">上架</label><select id="eSale" class="sel"><option value="1"' + (it.onSale ? ' selected' : '') + '>上架</option><option value="0"' + (it.onSale ? '' : ' selected') + '>下架</option></select></div>' +
+    fld('eStock', '全服限量（留空＝不限）', 'text', ' inputmode="numeric" value="' + (it.stock == null ? '' : it.stock) + '"') +
+    fld('ePer', '每人限購（留空＝不限）', 'text', ' inputmode="numeric" value="' + (it.perUser == null ? '' : it.perUser) + '"') +
+    '<div class="fld"><label for="eStart">開賣時間</label><input id="eStart" type="datetime-local" value="' + dtLocal(it.startAt) + '"></div>' +
+    '<div class="fld"><label for="eEnd">下架時間</label><input id="eEnd" type="datetime-local" value="' + dtLocal(it.endAt) + '"></div>' +
+    fld('eSalvage', '重複時換多少星幣', 'text', ' inputmode="numeric" value="' + (it.salvage == null ? '' : it.salvage) + '" placeholder="預設為價格的一半"') +
+    (it.type === 'avatar' || it.type === 'bg' || it.type === 'back' ? fld('eTier', '階級（1～4）', 'text', ' inputmode="numeric" value="' + (it.tier || '') + '"') : '<div></div>') +
+    '</div>' +
+    fld('eDesc', '說明', 'text', ' maxlength="80" autocomplete="off" value="' + esc(it.desc || '') + '"') +
+    (it.type === 'chest' ? '<div class="fld"><label for="eRw">寶箱內容</label><textarea id="eRw" class="ta mono" rows="6">' + esc(rw) + '</textarea>' +
+      '<div class="help">星幣：{"kind":"stars","min":20,"max":40,"weight":70}　物品：{"kind":"item","itemId":"av_u01","qty":1,"weight":5}，weight 是機率權重</div></div>' : '');
+  formSheet('編輯商品', '編號：' + it.id, body, '儲存', '', function () {
+    var num = function (id) { var v = $(id).value.trim(); return v === '' ? null : Number(v); };
+    var patch = {
+      name: $('eName').value.trim(), price: num('ePrice'), onSale: $('eSale').value === '1',
+      stock: num('eStock'), perUser: num('ePer'), startAt: fromLocal($('eStart').value), endAt: fromLocal($('eEnd').value),
+      salvage: num('eSalvage'), desc: $('eDesc').value.trim() || null
+    };
+    if ($('eTier')) patch.tier = num('eTier');
+    if (!patch.name) { toast('名字不能空白', 'bad'); return null; }
+    if ($('eRw')) {
+      try { patch.rewards = JSON.parse($('eRw').value); } catch (e) { toast('寶箱內容格式不對', 'bad'); return null; }
+    }
+    return call('adminCatalog', { itemId: it.id, patch: patch }).then(function () { setTimeout(sheetCatalog, 280); return '已儲存'; });
+  });
+}
+
 function sheetSeasonConfig() {
   var cfg = S.cfg || {};
-  var rf = cfg.rankFrom || RANK_FROM, sf = cfg.statsFrom || 0;
-  var local = sf ? new Date(sf + TW).toISOString().slice(0, 16) : '';
-  formSheet('季與數據設定', '本週是 ' + S.sid + '。正式季之前的週次只結算、不發積分和星幣。',
+  var rf = cfg.rankFrom || RANK_FROM, sf = cfg.statsFrom || 0, odds = cfg.chestOdds || [35, 30, 15, 10, 7, 3];
+  formSheet('季與數據設定', '本週是 ' + S.sid + '。正式季之前的週次只結算，不發積分、星幣和寶箱。',
     fld('sRankFrom', '正式季從哪一週開始', 'text', ' autocomplete="off" value="' + esc(rf) + '" placeholder="例如 2026-W39"') +
-    '<div class="fld"><label for="sStatsFrom">牌局數據從什麼時候開始記錄（台灣時間）</label><input id="sStatsFrom" type="datetime-local" value="' + local + '">' +
-    '<div class="help">留空代表一直都在記錄</div></div>',
+    '<div class="fld"><label for="sStatsFrom">牌局數據從什麼時候開始記錄（台灣時間）</label><input id="sStatsFrom" type="datetime-local" value="' + dtLocal(sf) + '">' +
+    '<div class="help">留空代表一直都在記錄</div></div>' +
+    '<div class="stat-h">結算寶箱機率（%）</div><div class="fld-grid three">' +
+    odds.map(function (o, i) { return fld('odd' + i, RARITY[i + 1], 'text', ' inputmode="decimal" value="' + o + '"'); }).join('') + '</div>',
     '儲存', '', function () {
-      var w = $('sRankFrom').value.trim().toUpperCase(), v = $('sStatsFrom').value;
+      var w = $('sRankFrom').value.trim().toUpperCase();
       if (!/^\d{4}-W\d{2}$/.test(w)) { toast('週次格式要像 2026-W39', 'bad'); return null; }
-      var ms = v ? Date.parse(v + ':00Z') - TW : 0;
-      return call('adminSeasonConfig', { rankFrom: w, statsFrom: ms }).then(function () { return '已儲存'; });
+      var o = [0, 1, 2, 3, 4, 5].map(function (i) { return Number($('odd' + i).value); });
+      if (o.some(function (x) { return !(x >= 0); })) { toast('機率要是 0 以上的數字', 'bad'); return null; }
+      return call('adminSeasonConfig', { rankFrom: w, statsFrom: fromLocal($('sStatsFrom').value) || 0, chestOdds: o }).then(function () { return '已儲存'; });
     });
 }
 
@@ -1461,7 +1893,8 @@ function sizePoker() {
   var v = $('vPoker');
   if (!v || v.hidden) return;
   var top = document.querySelector('.top').offsetHeight, tabs = document.querySelector('.tabs').offsetHeight;
-  v.style.height = Math.max(420, window.innerHeight - top - tabs - 12) + 'px';
+  var ann = $('announce').hidden ? 0 : $('announce').offsetHeight + 8;
+  v.style.height = Math.max(420, window.innerHeight - top - tabs - ann - 12) + 'px';
 }
 window.addEventListener('resize', function () { if (S.tab === 'poker') { sizePoker(); renderPoker(true); } });
 
@@ -1503,7 +1936,7 @@ function renderSeats(force) {
     var style = 'left:' + x.toFixed(2) + '%;top:' + y.toFixed(2) + '%;width:' + Math.round(w) + 'px';
     if (!s) { h += '<div class="seat vacant" style="left:' + x.toFixed(2) + '%;top:' + y.toFixed(2) + '%"></div>'; continue; }
     var pl = S.players[s.pid] || { name: s.name, pid: s.pid };
-    var fcol = frameColor(pl);
+    var showBacks = H.phase !== 'idle' && s.inHand && !s.folded && i !== me;
     PK.seatPos[s.pid] = { x: x.toFixed(2), y: (y - 58 / Ht * 100).toFixed(2) };
     var cls = 'seat' + (i === me ? ' me' : '') + (H.phase !== 'idle' && H.turn === i ? ' turn' : '') +
       (s.folded || (H.phase !== 'idle' && !s.inHand) || s.sitout ? ' dim' : '') + (wonBy[i] ? ' win' : '');
@@ -1513,7 +1946,8 @@ function renderSeats(force) {
     var blind = H.phase !== 'idle' ? (i === H.sb ? '小盲' : i === H.bb ? '大盲' : '') : '';
     h += '<div class="' + cls + '" style="' + style + '" data-pid="' + esc(s.pid) + '">' +
       (tag ? '<span class="dealer">D</span>' : '') +
-      '<div class="sc"' + (fcol ? ' style="border-color:' + fcol + '"' : '') + '>' +
+      (showBacks ? '<div class="backs">' + cardBackHTML(pl) + cardBackHTML(pl, 'b2') + '</div>' : '') +
+      '<div class="sc">' +
       '<div class="seat-av">' + playerAvatar(pl, 30) + '</div>' +
       '<div class="nm">' + esc(pl.name || s.name) + '</div>' +
       '<div class="stk">' + fmt(s.stack) + '</div>' +
@@ -1550,9 +1984,9 @@ function statusText() {
   var head = lr ? lr.winners.map(function (w) { return esc(w.name) + ' 贏 ' + fmt(w.amount) + (w.hand ? '（' + esc(w.hand) + '）' : ''); }).join('、') + '<br>' : '';
   var readyN = st.seats.filter(readySeat).length;
   if (locked) return head + '本季結算中，暫停開局';
-  if (st.seats.some(function (x) { return x && x.sid && x.sid !== S.sid; })) return head + '上一季還沒結算，等主辦結算後就能繼續';
+  if (st.seats.some(function (x) { return x && x.sid && x.sid !== S.sid; })) return head + '上一季還沒結算，等管理員結算後就能繼續';
   if (st.auto && st.auto.nextHandAt) return head + '下一手 <b>' + Math.max(0, Math.ceil((st.auto.nextHandAt - now) / 1000)) + '</b> 秒後開始';
-  if (!S2.auto) return head + '等待主辦開始下一手';
+  if (!S2.auto) return head + '等待管理員開始下一手';
   if (readyN < S2.minPlayers) return head + '還差 ' + (S2.minPlayers - readyN) + ' 人就會自動開局';
   return head + '準備開局';
 }
@@ -1609,8 +2043,8 @@ function renderPokerBar(force) {
   }
   if (isAdmin && st) {
     h += '<div class="adm-row">' + (st.hand.phase === 'idle'
-      ? '<button class="mini" data-pk="start">主辦：立刻開始</button>'
-      : '<button class="mini red" data-pk="abort">主辦：作廢這手</button>') + '</div>';
+      ? '<button class="mini" data-pk="start">管理員：立刻開始</button>'
+      : '<button class="mini red" data-pk="abort">管理員：作廢這手</button>') + '</div>';
   }
   if (put('pkBar', h, force)) {
     bindPokerBar();
@@ -1621,7 +2055,7 @@ function renderPokerBar(force) {
 
 $('pkSeats').addEventListener('click', function (e) {
   var el = e.target.closest('[data-pid]');
-  if (el) sheetProfile(el.getAttribute('data-pid'));
+  if (el) seatTap(el.getAttribute('data-pid'));
 });
 
 function bindPokerBar() {
@@ -1759,7 +2193,7 @@ function sheetPokerSettings() {
     '</div>' +
     '<div class="fld"><label for="pAuto">AI 控桌</label><select id="pAuto" class="sel">' +
       '<option value="1"' + (SS.auto ? ' selected' : '') + '>開啟：人夠了自動開局</option>' +
-      '<option value="0"' + (SS.auto ? '' : ' selected') + '>關閉：由主辦按開始</option></select></div>' +
+      '<option value="0"' + (SS.auto ? '' : ' selected') + '>關閉：由管理員按開始</option></select></div>' +
     '<div class="fld-grid">' +
       num('pMin', '自動開局最少人數', SS.minPlayers) + num('pWait', '有人進出等待秒數', SS.waitSec) +
       num('pQuick', '人數沒變的間隔秒數', SS.quickSec) + num('pMaxW', '倒數最長秒數', SS.maxWaitSec) +
@@ -1934,8 +2368,25 @@ function enterApp(profile) {
     render();
   }, function () {}));
 
+  S.unsubs.push(db.collection('config').doc('catalog').onSnapshot(function (d) {
+    rebuildItems(d.exists ? d.data() : null);
+    render(true);
+  }, function () {}));
+  S.unsubs.push(db.collection('mail').orderBy('at', 'desc').limit(40).onSnapshot(function (q) {
+    var list = [];
+    q.forEach(function (d) { list.push(d.data()); });
+    MAIL.list = list;
+    paintMailBadge();
+  }, function () {}));
+  S.unsubs.push(db.collection('players').doc(profile.pid).collection('mailClaims').onSnapshot(function (q) {
+    var m = {};
+    q.forEach(function (d) { m[d.id] = true; });
+    MAIL.claimed = m;
+    paintMailBadge();
+  }, function () {}));
   S.unsubs.push(db.collection('config').doc('app').onSnapshot(function (d) {
     S.cfg = d.exists ? d.data() : null;
+    paintAnnounce();
     if (S.tab === 'rank' && RK.tab === 'last') loadLastSeason();
     render();
   }, function () {}));
@@ -2008,6 +2459,7 @@ function endSession() {
   S.me = null; S.player = null; S.cfg = null; S.roster = [];
   S.acc = null; S.accounts = []; S.sid = null; S.tab = 'home'; S.meTab = 'acct';
   PK.st = null; PK.hole = null; PK.synced = false; closeRaise();
+  MAIL.list = []; MAIL.claimed = {}; $('announce').hidden = true;
   _last = {};
   closeSheet();
   showGate();
@@ -2015,7 +2467,7 @@ function endSession() {
 
 function paintTop() {
   $('topName').textContent = S.me.name;
-  $('topPid').textContent = '#' + S.me.pid;
+  $('topPid').textContent = '#' + (S.player && S.player.vanity ? S.player.vanity : S.me.pid);
 }
 
 document.querySelectorAll('.tab').forEach(function (b) {
@@ -2063,11 +2515,10 @@ function renderHome(force) {
   var st = p.stats || {}, a = S.acc, c = econ();
   var h = '';
 
-  var cardBg = bgStyle(p);
-  h += '<div class="idcard' + (cardBg ? ' has-bg' : '') + '"' + (cardBg ? ' style="--card-bg:' + cardBg.replace(/"/g, "'") + '"' : '') + '><div class="id-row">' + playerAvatar(p, 72) +
+  h += '<div class="idcard">' + bannerHTML(p, 74) + '<div class="id-row">' +
     '<div class="id-name"><h1>' + esc(p.name) + '</h1><div class="id-meta">' +
-    '<span class="id-no">#' + esc(p.pid) + '</span>' +
-    (p.role === 'admin' ? '<span class="tag gold">主辦</span>' : '') +
+    '<span class="id-no' + (p.vanity ? ' vanity' : '') + '">#' + esc(idOf(p)) + '</span>' +
+    (p.role === 'admin' ? '<span class="tag gold">管理員</span>' : '') +
     '<span class="tag star">★ ' + fmt(p.stars || 0) + '</span>' +
     '</div></div></div>' +
     '<div class="id-stats">' +
@@ -2231,11 +2682,11 @@ function renderMe(force) {
   var me = S.me, h = '';
   var isAdmin = me.role === 'admin';
   var mt = S.meTab || 'acct';
-  h += '<div class="seg" role="tablist">' + [['acct', '帳號'], ['shop', '商店'], ['closet', '衣櫃']].map(function (x) {
+  h += '<div class="seg" role="tablist">' + [['acct', '帳號'], ['shop', '商店'], ['bag', '包包'], ['closet', '衣櫃']].map(function (x) {
     return '<button role="tab" data-mt="' + x[0] + '" class="' + (mt === x[0] ? 'on' : '') + '">' + x[1] + '</button>';
   }).join('') + '</div>';
   if (mt !== 'acct') {
-    h += '<div class="me-sub">' + (mt === 'shop' ? renderShop() : renderCloset()) + '</div>';
+    h += '<div class="me-sub">' + (mt === 'shop' ? renderShop() : mt === 'bag' ? renderBag() : renderCloset()) + '</div>';
     if (put('vMe', h, force)) { bindMeTabs(); bindShopCloset(); }
     return;
   }
@@ -2249,7 +2700,10 @@ function renderMe(force) {
 
   if (isAdmin) {
     var open = !!(S.cfg && S.cfg.registrationOpen);
-    h += '<div class="sec-h"><h2>主辦</h2></div><div class="grp">' +
+    h += '<div class="sec-h"><h2>管理員</h2></div><div class="grp">' +
+      '<button class="row" data-act="catalog"><span class="k">商品管理<small>名字、價格、上架、限時、限量、寶箱內容</small></span><span class="chev">›</span></button>' +
+      '<button class="row" data-act="announce"><span class="k">公告<small>' + (S.cfg && S.cfg.announce ? '目前：' + esc(S.cfg.announce.text.slice(0, 24)) : '顯示在所有人畫面最上方') + '</small></span><span class="chev">›</span></button>' +
+      '<button class="row" data-act="mail"><span class="k">寄信<small>全服或指定玩家，可以附資產、星幣、物品</small></span><span class="chev">›</span></button>' +
       '<div class="row"><span class="k">開放註冊<small>開啟時，任何人都能用沒被用過的編號自己註冊</small></span>' +
       '<button class="switch" role="switch" id="regSwitch" aria-checked="' + open + '" aria-label="開放註冊"></button></div>' +
       '<button class="row" data-act="create"><span class="k">開帳號<small>先建好編號和名字，本人第一次登入時自己設密碼</small></span><span class="chev">›</span></button>' +
@@ -2264,7 +2718,7 @@ function renderMe(force) {
     h += '<div class="sec-h"><h2>名單</h2><span>' + S.roster.length + ' 人</span></div><div class="grp">';
     if (!S.roster.length) h += '<div class="empty">還沒有玩家</div>';
     S.roster.forEach(function (p) {
-      var tag = p.role === 'admin' ? '<span class="tag gold">主辦</span>'
+      var tag = p.role === 'admin' ? '<span class="tag gold">管理員</span>'
         : p.claimed ? '' : '<span class="tag warn">待設密碼</span>';
       var ac = accOf(p.pid);
       h += '<button class="row" data-pl="' + esc(p.pid) + '">' +
@@ -2298,6 +2752,9 @@ function bindMe() {
       else if (a === 'poker') sheetPokerSettings();
       else if (a === 'settle') sheetSettle();
       else if (a === 'seasoncfg') sheetSeasonConfig();
+      else if (a === 'catalog') sheetCatalog();
+      else if (a === 'announce') sheetAnnounce();
+      else if (a === 'mail') sheetSendMail();
       else if (a === 'lock') sheetLock();
     };
   });
@@ -2426,8 +2883,8 @@ function sheetPlayer(pid) {
   if (!p) return;
   var self = pid === S.me.pid, ac = accOf(pid), c = econ();
   var h = '<div class="who" style="margin-bottom:16px">' + playerAvatar(p, 48) +
-    '<div><b>' + esc(p.name) + '</b><br><span>#' + esc(p.pid) + '　' +
-    (p.role === 'admin' ? '主辦' : p.claimed ? '已設密碼' : '等待本人設定密碼') + '</span></div></div>';
+    '<div><b>' + esc(p.name) + '</b><br><span>#' + esc(p.pid) + (p.vanity ? '（靚號 ' + esc(p.vanity) + '）' : '') + '　' +
+    (p.role === 'admin' ? '管理員' : p.claimed ? '已設密碼' : '等待本人設定密碼') + '</span></div></div>';
   h += ac
     ? '<div class="breakdown sheet-bd">' +
         '<div><span>本季資產</span><b class="gold">' + fmt(ac.net) + '</b></div>' +
@@ -2438,9 +2895,11 @@ function sheetPlayer(pid) {
     : '<p class="desc">本季還沒有帳戶，調整資產時會自動用起始資金建立。</p>';
   h += '<div class="grp">' +
       '<button class="row" data-p="adjust"><span class="k">調整資產<small>增加或扣除錢包裡的錢，會記在流水帳</small></span><span class="chev">›</span></button>' +
-      '<button class="row" data-p="grant"><span class="k">發放星幣或物品<small>包含限定頭像框、背景板</small></span><span class="chev">›</span></button>' +
+      '<button class="row" data-p="grant"><span class="k">發放星幣或物品<small>頭像、背景、卡背、鑰匙、寶箱、道具都可以</small></span><span class="chev">›</span></button>' +
+      '<button class="row" data-p="revoke"><span class="k">收回物品<small>誤發或退款時使用</small></span><span class="chev">›</span></button>' +
+      (self ? '' : '<button class="row" data-p="role"><span class="k">' + (p.role === 'admin' ? '取消管理員' : '設為管理員') + '<small>管理員擁有全部後台權限</small></span><span class="chev">›</span></button>') +
       (PK.st && PK.st.seats.some(function (x) { return x && x.pid === pid; }) ? '<button class="row red" data-p="kick"><span class="k">請離牌桌<small>牌局中會先蓋牌，打完帶回錢包</small></span></button>' : '') +
-      '<button class="row" data-p="ledger"><span class="k">流水帳<small>本季最近 40 筆，只有主辦看得到</small></span><span class="chev">›</span></button>' +
+      '<button class="row" data-p="ledger"><span class="k">流水帳<small>本季最近 40 筆，只有管理員看得到</small></span><span class="chev">›</span></button>' +
       '<button class="row" data-p="rename"><span class="k">改名</span><span class="chev">›</span></button>' +
       (self ? '' : '<button class="row red" data-p="reset"><span class="k">重設密碼<small>他的登入會失效，下次進來要重新設密碼</small></span></button>') +
     '</div>' +
@@ -2449,7 +2908,16 @@ function sheetPlayer(pid) {
     sh.querySelector('[data-close]').onclick = closeSheet;
     sh.querySelector('[data-p=adjust]').onclick = function () { sheetAdjust(p); };
     sh.querySelector('[data-p=ledger]').onclick = function () { sheetLedger(p); };
-    sh.querySelector('[data-p=grant]').onclick = function () { sheetGrant(p); };
+    sh.querySelector('[data-p=grant]').onclick = function () { sheetGrant(S.players[p.pid] || p); };
+    sh.querySelector('[data-p=revoke]').onclick = function () { sheetRevoke(S.players[p.pid] || p); };
+    var rl = sh.querySelector('[data-p=role]');
+    if (rl) rl.onclick = function () {
+      var to = p.role === 'admin' ? 'player' : 'admin';
+      formSheet(to === 'admin' ? '把 ' + esc(p.name) + ' 設為管理員？' : '取消 ' + esc(p.name) + ' 的管理員？',
+        to === 'admin' ? '他會擁有全部後台權限，包含改資產、發物品、結算。' : '他會變回一般玩家。', '', '確定', to === 'admin' ? 'danger' : '', function () {
+          return call('adminSetRole', { pid: p.pid, role: to }).then(function () { return '已更新權限，他重新整理後生效'; });
+        });
+    };
     var kk = sh.querySelector('[data-p=kick]');
     if (kk) kk.onclick = function () {
       formSheet('請 ' + esc(p.name) + ' 離開牌桌？', '牌局中會先幫他蓋牌，打完這手把籌碼帶回錢包。', '', '請離', 'danger', function () {
@@ -2552,8 +3020,8 @@ function sheetAdjust(p) {
 
 var LEDGER_TXT = {
   start: '起始資金', borrow: '借款', repay: '自動還款', deposit: '存入銀行', withdraw: '從銀行領出',
-  daily: '每日獎勵', admin: '主辦調整', interest: '利息',
-  buyIn: '帶入牌桌', cashOut: '離桌帶回', rebuy: '補碼'
+  daily: '每日獎勵', admin: '管理員調整', interest: '利息',
+  buyIn: '帶入牌桌', cashOut: '離桌帶回', rebuy: '補碼', mail: '信箱領取'
 };
 
 function sheetLedger(p) {
@@ -2599,16 +3067,14 @@ function sheetEcon() {
       num('eDaily', '每日獎勵', c.dailyAmount) +
       num('eHands', '每日需打手數', c.dailyHands, '設 0 可以直接領') +
       num('eRank', '計入排名最少手數', c.rankMinHands) +
-      num('sPer1', '門檻內每多少換 1 星幣', c.starPer1) +
-      num('sTier', '星幣門檻', c.starTier) +
-      num('sPer2', '門檻以上每多少換 1 星幣', c.starPer2) +
-      num('sCap', '一季最多星幣', c.starCap) +
+      num('sPer', '每多少資產換 1 星幣', c.starPer, '無條件進位') +
+      num('sCap', '一季最多星幣', c.starCap, '0 = 不限') +
       num('sMinH', '換星幣最少手數', c.starMinHands) +
       num('eMin', '第一名利率 %', pv(c.interestMin), '每 3 小時') +
       num('eMax', '最後一名利率 %', pv(c.interestMax), '每 3 小時') +
     '</div>',
     '儲存設定', '', function () {
-      var ints = { eStart: 'startingMoney', eKeep: 'bankKeep', eUnit: 'loanUnit', eRepay: 'loanRepayAt', eBelow: 'borrowBelow', eDaily: 'dailyAmount', eHands: 'dailyHands', eRank: 'rankMinHands', sPer1: 'starPer1', sTier: 'starTier', sPer2: 'starPer2', sCap: 'starCap', sMinH: 'starMinHands' };
+      var ints = { eStart: 'startingMoney', eKeep: 'bankKeep', eUnit: 'loanUnit', eRepay: 'loanRepayAt', eBelow: 'borrowBelow', eDaily: 'dailyAmount', eHands: 'dailyHands', eRank: 'rankMinHands', sPer: 'starPer', sCap: 'starCap', sMinH: 'starMinHands' };
       var patch = {}, bad = null;
       Object.keys(ints).forEach(function (id) {
         var v = $(id).value.trim();

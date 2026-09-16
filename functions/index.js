@@ -16,6 +16,7 @@ const { createEconomy } = require('./core/economy');
 const { createPoker } = require('./games/poker');
 const { createSeason } = require('./core/season');
 const { createShop } = require('./core/shop');
+const { createMail } = require('./core/mail');
 
 const db = admin.firestore();
 const now = () => Date.now();
@@ -24,6 +25,7 @@ const A = createAuth({ db, auth: admin.auth(), now });
 const EC = createEconomy({ db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin });
 const PK = createPoker({ db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin });
 const SH = createShop({ db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin });
+const ML = createMail({ db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin });
 const SE = createSeason({ db, now, requireAdmin: A.requireAdmin, runInterest: EC.runInterest, closeTables: PK.closeSeason });
 
 /* 把自訂錯誤轉成前端讀得到的 HttpsError，其他錯誤不外洩細節 */
@@ -82,7 +84,19 @@ exports.adminPokerKick = wrap(PK.adminKick);
 exports.shopBuy = wrap(SH.buy);
 exports.shopEquip = wrap(SH.equip);
 exports.shopRename = wrap(SH.rename);
+exports.shopVanity = wrap(SH.vanity);
+exports.shopOpenChest = wrap(SH.openChest);
+exports.pokerSwapSeat = wrap(PK.swapSeat);
 exports.adminGrant = wrap(SH.adminGrant);
+exports.adminRevoke = wrap(SH.adminRevoke);
+exports.adminCatalog = wrap(SH.adminCatalog);
+exports.adminSetRole = wrap(A.adminSetRole);
+
+/* ---------- 公告、信箱 ---------- */
+exports.adminAnnounce = wrap(ML.adminAnnounce);
+exports.adminSendMail = wrap(ML.adminSendMail);
+exports.adminDeleteMail = wrap(ML.adminDeleteMail);
+exports.mailClaim = wrap(ML.claim);
 
 /* ---------- 季 ---------- */
 exports.adminSettleSeason = wrap(SE.adminSettle);

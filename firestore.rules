@@ -18,6 +18,23 @@ service cloud.firestore {
     match /players/{pid} {
       allow read: if signedIn();
       allow write: if false;
+
+      // 自己領過哪些信
+      match /mailClaims/{mid} {
+        allow read: if signedIn() && request.auth.token.pid == pid;
+        allow write: if false;
+      }
+    }
+
+    // 信箱：全部人都讀得到信件列表，領取與否由伺服器判斷
+    match /mail/{mid} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /vanity/{num} {
+      allow read: if signedIn();
+      allow write: if false;
     }
 
     // 德州：牌桌公開；每個人只讀得到自己的底牌；整副牌（secret）完全不開放

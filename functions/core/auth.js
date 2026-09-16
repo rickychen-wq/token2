@@ -233,6 +233,19 @@ function createAuth({ db, auth, now }) {
       return { ok: true };
     },
 
+    async adminSetRole(req) {
+      const s = await requireAdmin(req);
+      const d = req.data || {};
+      const pid = cleanPid(d.pid);
+      const role = d.role === 'admin' ? 'admin' : 'player';
+      if (pid === s.pid) throw new AppError('不能改自己的權限', 'self');
+      const ref = playerRef(pid);
+      const snap = await ref.get();
+      if (!snap.exists) throw new AppError('找不到這個編號', 'not-found');
+      await ref.update({ role });
+      return { pid, role };
+    },
+
     async adminRenamePlayer(req) {
       await requireAdmin(req);
       const d = req.data || {};
