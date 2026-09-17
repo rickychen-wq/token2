@@ -17,6 +17,8 @@ const { createPoker } = require('./games/poker');
 const { createSeason } = require('./core/season');
 const { createShop } = require('./core/shop');
 const { createMail } = require('./core/mail');
+const { createMini } = require('./games/minigames');
+const { createBlackjack } = require('./games/blackjack');
 
 const db = admin.firestore();
 const now = () => Date.now();
@@ -26,7 +28,10 @@ const EC = createEconomy({ db, now, requireSession: A.requireSession, requireAdm
 const PK = createPoker({ db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin });
 const SH = createShop({ db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin });
 const ML = createMail({ db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin });
-const SE = createSeason({ db, now, requireAdmin: A.requireAdmin, runInterest: EC.runInterest, closeTables: PK.closeSeason });
+const MG = createMini({ db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin, mutate: EC.mutate });
+const BJ = createBlackjack({ db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin });
+const SE = createSeason({ db, now, requireAdmin: A.requireAdmin, runInterest: EC.runInterest,
+  closeTables: async (sid) => { const r = await PK.closeSeason(sid); await BJ.closeSeason(sid); return r; } });
 
 /* 把自訂錯誤轉成前端讀得到的 HttpsError，其他錯誤不外洩細節 */
 function wrap(fn) {
@@ -91,6 +96,17 @@ exports.adminGrant = wrap(SH.adminGrant);
 exports.adminRevoke = wrap(SH.adminRevoke);
 exports.adminCatalog = wrap(SH.adminCatalog);
 exports.adminSetRole = wrap(A.adminSetRole);
+
+/* ---------- 小遊戲 ---------- */
+exports.gateDeal = wrap(MG.gateDeal);
+exports.gateShoot = wrap(MG.gateShoot);
+exports.slotSpin = wrap(MG.slotSpin);
+exports.bjSit = wrap(BJ.sit);
+exports.bjLeave = wrap(BJ.leave);
+exports.bjBet = wrap(BJ.bet);
+exports.bjAct = wrap(BJ.act);
+exports.bjTick = wrap(BJ.tick);
+exports.adminGames = wrap(MG.adminGames);
 
 /* ---------- 公告、信箱 ---------- */
 exports.adminAnnounce = wrap(ML.adminAnnounce);

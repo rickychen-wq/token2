@@ -47,7 +47,7 @@ function createEconomy({ db, now, requireSession, requireAdmin }) {
       tx.set(accRef(sid, pid), acc);
       const accDoc = accRef(sid, pid);
       entries.forEach((e) => {
-        tx.set(accDoc.collection('ledger').doc(), Object.assign(e, { at: t, by: (meta && meta.by) || pid, note: (meta && meta.note) || null }));
+        tx.set(accDoc.collection('ledger').doc(), Object.assign(e, { at: t, by: (meta && meta.by) || pid, note: (meta && meta.note) || e.note || null }));
       });
 
       const st = pSnap.data().stats || {};

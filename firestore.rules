@@ -53,6 +53,12 @@ service cloud.firestore {
       }
     }
 
+    // 21 點：牌桌公開，牌靴（secret）不開放
+    match /games/bj/tables/{tid} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
     match /seasons/{sid} {
       allow read: if signedIn();
       allow write: if false;

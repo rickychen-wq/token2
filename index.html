@@ -683,6 +683,86 @@ button.game:active{transform:scale(.99)}
 .fld input,.fld .sel,.fld .ta{min-width:0;max-width:100%}
 .sheet{overflow-x:hidden}
 
+/* ---------- 小遊戲 ---------- */
+.pk-mine{flex:none;min-height:70px}
+.felt{min-height:0}
+.game-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.game.mini-g{flex-direction:column;align-items:flex-start;gap:8px;min-height:0;padding:12px}
+.game.mini-g .game-suit{width:42px;height:42px;font-size:22px;font-family:var(--ui);font-weight:700}
+.game.mini-g h3{font-size:15px}
+.game.mini-g p{font-size:11.5px}
+.g-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.g-head h2{flex:1;font-size:18px;font-weight:700;letter-spacing:.06em}
+.g-back{height:34px;padding:0 12px;border-radius:17px;font-size:13px;color:var(--cy-hi);border:1px solid var(--edge);background:rgba(63,199,255,.06)}
+.g-wallet{text-align:center;font-size:12.5px;color:var(--faint);margin-bottom:8px}
+.g-wallet b{font-family:var(--ui);font-size:16px;color:var(--gold)}
+.g-bar{margin-top:14px}
+.g-bar .quick button.on,.quick button.on{color:#04121C;background:linear-gradient(135deg,var(--cy-hi),var(--cy));border-color:transparent}
+.g-bar .quick{margin-bottom:10px}
+.g-rule{margin-top:14px;font-size:12px;color:var(--faint);line-height:1.7}
+.btn.gold{background:linear-gradient(135deg,#FFE7B0,var(--gold) 55%,#D9A93E);color:#2A1A00}
+.pc.hole{background:repeating-linear-gradient(45deg,#1B3A60 0 4px,#0B1B30 4px 8px);border:1px solid rgba(120,220,255,.5);box-shadow:0 3px 10px rgba(0,0,0,.5)}
+.pc.big{width:64px;height:90px;border-radius:8px}
+.pc.big b{font-size:28px}.pc.big i{font-size:22px}
+.pc.slot.q{display:flex;align-items:center;justify-content:center;font-family:var(--ui);font-weight:700;font-size:30px;color:var(--faint)}
+
+.bj-table{border-radius:14px;padding:16px 12px;background:radial-gradient(ellipse at 50% 0%,rgba(63,199,255,.12),transparent 60%),linear-gradient(180deg,#0C2038,#070E1E);border:1px solid var(--edge)}
+.bj-dealer{display:flex;flex-direction:column;align-items:center;gap:6px}
+.bj-cards{display:flex;gap:4px;justify-content:center;min-height:56px}
+.bj-cards.sm{min-height:34px;gap:2px}
+.bj-val{font-family:var(--ui);font-weight:700;font-size:16px;color:var(--cy-hi);min-height:20px}
+.bj-status{text-align:center;font-size:13px;color:var(--dim);margin:10px 0 12px}
+.bj-status b{font-family:var(--ui);font-size:16px;color:var(--gold)}
+.bj-seats{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:8px}
+.bj-seat{border-radius:10px;padding:8px;background:rgba(3,8,18,.55);border:1px solid var(--edge-soft);min-height:108px;display:flex;flex-direction:column;gap:5px}
+.bj-seat.empty{align-items:center;justify-content:center;color:var(--faint);font-size:12px;border-style:dashed;min-height:60px}
+.bj-seat.me{border-color:rgba(75,227,143,.45)}
+.bj-seat.turn{border-color:var(--edge-hot);box-shadow:0 0 18px rgba(63,199,255,.35)}
+.bj-seat.r-win,.bj-seat.r-blackjack{border-color:rgba(255,211,122,.7)}
+.bj-seat.r-lose,.bj-seat.r-bust{opacity:.6}
+.bj-who{display:flex;align-items:center;gap:6px;min-width:0}
+.bj-who b{font-size:12.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bj-meta{display:flex;justify-content:space-between;font-family:var(--ui);font-weight:700;font-size:13px}
+.bj-bet{color:var(--gold)}
+.bj-pts{color:var(--cy-hi)}
+.bj-res{font-size:12px;font-weight:700;color:var(--gold)}
+.bj-seat.r-lose .bj-res,.bj-seat.r-bust .bj-res{color:#FF8FA3}
+.bj-idle{font-size:11.5px;color:var(--faint)}
+
+.gt-board{display:flex;justify-content:center;align-items:flex-end;gap:14px;padding:22px 10px;border-radius:14px;background:radial-gradient(ellipse at 50% 30%,rgba(63,199,255,.12),transparent 60%),linear-gradient(180deg,#0C2038,#070E1E);border:1px solid var(--edge)}
+.gt-post,.gt-shot{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;color:var(--faint)}
+.gt-shot .pc{transform:translateY(-14px)}
+.gt-shot.r-win span{color:var(--grn);font-weight:700}
+.gt-shot.r-post span,.gt-shot.r-lose span{color:#FF8FA3;font-weight:700}
+.gt-shot.r-win .pc{box-shadow:0 0 26px rgba(75,227,143,.6)}
+.gt-shot.r-post .pc{box-shadow:0 0 26px rgba(255,92,121,.7)}
+.gt-shot[class*=r-] .pc{animation:shotIn .5s cubic-bezier(.2,1.4,.4,1)}
+@keyframes shotIn{from{transform:translateY(-60px) scale(.6);opacity:0}}
+.gt-result{text-align:center;font-family:var(--ui);font-weight:700;font-size:30px;margin-top:10px}
+.gt-result.r-win{color:var(--grn)}.gt-result.r-lose,.gt-result.r-post{color:#FF8FA3}
+.gt-info{text-align:center;font-size:13.5px;color:var(--dim);margin-top:12px;line-height:1.6}
+.gt-info b{font-family:var(--ui);color:var(--gold);font-size:16px}
+
+.slot-mach{border-radius:18px;padding:18px 14px 14px;background:linear-gradient(180deg,#132C4A,#081322);border:1px solid var(--edge-hot);box-shadow:0 0 40px rgba(63,199,255,.15),inset 0 1px 0 rgba(168,238,255,.2)}
+.slot-mach.big{animation:bigWin 1.2s ease-out}
+@keyframes bigWin{0%,100%{box-shadow:0 0 40px rgba(63,199,255,.15)}30%{box-shadow:0 0 80px rgba(255,211,122,.7)}}
+.slot-win{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.reel{position:relative;height:110px;overflow:hidden;border-radius:10px;background:linear-gradient(180deg,#02060E,#0B1B30 50%,#02060E);border:1px solid var(--edge)}
+.strip{display:flex;flex-direction:column;align-items:center}
+.sym{display:flex;align-items:center;justify-content:center;height:110px;font-size:52px;line-height:1}
+.pay-t .sym{height:auto;font-size:20px;display:inline-flex;margin-right:2px}
+.sym.s-seven{font-family:var(--ui);font-weight:700;color:#FF5C79;text-shadow:0 0 12px rgba(255,92,121,.6)}
+.pay-t .sym.s-seven{font-size:22px}
+.reel.spin .strip{animation:reelSpin .28s linear infinite;filter:blur(1.5px)}
+@keyframes reelSpin{from{transform:translateY(0)}to{transform:translateY(-660px)}}
+.reel.stop .strip{animation:reelStop .38s cubic-bezier(.2,1.6,.4,1)}
+@keyframes reelStop{from{transform:translateY(-30px)}to{transform:none}}
+.payline{position:absolute;left:-4px;right:-4px;top:50%;height:2px;background:rgba(255,211,122,.35);pointer-events:none}
+.slot-msg{text-align:center;margin-top:12px;font-size:14px;color:var(--dim);min-height:22px}
+.slot-msg b{font-family:var(--ui);font-size:22px;color:var(--gold)}
+.slot-go{min-height:60px;font-family:var(--ui);font-size:18px;letter-spacing:.2em}
+.pay-t .row{min-height:44px}
+
 @media (max-width:360px){
   .gate .mark{font-size:34px}
   .cell{height:100px;font-size:64px}
@@ -777,6 +857,9 @@ button.game:active{transform:scale(.99)}
     </section>
     <section id="vRank" class="view" hidden></section>
     <section id="vBank" class="view" hidden></section>
+    <section id="vBj" class="view game-view" hidden></section>
+    <section id="vGate" class="view game-view" hidden></section>
+    <section id="vSlot" class="view game-view" hidden></section>
     <section id="vMe" class="view" hidden></section>
   </div>
 
@@ -2349,6 +2432,286 @@ function sheetLock() {
 }
 
 /* =====================================================================
+   小遊戲：21 點、射龍門、拉霸機
+   ===================================================================== */
+var GAMES_DEF = { gate: { enabled: true, minBet: 200, maxBet: 5000, edge: 0.05 }, slot: { enabled: true, bets: [100, 200, 500, 1000] },
+  bj: { enabled: true, minBet: 200, maxBet: 5000, betSec: 30, turnSec: 20, resultSec: 6 } };
+function gcfg(k) { return Object.assign({}, GAMES_DEF[k], ((S.cfg && S.cfg.games) || {})[k]); }
+
+function gameHead(title, right) {
+  return '<div class="g-head"><button class="g-back" data-gback>‹ 大廳</button><h2>' + title + '</h2><div class="g-r">' + (right || '') + '</div></div>';
+}
+function bindBack(root) { var b = root.querySelector('[data-gback]'); if (b) b.onclick = function () { switchTab('home'); }; }
+function walletLine() { return '<div class="g-wallet">錢包 <b>' + fmt(S.acc ? S.acc.wallet : 0) + '</b></div>'; }
+function backCardHTML() { return '<div class="pc hole"></div>'; }
+
+/* ---------- 21 點 ---------- */
+var BJ = { st: null, lastTick: 0, bet: null, sending: false };
+function bjHV(cards) {
+  var t = 0, a = 0;
+  (cards || []).forEach(function (c) { var r = ((c / 4) | 0) + 2, v = r === 14 ? 11 : r >= 10 ? 10 : r; t += v; if (v === 11) a++; });
+  while (t > 21 && a) { t -= 10; a--; }
+  return t;
+}
+function bjSeat() { var st = BJ.st; if (!st) return -1; for (var i = 0; i < st.seats.length; i++) if (st.seats[i] && st.seats[i].pid === S.me.pid) return i; return -1; }
+var BJ_RES = { win: '贏', blackjack: '黑傑克', push: '平手', lose: '輸', bust: '爆牌' };
+
+function renderBj(force) {
+  var st = BJ.st, c = gcfg('bj'), me = bjSeat();
+  var h = gameHead('21 點', me >= 0 ? '<button class="mini red" data-bj="leave">離座</button>' : '');
+  if (!st) st = { seats: [null, null, null, null, null], round: { phase: 'idle', bets: {}, dealer: [] } };
+  var R = st.round, bets = R.bets || {};
+  var dealerCards = (R.dealer || []).map(function (x) { return cardHTML(x); }).join('') + (R.dealerHidden ? backCardHTML() : '');
+  h += '<div class="bj-table">' +
+    '<div class="bj-dealer"><span class="lbl">荷官</span><div class="bj-cards">' + (dealerCards || '<div class="pc slot"></div><div class="pc slot"></div>') + '</div>' +
+      '<div class="bj-val">' + ((R.dealer || []).length && !R.dealerHidden ? bjHV(R.dealer) + ' 點' : R.dealerHidden ? bjHV(R.dealer) + ' ＋ ?' : '') + '</div></div>' +
+    '<div class="bj-status" id="bjStatus"></div>' +
+    '<div class="bj-seats">';
+  for (var i = 0; i < st.seats.length; i++) {
+    var s = st.seats[i], b = bets[i];
+    if (!s) { h += '<div class="bj-seat empty"><span>空位</span></div>'; continue; }
+    var p = S.players[s.pid] || { name: s.name, pid: s.pid };
+    h += '<div class="bj-seat' + (i === me ? ' me' : '') + (R.phase === 'playing' && R.turn === i ? ' turn' : '') + (b && b.result ? ' r-' + b.result : '') + '">' +
+      '<div class="bj-who">' + playerAvatar(p, 26) + '<b>' + esc(p.name) + '</b></div>' +
+      (b ? '<div class="bj-cards sm">' + (b.cards || []).map(function (x) { return cardHTML(x, 'mini'); }).join('') + '</div>' +
+        '<div class="bj-meta"><span class="bj-bet">' + fmt(b.amount) + (b.doubled ? ' ×2' : '') + '</span>' +
+        ((b.cards || []).length ? '<span class="bj-pts">' + bjHV(b.cards) + '</span>' : '') + '</div>' +
+        (b.result ? '<div class="bj-res">' + BJ_RES[b.result] + (b.payout ? ' +' + fmt(b.payout) : '') + '</div>' : '')
+        : '<div class="bj-idle">' + (R.phase === 'betting' || R.phase === 'idle' ? '還沒下注' : '這局沒參加') + '</div>') +
+    '</div>';
+  }
+  h += '</div></div>';
+
+  var bar = '';
+  if (!c.enabled) bar = '<div class="pk-wait">21 點目前關閉中</div>';
+  else if (me < 0) bar = walletLine() + '<button class="btn" data-bj="sit">坐下</button>';
+  else {
+    var mb = bets[me];
+    if ((R.phase === 'idle' || R.phase === 'betting') && !mb) {
+      var amt = BJ.bet || c.minBet;
+      var chips = [c.minBet, 500, 1000, 2000, c.maxBet].filter(function (v, k, a) { return v >= c.minBet && v <= c.maxBet && a.indexOf(v) === k; });
+      bar = walletLine() + '<div class="quick">' + chips.map(function (v) { return '<button data-bjamt="' + v + '" class="' + (v === amt ? 'on' : '') + '">' + fmt(v) + '</button>'; }).join('') + '</div>' +
+        '<button class="btn" data-bj="bet">下注 ' + fmt(amt) + '</button>';
+    } else if (R.phase === 'playing' && R.turn === me) {
+      bar = '<div class="pk-hint" id="bjHint"></div><div class="act-row">' +
+        '<button class="btn ghost" data-bj="stand">停牌</button>' +
+        '<button class="btn" data-bj="hit">要牌</button>' +
+        ((mb.cards || []).length === 2 && !mb.doubled && S.acc && S.acc.wallet >= mb.amount ? '<button class="btn gold" data-bj="double">加倍</button>' : '') + '</div>';
+    } else if (mb && R.phase === 'betting') bar = '<div class="pk-wait">已下注 ' + fmt(mb.amount) + '，等待發牌</div>';
+    else bar = walletLine() + '<div class="pk-wait">' + (R.phase === 'result' ? '本局結束，準備下一局' : '等待其他人動作') + '</div>';
+  }
+  h += '<div class="g-bar">' + bar + '</div>';
+  h += '<p class="g-rule">荷官 17 點停牌、黑傑克賠 1.5 倍、其他贏賠 1 倍、平手退注。前兩張可以加倍（只補一張）。有人下注後 ' + c.betSec + ' 秒發牌，每人 ' + c.turnSec + ' 秒思考。</p>';
+
+  if (put('vBj', h, force)) {
+    var root = $('vBj'); bindBack(root);
+    root.querySelectorAll('[data-bjamt]').forEach(function (b) { b.onclick = function () { BJ.bet = +b.getAttribute('data-bjamt'); renderBj(true); }; });
+    root.querySelectorAll('[data-bj]').forEach(function (b) {
+      b.onclick = function () {
+        var k = b.getAttribute('data-bj');
+        if (BJ.sending) return;
+        var fn = { sit: 'bjSit', leave: 'bjLeave', bet: 'bjBet', hit: 'bjAct', stand: 'bjAct', double: 'bjAct' }[k];
+        var data = k === 'bet' ? { amount: BJ.bet || c.minBet } : (k === 'hit' || k === 'stand' || k === 'double') ? { type: k } : {};
+        BJ.sending = true; busy(b, true);
+        pcall(fn, data).catch(function (e) { toast(e.message, 'bad'); }).then(function () { BJ.sending = false; busy(b, false); });
+      };
+    });
+  }
+  paintBjClock();
+}
+
+function paintBjClock() {
+  var st = BJ.st, el = $('bjStatus');
+  if (!el || !st) { if (el) el.textContent = '坐下並下注就會開局'; return; }
+  var R = st.round, left = Math.max(0, Math.ceil(((R.deadline || 0) - serverNow()) / 1000)), txt;
+  if (R.phase === 'idle') txt = '等待下注，有人下注後開始倒數';
+  else if (R.phase === 'betting') txt = '下注中　<b>' + left + '</b> 秒後發牌';
+  else if (R.phase === 'playing') { var s = st.seats[R.turn]; txt = (s ? esc(s.name) : '') + ' 思考中　<b>' + left + '</b>'; }
+  else txt = '本局結束　<b>' + left + '</b> 秒後開放下注';
+  if (el.innerHTML !== txt) el.innerHTML = txt;
+  var hint = $('bjHint');
+  if (hint) { var t2 = '輪到你　<b>' + left + '</b> 秒'; if (hint.innerHTML !== t2) hint.innerHTML = t2; }
+}
+
+function bjHeartbeat() {
+  var st = BJ.st;
+  if (!st || !S.me) return;
+  if (S.tab !== 'bj' && bjSeat() < 0) return;
+  var R = st.round;
+  if (!R.deadline || serverNow() < R.deadline + 500) return;
+  if (Date.now() - BJ.lastTick < 2500) return;
+  BJ.lastTick = Date.now();
+  pcall('bjTick').catch(function () {});
+}
+
+/* ---------- 射龍門 ---------- */
+var GT = { posts: null, last: null, bet: null, busy: false };
+function gRank(c) { return ((c / 4) | 0) + 2; }
+function gateOdds(lo, hi, guess, edge) {
+  var win, pPost;
+  if (lo === hi) { win = guess === 'high' ? 14 - lo : guess === 'low' ? lo - 2 : 0; pPost = 1 / 13; }
+  else { win = hi - lo - 1; pPost = 2 / 13; }
+  var pWin = win / 13;
+  if (pWin <= 0) return 0;
+  return Math.max(0.1, Math.floor(((1 - pWin - pPost) + 2 * pPost - edge) / pWin * 10) / 10);
+}
+
+function renderGate(force) {
+  var c = gcfg('gate'), posts = GT.posts || (S.acc && S.acc.gate && S.acc.gate.posts) || null;
+  var h = gameHead('射龍門', '<button class="mini" data-gt="rules">玩法</button>');
+  var lo, hi, pair, adj;
+  if (posts) { lo = Math.min(gRank(posts[0]), gRank(posts[1])); hi = Math.max(gRank(posts[0]), gRank(posts[1])); pair = lo === hi; adj = hi - lo === 1; }
+  var last = GT.last;
+  h += '<div class="gt-board">' +
+    '<div class="gt-post">' + (posts ? cardHTML(posts[0], 'big') : '<div class="pc slot big"></div>') + '<span>門柱</span></div>' +
+    '<div class="gt-shot' + (last ? ' r-' + last.result : '') + '">' + (last ? cardHTML(last.card, 'big') : '<div class="pc slot big q">?</div>') + '<span>' + (last ? { win: '射中！', lose: '沒射中', post: '撞柱！' }[last.result] : '第三張') + '</span></div>' +
+    '<div class="gt-post">' + (posts ? cardHTML(posts[1], 'big') : '<div class="pc slot big"></div>') + '<span>門柱</span></div>' +
+  '</div>';
+  if (last) h += '<div class="gt-result r-' + last.result + '">' + (last.delta >= 0 ? '+' : '') + fmt(last.delta) + '</div>';
+
+  var info = '';
+  if (!posts) info = '按「發門柱」開始，看完兩張門柱再決定要不要射';
+  else if (adj) info = '兩柱相鄰，中間沒有牌，只能換一副';
+  else if (pair) info = '兩柱一樣是 ' + RANKS[lo - 2] + '，猜第三張比較大或比較小';
+  else info = '中間有 <b>' + (hi - lo - 1) + '</b> 種點數　射中贏 <b>' + gateOdds(lo, hi, null, c.edge) + '</b> 倍　撞柱賠 2 倍';
+  h += '<div class="gt-info">' + info + '</div>';
+
+  var amt = GT.bet || c.minBet;
+  var chips = [c.minBet, 500, 1000, 2000, c.maxBet].filter(function (v, k, a) { return v >= c.minBet && v <= c.maxBet && a.indexOf(v) === k; });
+  var bar = walletLine();
+  if (!c.enabled) bar += '<div class="pk-wait">射龍門目前關閉中</div>';
+  else if (!posts) bar += '<button class="btn" data-gt="deal">發門柱</button>';
+  else {
+    bar += '<div class="quick">' + chips.map(function (v) { return '<button data-gtamt="' + v + '" class="' + (v === amt ? 'on' : '') + '">' + fmt(v) + '</button>'; }).join('') + '</div>';
+    if (adj) bar += '<button class="btn" data-gt="deal">換一副</button>';
+    else if (pair) bar += '<div class="act-row">' +
+      (lo > 2 ? '<button class="btn" data-gt="low">猜小　' + gateOdds(lo, hi, 'low', c.edge) + ' 倍</button>' : '') +
+      (lo < 14 ? '<button class="btn" data-gt="high">猜大　' + gateOdds(lo, hi, 'high', c.edge) + ' 倍</button>' : '') + '</div>' +
+      '<button class="btn ghost" data-gt="deal" style="margin-top:8px">換一副</button>';
+    else bar += '<div class="act-row"><button class="btn ghost" data-gt="deal">換一副</button><button class="btn" data-gt="shoot">射門 ' + fmt(amt) + '</button></div>';
+  }
+  h += '<div class="g-bar">' + bar + '</div>';
+
+  if (put('vGate', h, force)) {
+    var root = $('vGate'); bindBack(root);
+    root.querySelectorAll('[data-gtamt]').forEach(function (b) { b.onclick = function () { GT.bet = +b.getAttribute('data-gtamt'); renderGate(true); }; });
+    root.querySelectorAll('[data-gt]').forEach(function (b) {
+      b.onclick = function () {
+        var k = b.getAttribute('data-gt');
+        if (k === 'rules') return sheetGateRules();
+        if (GT.busy) return;
+        GT.busy = true; busy(b, true);
+        var p = k === 'deal'
+          ? call('gateDeal').then(function (r) { GT.posts = r.posts; GT.last = null; })
+          : call('gateShoot', { bet: GT.bet || c.minBet, guess: k === 'shoot' ? null : k }).then(function (r) {
+              GT.last = r; GT.posts = r.posts;
+              setTimeout(function () { GT.posts = null; if (S.tab === 'gate') renderGate(true); }, 2200);
+            });
+        p.catch(function (e) { toast(e.message, 'bad'); }).then(function () { GT.busy = false; renderGate(true); });
+      };
+    });
+  }
+}
+
+function sheetGateRules() {
+  var c = gcfg('gate');
+  openSheet('<h3>射龍門玩法</h3><div class="grp">' +
+    '<div class="row"><span class="k">1. 發兩張門柱<small>A 最大、2 最小，花色不影響</small></span></div>' +
+    '<div class="row"><span class="k">2. 決定要不要射<small>不想射可以免費換一副。兩柱相鄰（例如 7 和 8）中間沒牌，只能換</small></span></div>' +
+    '<div class="row"><span class="k">3. 射門<small>第三張落在兩柱中間就贏，落在外面輸 1 倍，剛好撞到門柱輸 2 倍</small></span></div>' +
+    '<div class="row"><span class="k">兩柱一樣<small>猜第三張比柱子大或小，猜對贏，猜錯輸 1 倍，一樣大輸 2 倍</small></span></div>' +
+    '<div class="row"><span class="k">賠率<small>中間越窄越難中、賠越多；越寬越好中、賠越少。每種門柱的賠率都照機率算好，下注前會顯示</small></span></div>' +
+    '<div class="row"><span class="k">下注<small>每次 ' + fmt(c.minBet) + ' 到 ' + fmt(c.maxBet) + '，錢包至少要有下注的 2 倍（撞柱用）</small></span></div>' +
+    '</div><div class="acts" style="margin-top:14px"><button class="btn ghost" type="button" data-close>知道了</button></div>', function (sh) {
+    sh.querySelector('[data-close]').onclick = closeSheet;
+  });
+}
+
+/* ---------- 拉霸機 ---------- */
+var SLOT_SYM = { cherry: '🍒', lemon: '🍋', bell: '🔔', star: '⭐', seven: '7', token: '🪙', diamond: '💎' };
+var SLOT_PAY = [['diamond', 280], ['token', 140], ['seven', 90], ['star', 35], ['bell', 18], ['lemon', 10], ['cherry', 5]];
+var SL = { reels: ['seven', 'seven', 'seven'], bet: null, spinning: false, last: null };
+function symHTML(id) { return '<span class="sym s-' + id + '">' + SLOT_SYM[id] + '</span>'; }
+
+function renderSlot(force) {
+  var c = gcfg('slot'), bet = SL.bet && c.bets.indexOf(SL.bet) >= 0 ? SL.bet : c.bets[0];
+  var h = gameHead('拉霸機', '');
+  h += '<div class="slot-mach"><div class="slot-win">' +
+    SL.reels.map(function (r, i) { return '<div class="reel" id="reel' + i + '"><div class="strip">' + symHTML(r) + '</div></div>'; }).join('') +
+    '<div class="payline"></div></div>' +
+    '<div class="slot-msg" id="slotMsg">' + (SL.last ? (SL.last.win > 0 ? '贏得 <b>' + fmt(SL.last.win) + '</b>' + (SL.last.mult >= 5 ? '　' + SL.last.mult + ' 倍！' : '') : '沒中，再試一次') : '選好下注金額，拉下去！') + '</div></div>';
+  h += '<div class="g-bar">' + walletLine() +
+    '<div class="quick">' + c.bets.map(function (v) { return '<button data-slb="' + v + '" class="' + (v === bet ? 'on' : '') + '">' + fmt(v) + '</button>'; }).join('') + '</div>' +
+    (c.enabled ? '<button class="btn slot-go" id="slotGo">SPIN　' + fmt(bet) + '</button>' : '<div class="pk-wait">拉霸機目前關閉中</div>') + '</div>';
+  h += '<div class="sec-h"><h2>賠率表</h2><span>理論回報約 94%</span></div><div class="grp pay-t">' +
+    SLOT_PAY.map(function (x) { return '<div class="row"><span class="k">' + symHTML(x[0]) + symHTML(x[0]) + symHTML(x[0]) + '</span><span class="v">' + x[1] + ' 倍</span></div>'; }).join('') +
+    '<div class="row"><span class="k">任兩個 ' + symHTML('cherry') + '</span><span class="v">2 倍</span></div>' +
+    '<div class="row"><span class="k">第一格 ' + symHTML('cherry') + '<small>其他兩格不是櫻桃</small></span><span class="v">退 0.4 倍</span></div></div>';
+
+  if (put('vSlot', h, force)) {
+    var root = $('vSlot'); bindBack(root);
+    root.querySelectorAll('[data-slb]').forEach(function (b) { b.onclick = function () { if (!SL.spinning) { SL.bet = +b.getAttribute('data-slb'); renderSlot(true); } }; });
+    var go = $('slotGo');
+    if (go) go.onclick = function () { spinSlot(bet); };
+  }
+}
+
+function spinSlot(bet) {
+  if (SL.spinning) return;
+  if (S.acc && S.acc.wallet < bet) { toast('錢包不夠', 'bad'); return; }
+  SL.spinning = true;
+  var go = $('slotGo'); if (go) go.disabled = true;
+  var ids = Object.keys(SLOT_SYM), t0 = Date.now();
+  [0, 1, 2].forEach(function (i) {
+    var strip = document.querySelector('#reel' + i + ' .strip'), h = '';
+    for (var k = 0; k < 18; k++) h += symHTML(ids[(k * 3 + i * 5) % ids.length]);
+    strip.innerHTML = h; strip.parentNode.classList.add('spin');
+  });
+  $('slotMsg').textContent = '轉動中…';
+  call('slotSpin', { bet: bet }).then(function (r) {
+    var wait = Math.max(0, 700 - (Date.now() - t0));
+    [0, 1, 2].forEach(function (i) {
+      setTimeout(function () {
+        var reel = $('reel' + i); if (!reel) return;
+        reel.classList.remove('spin');
+        reel.querySelector('.strip').innerHTML = symHTML(r.reels[i]);
+        reel.classList.add('stop'); setTimeout(function () { reel.classList.remove('stop'); }, 400);
+        if (i === 2) {
+          SL.reels = r.reels; SL.last = r; SL.spinning = false;
+          var msg = $('slotMsg');
+          if (msg) msg.innerHTML = r.win > 0 ? '贏得 <b>' + fmt(r.win) + '</b>' + (r.mult >= 5 ? '　' + r.mult + ' 倍！' : '') : '沒中，再試一次';
+          var m = document.querySelector('.slot-mach'); if (m && r.mult >= 5) { m.classList.remove('big'); void m.offsetWidth; m.classList.add('big'); }
+          setTimeout(function () { if (S.tab === 'slot') renderSlot(true); }, 900);
+        }
+      }, wait + i * 380);
+    });
+  }).catch(function (e) {
+    SL.spinning = false; toast(e.message, 'bad'); renderSlot(true);
+  });
+}
+
+function sheetGames() {
+  var bj = gcfg('bj'), gt = gcfg('gate'), sl = gcfg('slot');
+  function sel(id, on) { return '<select id="' + id + '" class="sel"><option value="1"' + (on ? ' selected' : '') + '>開放</option><option value="0"' + (on ? '' : ' selected') + '>關閉</option></select>'; }
+  function f(id, label, v) { return '<div class="fld"><label for="' + id + '">' + label + '</label><input id="' + id + '" inputmode="decimal" value="' + v + '"></div>'; }
+  formSheet('小遊戲設定', '改完立刻生效。',
+    '<div class="stat-h">21 點</div><div class="fld-grid"><div class="fld"><label for="bjOn">狀態</label>' + sel('bjOn', bj.enabled) + '</div><div></div>' +
+      f('bjMin', '最低下注', bj.minBet) + f('bjMax', '最高下注', bj.maxBet) + f('bjBet', '下注倒數秒數', bj.betSec) + f('bjTurn', '思考秒數', bj.turnSec) + '</div>' +
+    '<div class="stat-h">射龍門</div><div class="fld-grid"><div class="fld"><label for="gtOn">狀態</label>' + sel('gtOn', gt.enabled) + '</div>' + f('gtEdge', '莊家優勢 %', Math.round(gt.edge * 1000) / 10) +
+      f('gtMin', '最低下注', gt.minBet) + f('gtMax', '最高下注', gt.maxBet) + '</div>' +
+    '<div class="stat-h">拉霸機</div><div class="fld-grid"><div class="fld"><label for="slOn">狀態</label>' + sel('slOn', sl.enabled) + '</div>' + f('slBets', '下注選項（逗號分開）', sl.bets.join(',')) + '</div>',
+    '儲存', '', function () {
+      var n = function (id) { return Number($(id).value); };
+      var bets = $('slBets').value.split(/[,，\s]+/).filter(Boolean).map(Number);
+      return call('adminGames', {
+        bj: { enabled: $('bjOn').value === '1', minBet: n('bjMin'), maxBet: n('bjMax'), betSec: n('bjBet'), turnSec: n('bjTurn') },
+        gate: { enabled: $('gtOn').value === '1', minBet: n('gtMin'), maxBet: n('gtMax'), edge: n('gtEdge') / 100 },
+        slot: { enabled: $('slOn').value === '1', bets: bets }
+      }).then(function () { return '已儲存'; });
+    });
+}
+
+/* =====================================================================
    主畫面
    ===================================================================== */
 function enterApp(profile) {
@@ -2402,6 +2765,11 @@ function enterApp(profile) {
 
   openSeason();
   openPoker();
+  S.unsubs.push(db.collection('games').doc('bj').collection('tables').doc('main').onSnapshot(function (d) {
+    BJ.st = d.exists ? d.data() : null;
+    if (S.tab === 'bj') renderBj();
+    else if (S.tab === 'home') renderHome();
+  }, function () {}));
 
   clearInterval(S.tick);
   var beat = 0;
@@ -2409,7 +2777,9 @@ function enterApp(profile) {
     if (!S.me) return;
     if (sidOf(Date.now()) !== S.sid) { openSeason(); return; }
     if (S.tab === 'poker') { paintPokerClock(); paintBubbles(); }
+    if (S.tab === 'bj') paintBjClock();
     pokerHeartbeat();
+    bjHeartbeat();
     if (++beat % 2) return;
     if (S.tab === 'home') paintSeason();
     else if (S.tab === 'bank') paintVaultClock();
@@ -2476,7 +2846,11 @@ document.querySelectorAll('.tab').forEach(function (b) {
 
 function switchTab(t) {
   S.tab = t;
-  document.querySelectorAll('.tab').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === t); });
+  var tabKey = ['bj', 'gate', 'slot'].indexOf(t) >= 0 ? 'home' : t;
+  document.querySelectorAll('.tab').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === tabKey); });
+  $('vBj').hidden = t !== 'bj';
+  $('vGate').hidden = t !== 'gate';
+  $('vSlot').hidden = t !== 'slot';
   $('vHome').hidden = t !== 'home';
   $('vBank').hidden = t !== 'bank';
   $('vPoker').hidden = t !== 'poker';
@@ -2494,6 +2868,9 @@ function render(force) {
   if (S.tab === 'home') renderHome(force);
   else if (S.tab === 'bank') renderBank(force);
   else if (S.tab === 'poker') renderPoker(force);
+  else if (S.tab === 'bj') renderBj(force);
+  else if (S.tab === 'gate') renderGate(force);
+  else if (S.tab === 'slot') renderSlot(force);
   else if (S.tab === 'rank') renderRank(force);
   else renderMe(force);
 }
@@ -2575,9 +2952,16 @@ function renderHome(force) {
     '<div class="game-suit">♠</div>' +
     '<div class="game-txt"><h3>德州撲克<span class="tag ' + (playing ? 'live' : 'cy') + '">' + (playing ? '進行中' : seated ? '等待開局' : '空桌') + '</span></h3>' +
     '<p>' + (seated ? seated + ' 人在桌上' : '還沒有人入座') + '</p></div><span class="chev">›</span></button>';
+  var bjSeated = BJ.st ? BJ.st.seats.filter(Boolean).length : 0, bjLive = BJ.st && BJ.st.round.phase !== 'idle';
+  h += '<div class="game-grid">' +
+    '<button class="game mini-g" data-go="bj"><div class="game-suit">21</div><div class="game-txt"><h3>21 點</h3><p>' + (bjLive ? '進行中' : bjSeated ? bjSeated + ' 人在桌上' : 'AI 荷官發牌') + '</p></div></button>' +
+    '<button class="game mini-g" data-go="gate"><div class="game-suit">🐉</div><div class="game-txt"><h3>射龍門</h3><p>射進兩柱中間</p></div></button>' +
+    '<button class="game mini-g" data-go="slot"><div class="game-suit">🎰</div><div class="game-txt"><h3>拉霸機</h3><p>拉一把試手氣</p></div></button>' +
+  '</div>';
 
   if (put('vHome', h, force)) {
     $('goPoker').onclick = function () { switchTab('poker'); };
+    $('vHome').querySelectorAll('[data-go]').forEach(function (b) { b.onclick = function () { switchTab(b.getAttribute('data-go')); }; });
     $('vHome').querySelector('.idcard').onclick = function () { sheetProfile(S.me.pid); };
     var cb = $('claimBtn');
     if (cb) cb.onclick = function () {
@@ -2712,6 +3096,7 @@ function renderMe(force) {
       '<button class="row" data-act="seasoncfg"><span class="k">季與數據設定<small>正式季從哪一週開始、牌局數據從什麼時候記錄</small></span><span class="chev">›</span></button>' +
       '<button class="row" data-act="settle"><span class="k">結算上一季<small>週一 00:01 會自動跑，排程失敗時才需要按</small></span><span class="chev">›</span></button>' +
       '<button class="row" data-act="lock"><span class="k">' + (S.season && S.season.status === 'locking' ? '解除本季鎖定' : '鎖定本季') + '<small>週日 23:00 會自動鎖定</small></span><span class="chev">›</span></button>' +
+      '<button class="row" data-act="games"><span class="k">小遊戲設定<small>21 點、射龍門、拉霸機的開關與下注範圍</small></span><span class="chev">›</span></button>' +
       '<button class="row" data-act="interest"><span class="k">補算利息<small>排程沒跑到時使用，同一個時段只會算一次</small></span><span class="chev">›</span></button>' +
     '</div>';
 
@@ -2749,6 +3134,7 @@ function bindMe() {
       else if (a === 'create') sheetCreate();
       else if (a === 'econ') sheetEcon();
       else if (a === 'interest') sheetInterest();
+      else if (a === 'games') sheetGames();
       else if (a === 'poker') sheetPokerSettings();
       else if (a === 'settle') sheetSettle();
       else if (a === 'seasoncfg') sheetSeasonConfig();
@@ -3021,7 +3407,7 @@ function sheetAdjust(p) {
 var LEDGER_TXT = {
   start: '起始資金', borrow: '借款', repay: '自動還款', deposit: '存入銀行', withdraw: '從銀行領出',
   daily: '每日獎勵', admin: '管理員調整', interest: '利息',
-  buyIn: '帶入牌桌', cashOut: '離桌帶回', rebuy: '補碼', mail: '信箱領取'
+  buyIn: '帶入牌桌', cashOut: '離桌帶回', rebuy: '補碼', mail: '信箱領取', game: '小遊戲'
 };
 
 function sheetLedger(p) {
