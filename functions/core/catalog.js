@@ -9,6 +9,7 @@ const FEMALE = ['翠影書記', '夜藍蝶結', '碧潮少女', '緋月魔女', 
 const MALE = ['白髮緋瞳', '赤髮狂狼', '藍夜寡言', '翡翠騎士', '紫魅學長', '金獅貴公子', '銀月劍士', '雙色惡魔', '黑夜低語', '碧影刺客'];
 const MEME = ['就很爽', '嫌棄臉', '你很棒', '墨鏡大佬', '側眼瞄', '仰望天空', '已躺平', '金鍊奶茶哥', '奶茶大', '人生就是爽'];
 const UR = ['深淵藍焰守護者', '銀翼機甲王牌', '太陽女帝', '月下紫晶女王', '赤焰鬼角'];
+const DEX = ['缺角的聖杯', '看不懂的真跡', '成精的高麗菜', '奏樂令旗', '綠豆勇者', '藏寶圖殘卷', '見紅彎刀'];
 const BACKS = ['白羽神性', '赤月終焉', '深海幻夢', '神之救贖', '狂亂終局', '虛無無限'];
 const BGS = ['極光冰城', '聖環殘殿', '鎏金天庭', '月下神社', '深淵聖殿', '星環遺跡', '黑洞幻境', '紫晶王國', '血月魔環', '機甲遺城'];
 
@@ -45,8 +46,10 @@ for (let r = 1; r <= 7; r++) {
     rewards: [{ kind: 'stars', min: CHEST_REWARD[r][0], max: CHEST_REWARD[r][1], weight: 1 }] });
 }
 
+DEX.forEach((n, i) => DEFAULTS.push({ id: 'dex_' + pad(i + 1), type: 'dex', sub: 'doodle', name: n, price: null, onSale: false, img: 'assets/dex/d' + pad(i + 1) + '.png', desc: '塗鴉秘寶館收藏' }));
+
 const BASIC_EMOTES = ['👍', '😂', '😮', '😡', '🤡', '🔥', '🙏', '😭'];
-const SLOT_KEY = { avatar: 'avatars', frame: 'frames', bg: 'bgs', back: 'backs', emote: 'emotes' };
+const SLOT_KEY = { avatar: 'avatars', frame: 'frames', bg: 'bgs', back: 'backs', emote: 'emotes', dex: 'dex' };
 const STACKABLE = { card: 1, key: 1, chest: 1 };   // 可以累積數量的物品
 
 /* 後台可以改的欄位 */

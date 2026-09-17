@@ -763,6 +763,84 @@ button.game:active{transform:scale(.99)}
 .slot-go{min-height:60px;font-family:var(--ui);font-size:18px;letter-spacing:.2em}
 .pay-t .row{min-height:44px}
 
+/* ---------- v9 ---------- */
+.rules-btn{flex:none;width:32px;height:32px;border-radius:50%;font-family:var(--ui);font-weight:700;font-size:17px;line-height:30px;color:var(--cy-hi);border:1.5px solid var(--edge-hot);background:rgba(63,199,255,.08);box-shadow:0 0 12px rgba(63,199,255,.2)}
+.g-r{display:flex;align-items:center;gap:8px}
+.pk-rules{position:absolute;top:10px;right:10px;z-index:9}
+.pk-mine{display:none!important}
+.board .pc{width:var(--bcw,36px);height:calc(var(--bcw,36px) * 1.4)}
+.board .pc b{font-size:calc(var(--bcw,36px) * .46)}.board .pc i{font-size:calc(var(--bcw,36px) * .38)}
+#pkHand{position:absolute;right:8px;bottom:8px;z-index:10}
+.hand-dock{position:relative;width:74px;height:78px;touch-action:none;-webkit-user-select:none;user-select:none;cursor:pointer}
+.hand-dock .cb{position:absolute;width:40px;height:56px;border-radius:5px;bottom:18px}
+.hand-dock .dk1{right:24px;transform:rotate(-10deg)}
+.hand-dock .dk2{right:6px;transform:rotate(8deg)}
+.hand-dock span{position:absolute;left:0;right:0;bottom:0;text-align:center;font-size:10.5px;color:var(--dim);white-space:nowrap}
+.peek{position:fixed;left:50%;top:44%;z-index:30;display:flex;gap:12px;opacity:0;pointer-events:none;transform:translate(-50%,-50%) scale(.5);transition:transform .25s cubic-bezier(.2,1.2,.4,1),opacity .15s}
+.felt.peeking .peek{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.felt.peeking .hand-dock{opacity:.25}
+.peek .pc{width:70px;height:98px;border-radius:8px;box-shadow:0 12px 30px rgba(0,0,0,.7)}
+.peek .pc b{font-size:32px}.peek .pc i{font-size:26px}
+
+.bj-dealer-id{display:flex;align-items:center;gap:8px}
+.game-grid{grid-template-columns:repeat(2,1fr)}
+.game.mini-g{flex-direction:row;align-items:center}
+
+.hand-rank .row{gap:10px}
+.hand-ex{display:flex;gap:2px;flex:none}
+.hand-ex .pc.mini{width:20px;height:28px}
+.hand-ex .pc.mini b{font-size:9px}.hand-ex .pc.mini i{font-size:8px}
+
+.dice-tray{position:relative;display:flex;justify-content:center;align-items:center;gap:14px;padding:22px 10px 42px;border-radius:14px;background:radial-gradient(ellipse at 50% 30%,rgba(63,199,255,.14),transparent 60%),linear-gradient(180deg,#0C2038,#070E1E);border:1px solid var(--edge)}
+.die{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);width:58px;height:58px;padding:8px;border-radius:12px;background:linear-gradient(145deg,#FFFFFF,#D8E2EA);box-shadow:0 8px 20px rgba(0,0,0,.55),inset 0 -3px 0 rgba(0,0,0,.12)}
+.die i{display:block;width:10px;height:10px;margin:auto;border-radius:50%}
+.die i.on{background:#0B1622}
+.die.red i.on{background:#D3172F}
+.dice-tray.rolling .die{animation:dieShake .35s ease-in-out infinite}
+.dice-tray.rolling .die.d1{animation-delay:.08s}.dice-tray.rolling .die.d2{animation-delay:.16s}
+@keyframes dieShake{0%,100%{transform:rotate(0) translateY(0)}25%{transform:rotate(-18deg) translateY(-8px)}75%{transform:rotate(16deg) translateY(4px)}}
+.dice-sum{position:absolute;left:0;right:0;bottom:12px;text-align:center;font-size:13px;color:var(--dim)}
+.dice-sum b{font-family:var(--ui);font-size:18px;color:var(--fg)}
+.dice-sum .up{font-family:var(--ui);font-weight:700;color:var(--grn)}.dice-sum .dn{font-family:var(--ui);font-weight:700;color:#FF8FA3}
+.dboard{margin-top:12px;display:flex;flex-direction:column;gap:6px}
+.drow{display:grid;gap:6px}
+.drow.four{grid-template-columns:repeat(4,1fr)}
+.drow.six{grid-template-columns:repeat(6,1fr)}
+.drow.seven{grid-template-columns:repeat(7,1fr)}
+.dc{position:relative;min-width:0;padding:8px 2px;border-radius:8px;display:flex;flex-direction:column;align-items:center;gap:2px;background:linear-gradient(160deg,var(--glass),var(--glass2));border:1px solid var(--edge)}
+.dc b{font-size:17px;font-weight:700;line-height:1.1}
+.dc small{font-size:9.5px;color:var(--faint);white-space:nowrap}
+.dc.tot b{font-family:var(--ui);font-size:15px}
+.dc.hit{border-color:rgba(75,227,143,.8);box-shadow:0 0 16px rgba(75,227,143,.35)}
+.dc.miss{opacity:.45}
+.dc .chip{position:absolute;top:-6px;right:-4px;padding:0 5px;border-radius:9px;font-family:var(--ui);font-weight:700;font-size:10.5px;line-height:17px;color:#1A1204;background:linear-gradient(135deg,#FFE6AE,var(--gold));box-shadow:0 0 8px rgba(255,211,122,.5)}
+.die.xs{width:13px;height:13px;padding:2px;border-radius:3px}.die.xs i{width:2.5px;height:2.5px}
+.die.sm{width:26px;height:26px;padding:4px;border-radius:6px}.die.sm i{width:4.5px;height:4.5px}
+.mini-dice{display:flex;gap:1px}
+.dice-bar .act-row .btn{min-height:52px}
+
+.seg button{padding:0 2px;font-size:13px}
+.dex-hero{display:flex;align-items:center;gap:14px;border-radius:12px;padding:14px 16px;background:linear-gradient(160deg,var(--glass),var(--glass2));border:1px solid var(--edge)}
+.dex-num{font-family:var(--ui);font-size:15px;color:var(--dim)}.dex-num b{font-size:28px;color:var(--gold)}
+.dex-bar{flex:1;height:6px;border-radius:3px;background:rgba(63,199,255,.1);overflow:hidden}
+.dex-bar i{display:block;height:100%;background:linear-gradient(90deg,#1FA5DE,var(--cy))}
+.dex-desc{font-size:12px;color:var(--faint);margin:-6px 2px 10px}
+.dex-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.dex-grid.bg{grid-template-columns:repeat(2,1fr)}
+.dex-grid.back{grid-template-columns:repeat(6,1fr)}
+.dex-item{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+.dex-img{width:100%;aspect-ratio:1;border-radius:10px;overflow:hidden;background:rgba(3,8,18,.6);border:1px solid var(--edge-soft)}
+.dex-grid.bg .dex-img{aspect-ratio:3/1}
+.dex-grid.back .dex-img{aspect-ratio:2/5}
+.dex-grid.dex .dex-img{background:rgba(255,255,255,.04)}
+.dex-img img{width:100%;height:100%;object-fit:cover;display:block;filter:grayscale(1) brightness(.18) contrast(.8);transition:filter .3s}
+.dex-grid.dex .dex-img img{object-fit:contain;padding:6px}
+.dex-item.got .dex-img{border-color:rgba(255,211,122,.45)}
+.dex-item.got .dex-img img{filter:none}
+.dex-item span{font-size:11px;color:var(--faint);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dex-item.got span{color:var(--fg)}
+.dex-view.locked img{filter:grayscale(1) brightness(.18)}
+
 @media (max-width:360px){
   .gate .mark{font-size:34px}
   .cell{height:100px;font-size:64px}
@@ -842,6 +920,8 @@ button.game:active{transform:scale(.99)}
         <div class="pk-center" id="pkCenter"></div>
         <div id="pkSeats"></div>
         <div id="pkBubbles"></div>
+        <button class="rules-btn pk-rules" data-rules="poker" aria-label="遊戲說明">?</button>
+        <div id="pkHand"></div>
       </div>
       <div class="pk-mine" id="pkMine"></div>
       <div class="pk-raise" id="pkRaise" hidden>
@@ -860,6 +940,7 @@ button.game:active{transform:scale(.99)}
     <section id="vBj" class="view game-view" hidden></section>
     <section id="vGate" class="view game-view" hidden></section>
     <section id="vSlot" class="view game-view" hidden></section>
+    <section id="vDice" class="view game-view" hidden></section>
     <section id="vMe" class="view" hidden></section>
   </div>
 
@@ -1278,7 +1359,7 @@ function pct(rate) {
 }
 
 /* 商品目錄預設值：由伺服器 functions/core/catalog.js 產生。後台的修改會從 config/catalog 蓋上來 */
-var DEFAULT_ITEMS = [{"id":"av_f01","type":"avatar","sub":"female","tier":1,"name":"翠影書記","price":120,"onSale":true,"img":"assets/av/f01.webp"},{"id":"av_f02","type":"avatar","sub":"female","tier":1,"name":"夜藍蝶結","price":120,"onSale":true,"img":"assets/av/f02.webp"},{"id":"av_f03","type":"avatar","sub":"female","tier":1,"name":"碧潮少女","price":120,"onSale":true,"img":"assets/av/f03.webp"},{"id":"av_f04","type":"avatar","sub":"female","tier":1,"name":"緋月魔女","price":120,"onSale":true,"img":"assets/av/f04.webp"},{"id":"av_f05","type":"avatar","sub":"female","tier":1,"name":"銀羽紫瞳","price":120,"onSale":true,"img":"assets/av/f05.webp"},{"id":"av_f06","type":"avatar","sub":"female","tier":1,"name":"櫻粉惡魔","price":120,"onSale":true,"img":"assets/av/f06.webp"},{"id":"av_f07","type":"avatar","sub":"female","tier":1,"name":"赤焰千金","price":120,"onSale":true,"img":"assets/av/f07.webp"},{"id":"av_f08","type":"avatar","sub":"female","tier":1,"name":"紫夜吟遊","price":120,"onSale":true,"img":"assets/av/f08.webp"},{"id":"av_f09","type":"avatar","sub":"female","tier":1,"name":"金輝學姊","price":120,"onSale":true,"img":"assets/av/f09.webp"},{"id":"av_f10","type":"avatar","sub":"female","tier":1,"name":"月光白雪","price":120,"onSale":true,"img":"assets/av/f10.webp"},{"id":"av_m01","type":"avatar","sub":"male","tier":1,"name":"白髮緋瞳","price":120,"onSale":true,"img":"assets/av/m01.webp"},{"id":"av_m02","type":"avatar","sub":"male","tier":1,"name":"赤髮狂狼","price":120,"onSale":true,"img":"assets/av/m02.webp"},{"id":"av_m03","type":"avatar","sub":"male","tier":1,"name":"藍夜寡言","price":120,"onSale":true,"img":"assets/av/m03.webp"},{"id":"av_m04","type":"avatar","sub":"male","tier":1,"name":"翡翠騎士","price":120,"onSale":true,"img":"assets/av/m04.webp"},{"id":"av_m05","type":"avatar","sub":"male","tier":1,"name":"紫魅學長","price":120,"onSale":true,"img":"assets/av/m05.webp"},{"id":"av_m06","type":"avatar","sub":"male","tier":1,"name":"金獅貴公子","price":120,"onSale":true,"img":"assets/av/m06.webp"},{"id":"av_m07","type":"avatar","sub":"male","tier":1,"name":"銀月劍士","price":120,"onSale":true,"img":"assets/av/m07.webp"},{"id":"av_m08","type":"avatar","sub":"male","tier":1,"name":"雙色惡魔","price":120,"onSale":true,"img":"assets/av/m08.webp"},{"id":"av_m09","type":"avatar","sub":"male","tier":1,"name":"黑夜低語","price":120,"onSale":true,"img":"assets/av/m09.webp"},{"id":"av_m10","type":"avatar","sub":"male","tier":1,"name":"碧影刺客","price":120,"onSale":true,"img":"assets/av/m10.webp"},{"id":"av_e01","type":"avatar","sub":"meme","tier":1,"name":"就很爽","price":10,"onSale":true,"img":"assets/av/e01.webp"},{"id":"av_e02","type":"avatar","sub":"meme","tier":1,"name":"嫌棄臉","price":10,"onSale":true,"img":"assets/av/e02.webp"},{"id":"av_e03","type":"avatar","sub":"meme","tier":1,"name":"你很棒","price":10,"onSale":true,"img":"assets/av/e03.webp"},{"id":"av_e04","type":"avatar","sub":"meme","tier":1,"name":"墨鏡大佬","price":10,"onSale":true,"img":"assets/av/e04.webp"},{"id":"av_e05","type":"avatar","sub":"meme","tier":1,"name":"側眼瞄","price":10,"onSale":true,"img":"assets/av/e05.webp"},{"id":"av_e06","type":"avatar","sub":"meme","tier":1,"name":"仰望天空","price":10,"onSale":true,"img":"assets/av/e06.webp"},{"id":"av_e07","type":"avatar","sub":"meme","tier":1,"name":"已躺平","price":10,"onSale":true,"img":"assets/av/e07.webp"},{"id":"av_e08","type":"avatar","sub":"meme","tier":1,"name":"金鍊奶茶哥","price":10,"onSale":true,"img":"assets/av/e08.webp"},{"id":"av_e09","type":"avatar","sub":"meme","tier":1,"name":"奶茶大","price":10,"onSale":true,"img":"assets/av/e09.webp"},{"id":"av_e10","type":"avatar","sub":"meme","tier":1,"name":"人生就是爽","price":10,"onSale":true,"img":"assets/av/e10.webp"},{"id":"av_u01","type":"avatar","sub":"ur","tier":2,"name":"深淵藍焰守護者","price":500,"onSale":false,"img":"assets/av/u01.webp"},{"id":"av_u02","type":"avatar","sub":"ur","tier":2,"name":"銀翼機甲王牌","price":500,"onSale":false,"img":"assets/av/u02.webp"},{"id":"av_u03","type":"avatar","sub":"ur","tier":2,"name":"太陽女帝","price":500,"onSale":false,"img":"assets/av/u03.webp"},{"id":"av_u04","type":"avatar","sub":"ur","tier":2,"name":"月下紫晶女王","price":500,"onSale":false,"img":"assets/av/u04.webp"},{"id":"av_u05","type":"avatar","sub":"ur","tier":2,"name":"赤焰鬼角","price":500,"onSale":false,"img":"assets/av/u05.webp"},{"id":"av_x01","type":"avatar","sub":"god","tier":4,"name":"終焉神域","price":null,"onSale":false,"img":"assets/av/x01.webp"},{"id":"bg_01","type":"bg","tier":1,"name":"極光冰城","price":450,"onSale":true,"img":"assets/bg/g01.webp"},{"id":"bg_02","type":"bg","tier":1,"name":"聖環殘殿","price":450,"onSale":true,"img":"assets/bg/g02.webp"},{"id":"bg_03","type":"bg","tier":1,"name":"鎏金天庭","price":450,"onSale":true,"img":"assets/bg/g03.webp"},{"id":"bg_04","type":"bg","tier":1,"name":"月下神社","price":450,"onSale":true,"img":"assets/bg/g04.webp"},{"id":"bg_05","type":"bg","tier":1,"name":"深淵聖殿","price":450,"onSale":true,"img":"assets/bg/g05.webp"},{"id":"bg_06","type":"bg","tier":1,"name":"星環遺跡","price":450,"onSale":true,"img":"assets/bg/g06.webp"},{"id":"bg_07","type":"bg","tier":1,"name":"黑洞幻境","price":450,"onSale":true,"img":"assets/bg/g07.webp"},{"id":"bg_08","type":"bg","tier":1,"name":"紫晶王國","price":450,"onSale":true,"img":"assets/bg/g08.webp"},{"id":"bg_09","type":"bg","tier":1,"name":"血月魔環","price":450,"onSale":true,"img":"assets/bg/g09.webp"},{"id":"bg_10","type":"bg","tier":1,"name":"機甲遺城","price":450,"onSale":true,"img":"assets/bg/g10.webp"},{"id":"bk_01","type":"back","tier":3,"name":"白羽神性","price":null,"onSale":false,"img":"assets/back/b01.webp"},{"id":"bk_02","type":"back","tier":3,"name":"赤月終焉","price":null,"onSale":false,"img":"assets/back/b02.webp"},{"id":"bk_03","type":"back","tier":3,"name":"深海幻夢","price":null,"onSale":false,"img":"assets/back/b03.webp"},{"id":"bk_04","type":"back","tier":3,"name":"神之救贖","price":null,"onSale":false,"img":"assets/back/b04.webp"},{"id":"bk_05","type":"back","tier":3,"name":"狂亂終局","price":null,"onSale":false,"img":"assets/back/b05.webp"},{"id":"bk_06","type":"back","tier":3,"name":"虛無無限","price":null,"onSale":false,"img":"assets/back/b06.webp"},{"id":"em_taunt","type":"emote","name":"嘲諷包","price":30,"onSale":true,"list":["就這？","謝謝老闆","你在怕","穩了"]},{"id":"em_drama","type":"emote","name":"戲劇包","price":30,"onSale":true,"list":["我的天","心臟不好","這也能跟？","再來一把"]},{"id":"card_rename","type":"card","sub":"rename","name":"星輝改名卡","price":30,"onSale":true,"img":"assets/item/c01.webp","desc":"改一次名字"},{"id":"card_seat","type":"card","sub":"seat","name":"星界換座位卡","price":10,"onSale":true,"img":"assets/item/c02.webp","desc":"兩手之間跟桌上任何人換位子，對方有卡的話會被擋下"},{"id":"card_vanity","type":"card","sub":"vanity","name":"全新身份卡","price":100,"onSale":true,"img":"assets/item/c05.webp","desc":"設定 1 到 7 位數的靚號，顯示在牌桌、排行榜和個人頁"},{"id":"card_wild","type":"card","sub":"wild","name":"萬象隨心","price":null,"onSale":false,"img":"assets/item/c04.webp","desc":"功能尚未開放"},{"id":"key_1","type":"key","rarity":1,"name":"稀有鑰匙・冰霜星輝","price":5,"onSale":true,"img":"assets/item/k01.webp"},{"id":"chest_1","type":"chest","rarity":1,"name":"稀有寶箱・秘境藍晶","price":null,"onSale":false,"img":"assets/item/ch01.webp","rewards":[{"kind":"stars","min":20,"max":40,"weight":1}]},{"id":"key_2","type":"key","rarity":2,"name":"極稀有鑰匙・月影紫晶","price":10,"onSale":true,"img":"assets/item/k02.webp"},{"id":"chest_2","type":"chest","rarity":2,"name":"極稀有寶箱・月影紫晶","price":null,"onSale":false,"img":"assets/item/ch02.webp","rewards":[{"kind":"stars","min":40,"max":80,"weight":1}]},{"id":"key_3","type":"key","rarity":3,"name":"史詩鑰匙・血月煉獄","price":20,"onSale":true,"img":"assets/item/k03.webp"},{"id":"chest_3","type":"chest","rarity":3,"name":"史詩寶箱・血月惡魔","price":null,"onSale":false,"img":"assets/item/ch03.webp","rewards":[{"kind":"stars","min":80,"max":150,"weight":1}]},{"id":"key_4","type":"key","rarity":4,"name":"傳奇鑰匙・星穹王座","price":35,"onSale":true,"img":"assets/item/k07.webp"},{"id":"chest_4","type":"chest","rarity":4,"name":"傳奇寶箱・霜晶王座","price":null,"onSale":false,"img":"assets/item/ch05.webp","rewards":[{"kind":"stars","min":150,"max":250,"weight":1}]},{"id":"key_5","type":"key","rarity":5,"name":"神話鑰匙・天界神聖","price":50,"onSale":true,"img":"assets/item/k04.webp"},{"id":"chest_5","type":"chest","rarity":5,"name":"神話寶箱・天界璀璨","price":null,"onSale":false,"img":"assets/item/ch04.webp","rewards":[{"kind":"stars","min":250,"max":400,"weight":1}]},{"id":"key_6","type":"key","rarity":6,"name":"神秘鑰匙・宇宙星辰","price":null,"onSale":false,"img":"assets/item/k06.webp"},{"id":"chest_6","type":"chest","rarity":6,"name":"神秘寶箱・星界深淵","price":null,"onSale":false,"img":"assets/item/ch06.webp","rewards":[{"kind":"stars","min":400,"max":700,"weight":1}]},{"id":"key_7","type":"key","rarity":7,"name":"管理員鑰匙・熔火龍王","price":null,"onSale":false,"img":"assets/item/k05.webp"},{"id":"chest_7","type":"chest","rarity":7,"name":"管理員寶箱・熔岩龍焰","price":null,"onSale":false,"img":"assets/item/ch07.webp","rewards":[{"kind":"stars","min":700,"max":1000,"weight":1}]}];
+var DEFAULT_ITEMS = [{"id":"av_f01","type":"avatar","sub":"female","tier":1,"name":"翠影書記","price":120,"onSale":true,"img":"assets/av/f01.webp"},{"id":"av_f02","type":"avatar","sub":"female","tier":1,"name":"夜藍蝶結","price":120,"onSale":true,"img":"assets/av/f02.webp"},{"id":"av_f03","type":"avatar","sub":"female","tier":1,"name":"碧潮少女","price":120,"onSale":true,"img":"assets/av/f03.webp"},{"id":"av_f04","type":"avatar","sub":"female","tier":1,"name":"緋月魔女","price":120,"onSale":true,"img":"assets/av/f04.webp"},{"id":"av_f05","type":"avatar","sub":"female","tier":1,"name":"銀羽紫瞳","price":120,"onSale":true,"img":"assets/av/f05.webp"},{"id":"av_f06","type":"avatar","sub":"female","tier":1,"name":"櫻粉惡魔","price":120,"onSale":true,"img":"assets/av/f06.webp"},{"id":"av_f07","type":"avatar","sub":"female","tier":1,"name":"赤焰千金","price":120,"onSale":true,"img":"assets/av/f07.webp"},{"id":"av_f08","type":"avatar","sub":"female","tier":1,"name":"紫夜吟遊","price":120,"onSale":true,"img":"assets/av/f08.webp"},{"id":"av_f09","type":"avatar","sub":"female","tier":1,"name":"金輝學姊","price":120,"onSale":true,"img":"assets/av/f09.webp"},{"id":"av_f10","type":"avatar","sub":"female","tier":1,"name":"月光白雪","price":120,"onSale":true,"img":"assets/av/f10.webp"},{"id":"av_m01","type":"avatar","sub":"male","tier":1,"name":"白髮緋瞳","price":120,"onSale":true,"img":"assets/av/m01.webp"},{"id":"av_m02","type":"avatar","sub":"male","tier":1,"name":"赤髮狂狼","price":120,"onSale":true,"img":"assets/av/m02.webp"},{"id":"av_m03","type":"avatar","sub":"male","tier":1,"name":"藍夜寡言","price":120,"onSale":true,"img":"assets/av/m03.webp"},{"id":"av_m04","type":"avatar","sub":"male","tier":1,"name":"翡翠騎士","price":120,"onSale":true,"img":"assets/av/m04.webp"},{"id":"av_m05","type":"avatar","sub":"male","tier":1,"name":"紫魅學長","price":120,"onSale":true,"img":"assets/av/m05.webp"},{"id":"av_m06","type":"avatar","sub":"male","tier":1,"name":"金獅貴公子","price":120,"onSale":true,"img":"assets/av/m06.webp"},{"id":"av_m07","type":"avatar","sub":"male","tier":1,"name":"銀月劍士","price":120,"onSale":true,"img":"assets/av/m07.webp"},{"id":"av_m08","type":"avatar","sub":"male","tier":1,"name":"雙色惡魔","price":120,"onSale":true,"img":"assets/av/m08.webp"},{"id":"av_m09","type":"avatar","sub":"male","tier":1,"name":"黑夜低語","price":120,"onSale":true,"img":"assets/av/m09.webp"},{"id":"av_m10","type":"avatar","sub":"male","tier":1,"name":"碧影刺客","price":120,"onSale":true,"img":"assets/av/m10.webp"},{"id":"av_e01","type":"avatar","sub":"meme","tier":1,"name":"就很爽","price":10,"onSale":true,"img":"assets/av/e01.webp"},{"id":"av_e02","type":"avatar","sub":"meme","tier":1,"name":"嫌棄臉","price":10,"onSale":true,"img":"assets/av/e02.webp"},{"id":"av_e03","type":"avatar","sub":"meme","tier":1,"name":"你很棒","price":10,"onSale":true,"img":"assets/av/e03.webp"},{"id":"av_e04","type":"avatar","sub":"meme","tier":1,"name":"墨鏡大佬","price":10,"onSale":true,"img":"assets/av/e04.webp"},{"id":"av_e05","type":"avatar","sub":"meme","tier":1,"name":"側眼瞄","price":10,"onSale":true,"img":"assets/av/e05.webp"},{"id":"av_e06","type":"avatar","sub":"meme","tier":1,"name":"仰望天空","price":10,"onSale":true,"img":"assets/av/e06.webp"},{"id":"av_e07","type":"avatar","sub":"meme","tier":1,"name":"已躺平","price":10,"onSale":true,"img":"assets/av/e07.webp"},{"id":"av_e08","type":"avatar","sub":"meme","tier":1,"name":"金鍊奶茶哥","price":10,"onSale":true,"img":"assets/av/e08.webp"},{"id":"av_e09","type":"avatar","sub":"meme","tier":1,"name":"奶茶大","price":10,"onSale":true,"img":"assets/av/e09.webp"},{"id":"av_e10","type":"avatar","sub":"meme","tier":1,"name":"人生就是爽","price":10,"onSale":true,"img":"assets/av/e10.webp"},{"id":"av_u01","type":"avatar","sub":"ur","tier":2,"name":"深淵藍焰守護者","price":500,"onSale":false,"img":"assets/av/u01.webp"},{"id":"av_u02","type":"avatar","sub":"ur","tier":2,"name":"銀翼機甲王牌","price":500,"onSale":false,"img":"assets/av/u02.webp"},{"id":"av_u03","type":"avatar","sub":"ur","tier":2,"name":"太陽女帝","price":500,"onSale":false,"img":"assets/av/u03.webp"},{"id":"av_u04","type":"avatar","sub":"ur","tier":2,"name":"月下紫晶女王","price":500,"onSale":false,"img":"assets/av/u04.webp"},{"id":"av_u05","type":"avatar","sub":"ur","tier":2,"name":"赤焰鬼角","price":500,"onSale":false,"img":"assets/av/u05.webp"},{"id":"av_x01","type":"avatar","sub":"god","tier":4,"name":"終焉神域","price":null,"onSale":false,"img":"assets/av/x01.webp"},{"id":"bg_01","type":"bg","tier":1,"name":"極光冰城","price":450,"onSale":true,"img":"assets/bg/g01.webp"},{"id":"bg_02","type":"bg","tier":1,"name":"聖環殘殿","price":450,"onSale":true,"img":"assets/bg/g02.webp"},{"id":"bg_03","type":"bg","tier":1,"name":"鎏金天庭","price":450,"onSale":true,"img":"assets/bg/g03.webp"},{"id":"bg_04","type":"bg","tier":1,"name":"月下神社","price":450,"onSale":true,"img":"assets/bg/g04.webp"},{"id":"bg_05","type":"bg","tier":1,"name":"深淵聖殿","price":450,"onSale":true,"img":"assets/bg/g05.webp"},{"id":"bg_06","type":"bg","tier":1,"name":"星環遺跡","price":450,"onSale":true,"img":"assets/bg/g06.webp"},{"id":"bg_07","type":"bg","tier":1,"name":"黑洞幻境","price":450,"onSale":true,"img":"assets/bg/g07.webp"},{"id":"bg_08","type":"bg","tier":1,"name":"紫晶王國","price":450,"onSale":true,"img":"assets/bg/g08.webp"},{"id":"bg_09","type":"bg","tier":1,"name":"血月魔環","price":450,"onSale":true,"img":"assets/bg/g09.webp"},{"id":"bg_10","type":"bg","tier":1,"name":"機甲遺城","price":450,"onSale":true,"img":"assets/bg/g10.webp"},{"id":"bk_01","type":"back","tier":3,"name":"白羽神性","price":null,"onSale":false,"img":"assets/back/b01.webp"},{"id":"bk_02","type":"back","tier":3,"name":"赤月終焉","price":null,"onSale":false,"img":"assets/back/b02.webp"},{"id":"bk_03","type":"back","tier":3,"name":"深海幻夢","price":null,"onSale":false,"img":"assets/back/b03.webp"},{"id":"bk_04","type":"back","tier":3,"name":"神之救贖","price":null,"onSale":false,"img":"assets/back/b04.webp"},{"id":"bk_05","type":"back","tier":3,"name":"狂亂終局","price":null,"onSale":false,"img":"assets/back/b05.webp"},{"id":"bk_06","type":"back","tier":3,"name":"虛無無限","price":null,"onSale":false,"img":"assets/back/b06.webp"},{"id":"em_taunt","type":"emote","name":"嘲諷包","price":30,"onSale":true,"list":["就這？","謝謝老闆","你在怕","穩了"]},{"id":"em_drama","type":"emote","name":"戲劇包","price":30,"onSale":true,"list":["我的天","心臟不好","這也能跟？","再來一把"]},{"id":"card_rename","type":"card","sub":"rename","name":"星輝改名卡","price":30,"onSale":true,"img":"assets/item/c01.webp","desc":"改一次名字"},{"id":"card_seat","type":"card","sub":"seat","name":"星界換座位卡","price":10,"onSale":true,"img":"assets/item/c02.webp","desc":"兩手之間跟桌上任何人換位子，對方有卡的話會被擋下"},{"id":"card_vanity","type":"card","sub":"vanity","name":"全新身份卡","price":100,"onSale":true,"img":"assets/item/c05.webp","desc":"設定 1 到 7 位數的靚號，顯示在牌桌、排行榜和個人頁"},{"id":"card_wild","type":"card","sub":"wild","name":"萬象隨心","price":null,"onSale":false,"img":"assets/item/c04.webp","desc":"功能尚未開放"},{"id":"key_1","type":"key","rarity":1,"name":"稀有鑰匙・冰霜星輝","price":5,"onSale":true,"img":"assets/item/k01.webp"},{"id":"chest_1","type":"chest","rarity":1,"name":"稀有寶箱・秘境藍晶","price":null,"onSale":false,"img":"assets/item/ch01.webp","rewards":[{"kind":"stars","min":20,"max":40,"weight":1}]},{"id":"key_2","type":"key","rarity":2,"name":"極稀有鑰匙・月影紫晶","price":10,"onSale":true,"img":"assets/item/k02.webp"},{"id":"chest_2","type":"chest","rarity":2,"name":"極稀有寶箱・月影紫晶","price":null,"onSale":false,"img":"assets/item/ch02.webp","rewards":[{"kind":"stars","min":40,"max":80,"weight":1}]},{"id":"key_3","type":"key","rarity":3,"name":"史詩鑰匙・血月煉獄","price":20,"onSale":true,"img":"assets/item/k03.webp"},{"id":"chest_3","type":"chest","rarity":3,"name":"史詩寶箱・血月惡魔","price":null,"onSale":false,"img":"assets/item/ch03.webp","rewards":[{"kind":"stars","min":80,"max":150,"weight":1}]},{"id":"key_4","type":"key","rarity":4,"name":"傳奇鑰匙・星穹王座","price":35,"onSale":true,"img":"assets/item/k07.webp"},{"id":"chest_4","type":"chest","rarity":4,"name":"傳奇寶箱・霜晶王座","price":null,"onSale":false,"img":"assets/item/ch05.webp","rewards":[{"kind":"stars","min":150,"max":250,"weight":1}]},{"id":"key_5","type":"key","rarity":5,"name":"神話鑰匙・天界神聖","price":50,"onSale":true,"img":"assets/item/k04.webp"},{"id":"chest_5","type":"chest","rarity":5,"name":"神話寶箱・天界璀璨","price":null,"onSale":false,"img":"assets/item/ch04.webp","rewards":[{"kind":"stars","min":250,"max":400,"weight":1}]},{"id":"key_6","type":"key","rarity":6,"name":"神秘鑰匙・宇宙星辰","price":null,"onSale":false,"img":"assets/item/k06.webp"},{"id":"chest_6","type":"chest","rarity":6,"name":"神秘寶箱・星界深淵","price":null,"onSale":false,"img":"assets/item/ch06.webp","rewards":[{"kind":"stars","min":400,"max":700,"weight":1}]},{"id":"key_7","type":"key","rarity":7,"name":"管理員鑰匙・熔火龍王","price":null,"onSale":false,"img":"assets/item/k05.webp"},{"id":"chest_7","type":"chest","rarity":7,"name":"管理員寶箱・熔岩龍焰","price":null,"onSale":false,"img":"assets/item/ch07.webp","rewards":[{"kind":"stars","min":700,"max":1000,"weight":1}]},{"id":"dex_01","type":"dex","sub":"doodle","name":"缺角的聖杯","price":null,"onSale":false,"img":"assets/dex/d01.png","desc":"塗鴉秘寶館收藏"},{"id":"dex_02","type":"dex","sub":"doodle","name":"看不懂的真跡","price":null,"onSale":false,"img":"assets/dex/d02.png","desc":"塗鴉秘寶館收藏"},{"id":"dex_03","type":"dex","sub":"doodle","name":"成精的高麗菜","price":null,"onSale":false,"img":"assets/dex/d03.png","desc":"塗鴉秘寶館收藏"},{"id":"dex_04","type":"dex","sub":"doodle","name":"奏樂令旗","price":null,"onSale":false,"img":"assets/dex/d04.png","desc":"塗鴉秘寶館收藏"},{"id":"dex_05","type":"dex","sub":"doodle","name":"綠豆勇者","price":null,"onSale":false,"img":"assets/dex/d05.png","desc":"塗鴉秘寶館收藏"},{"id":"dex_06","type":"dex","sub":"doodle","name":"藏寶圖殘卷","price":null,"onSale":false,"img":"assets/dex/d06.png","desc":"塗鴉秘寶館收藏"},{"id":"dex_07","type":"dex","sub":"doodle","name":"見紅彎刀","price":null,"onSale":false,"img":"assets/dex/d07.png","desc":"塗鴉秘寶館收藏"}];
 var BASIC_EMOTES = ["👍","😂","😮","😡","🤡","🔥","🙏","😭"];
 var EDITABLE = ["name","price","onSale","tier","desc","stock","perUser","startAt","endAt","salvage","rewards","sub"];
 var RARITY = ["","稀有","極稀有","史詩","傳奇","神話","神秘","管理員"];
@@ -1296,7 +1377,7 @@ function rebuildItems(doc) {
 rebuildItems(null);
 
 var STACK = { card: 1, key: 1, chest: 1 };
-var TYPE_TXT = { avatar: '頭像', bg: '背景', back: '卡背', emote: '表情包', card: '道具', key: '鑰匙', chest: '寶箱' };
+var TYPE_TXT = { avatar: '頭像', bg: '背景', back: '卡背', emote: '表情包', card: '道具', key: '鑰匙', chest: '寶箱', dex: '塗鴉' };
 var SUB_TXT = { male: '男主', female: '女主', meme: '迷因', ur: 'UR', god: '神域' };
 var TIER_TXT = { 1: '一階', 2: '二階', 3: '三階', 4: '四階' };
 var RARITY_COLOR = ['', '#58B8FF', '#B26BFF', '#FF4D6D', '#8FE8FF', '#FFD37A', '#9D7BFF', '#FF8A3D'];
@@ -1341,7 +1422,7 @@ function itemThumb(it, size) {
 
 function ownedList(p, type) {
   var u = (p && p.unlocked) || {};
-  var key = { avatar: 'avatars', frame: 'frames', bg: 'bgs', back: 'backs', emote: 'emotes' }[type];
+  var key = { avatar: 'avatars', frame: 'frames', bg: 'bgs', back: 'backs', emote: 'emotes', dex: 'dex' }[type];
   return Array.isArray(u[key]) ? u[key] : [];
 }
 function owns(p, it) { return !STACK[it.type] && ownedList(p, it.type).indexOf(it.id) >= 0; }
@@ -1996,7 +2077,13 @@ function renderPoker(force) {
   var H = st.hand, me = mySeat();
   var mine = PK.hole && PK.hole.handNo === H.no && me >= 0 && (H.phase !== 'idle' || (st.lastResult && st.lastResult.handNo === H.no))
     ? '<span class="lbl">你的牌</span>' + PK.hole.cards.map(function (c) { return cardHTML(c); }).join('') : '';
-  put('pkMine', mine, force);
+  put('pkMine', '', force);
+  var handOn = !!mine;
+  var hand = handOn
+    ? '<div class="hand-dock" id="handDock">' + cardBackHTML(S.player, 'dk1') + cardBackHTML(S.player, 'dk2') + '<span>按住看牌</span></div>' +
+      '<div class="peek" id="peek">' + PK.hole.cards.map(function (c) { return cardHTML(c, 'peek-c'); }).join('') + '</div>'
+    : '';
+  put('pkHand', hand, force);
   renderPokerBar(force);
   paintPokerClock();
 }
@@ -2006,6 +2093,7 @@ function renderSeats(force) {
   var felt = $('pkFelt'), W = felt.clientWidth || 360, Ht = felt.clientHeight || 420;
   felt.classList.toggle('short', Ht < 400);
   var w = Math.max(62, Math.min(84, W / 4.6));
+  felt.style.setProperty('--bcw', Math.max(24, Math.min(40, Math.floor((W - 2 * w - 36) / 5.4))) + 'px');
   var rx = 50 - (w / 2 + 4) / W * 100, ry = 50 - 58 / Ht * 100;
   PK.seatPos = {};
   var lr = st.lastResult && H.phase === 'idle' && st.lastResult.handNo === H.no ? st.lastResult : null;
@@ -2135,6 +2223,16 @@ function renderPokerBar(force) {
   }
   paintPokerClock();
 }
+
+(function () {
+  var felt = $('pkFelt');
+  function show(e) { var d = e.target.closest('#handDock'); if (!d) return; e.preventDefault(); felt.classList.add('peeking'); }
+  function hide() { felt.classList.remove('peeking'); }
+  felt.addEventListener('pointerdown', show);
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (ev) { window.addEventListener(ev, hide); });
+  felt.addEventListener('contextmenu', function (e) { if (e.target.closest('#handDock')) e.preventDefault(); });
+  felt.addEventListener('click', function (e) { var r = e.target.closest('[data-rules]'); if (r) sheetRules('poker'); });
+})();
 
 $('pkSeats').addEventListener('click', function (e) {
   var el = e.target.closest('[data-pid]');
@@ -2435,13 +2533,14 @@ function sheetLock() {
    小遊戲：21 點、射龍門、拉霸機
    ===================================================================== */
 var GAMES_DEF = { gate: { enabled: true, minBet: 200, maxBet: 5000, edge: 0.05 }, slot: { enabled: true, bets: [100, 200, 500, 1000] },
-  bj: { enabled: true, minBet: 200, maxBet: 5000, betSec: 30, turnSec: 20, resultSec: 6 } };
+  bj: { enabled: true, minBet: 200, maxBet: 5000, betSec: 30, turnSec: 20, resultSec: 6 },
+  dice: { enabled: true, minBet: 100, maxTotal: 10000 } };
 function gcfg(k) { return Object.assign({}, GAMES_DEF[k], ((S.cfg && S.cfg.games) || {})[k]); }
 
 function gameHead(title, right) {
   return '<div class="g-head"><button class="g-back" data-gback>‹ 大廳</button><h2>' + title + '</h2><div class="g-r">' + (right || '') + '</div></div>';
 }
-function bindBack(root) { var b = root.querySelector('[data-gback]'); if (b) b.onclick = function () { switchTab('home'); }; }
+function bindBack(root) { var b = root.querySelector('[data-gback]'); if (b) b.onclick = function () { switchTab('home'); }; bindRules(root); }
 function walletLine() { return '<div class="g-wallet">錢包 <b>' + fmt(S.acc ? S.acc.wallet : 0) + '</b></div>'; }
 function backCardHTML() { return '<div class="pc hole"></div>'; }
 
@@ -2458,12 +2557,12 @@ var BJ_RES = { win: '贏', blackjack: '黑傑克', push: '平手', lose: '輸', 
 
 function renderBj(force) {
   var st = BJ.st, c = gcfg('bj'), me = bjSeat();
-  var h = gameHead('21 點', me >= 0 ? '<button class="mini red" data-bj="leave">離座</button>' : '');
+  var h = gameHead('21 點', (me >= 0 ? '<button class="mini red" data-bj="leave">離座</button>' : '') + rulesBtn('bj'));
   if (!st) st = { seats: [null, null, null, null, null], round: { phase: 'idle', bets: {}, dealer: [] } };
   var R = st.round, bets = R.bets || {};
   var dealerCards = (R.dealer || []).map(function (x) { return cardHTML(x); }).join('') + (R.dealerHidden ? backCardHTML() : '');
   h += '<div class="bj-table">' +
-    '<div class="bj-dealer"><span class="lbl">荷官</span><div class="bj-cards">' + (dealerCards || '<div class="pc slot"></div><div class="pc slot"></div>') + '</div>' +
+    '<div class="bj-dealer"><div class="bj-dealer-id">' + dealerAvatar(34) + '<span class="lbl">荷官</span></div><div class="bj-cards">' + (dealerCards || '<div class="pc slot"></div><div class="pc slot"></div>') + '</div>' +
       '<div class="bj-val">' + ((R.dealer || []).length && !R.dealerHidden ? bjHV(R.dealer) + ' 點' : R.dealerHidden ? bjHV(R.dealer) + ' ＋ ?' : '') + '</div></div>' +
     '<div class="bj-status" id="bjStatus"></div>' +
     '<div class="bj-seats">';
@@ -2558,7 +2657,7 @@ function gateOdds(lo, hi, guess, edge) {
 
 function renderGate(force) {
   var c = gcfg('gate'), posts = GT.posts || (S.acc && S.acc.gate && S.acc.gate.posts) || null;
-  var h = gameHead('射龍門', '<button class="mini" data-gt="rules">玩法</button>');
+  var h = gameHead('射龍門', rulesBtn('gate'));
   var lo, hi, pair, adj;
   if (posts) { lo = Math.min(gRank(posts[0]), gRank(posts[1])); hi = Math.max(gRank(posts[0]), gRank(posts[1])); pair = lo === hi; adj = hi - lo === 1; }
   var last = GT.last;
@@ -2635,7 +2734,7 @@ function symHTML(id) { return '<span class="sym s-' + id + '">' + SLOT_SYM[id] +
 
 function renderSlot(force) {
   var c = gcfg('slot'), bet = SL.bet && c.bets.indexOf(SL.bet) >= 0 ? SL.bet : c.bets[0];
-  var h = gameHead('拉霸機', '');
+  var h = gameHead('拉霸機', rulesBtn('slot'));
   h += '<div class="slot-mach"><div class="slot-win">' +
     SL.reels.map(function (r, i) { return '<div class="reel" id="reel' + i + '"><div class="strip">' + symHTML(r) + '</div></div>'; }).join('') +
     '<div class="payline"></div></div>' +
@@ -2699,16 +2798,227 @@ function sheetGames() {
       f('bjMin', '最低下注', bj.minBet) + f('bjMax', '最高下注', bj.maxBet) + f('bjBet', '下注倒數秒數', bj.betSec) + f('bjTurn', '思考秒數', bj.turnSec) + '</div>' +
     '<div class="stat-h">射龍門</div><div class="fld-grid"><div class="fld"><label for="gtOn">狀態</label>' + sel('gtOn', gt.enabled) + '</div>' + f('gtEdge', '莊家優勢 %', Math.round(gt.edge * 1000) / 10) +
       f('gtMin', '最低下注', gt.minBet) + f('gtMax', '最高下注', gt.maxBet) + '</div>' +
-    '<div class="stat-h">拉霸機</div><div class="fld-grid"><div class="fld"><label for="slOn">狀態</label>' + sel('slOn', sl.enabled) + '</div>' + f('slBets', '下注選項（逗號分開）', sl.bets.join(',')) + '</div>',
+    '<div class="stat-h">拉霸機</div><div class="fld-grid"><div class="fld"><label for="slOn">狀態</label>' + sel('slOn', sl.enabled) + '</div>' + f('slBets', '下注選項（逗號分開）', sl.bets.join(',')) + '</div>' +
+    '<div class="stat-h">骰寶</div><div class="fld-grid"><div class="fld"><label for="dcOn">狀態</label>' + sel('dcOn', gcfg('dice').enabled) + '</div><div></div>' + f('dcMin', '每格最低下注', gcfg('dice').minBet) + f('dcMax', '一次總上限', gcfg('dice').maxTotal) + '</div>',
     '儲存', '', function () {
       var n = function (id) { return Number($(id).value); };
       var bets = $('slBets').value.split(/[,，\s]+/).filter(Boolean).map(Number);
       return call('adminGames', {
         bj: { enabled: $('bjOn').value === '1', minBet: n('bjMin'), maxBet: n('bjMax'), betSec: n('bjBet'), turnSec: n('bjTurn') },
         gate: { enabled: $('gtOn').value === '1', minBet: n('gtMin'), maxBet: n('gtMax'), edge: n('gtEdge') / 100 },
-        slot: { enabled: $('slOn').value === '1', bets: bets }
+        slot: { enabled: $('slOn').value === '1', bets: bets },
+        dice: { enabled: $('dcOn').value === '1', minBet: n('dcMin'), maxTotal: n('dcMax') }
       }).then(function () { return '已儲存'; });
     });
+}
+
+/* =====================================================================
+   v9：骰寶、遊戲說明、圖鑑
+   ===================================================================== */
+function rulesBtn(game) { return '<button class="rules-btn" data-rules="' + game + '" aria-label="遊戲說明">?</button>'; }
+function bindRules(root) {
+  root.querySelectorAll('[data-rules]').forEach(function (b) { b.onclick = function () { sheetRules(b.getAttribute('data-rules')); }; });
+}
+function ruleRows(rows) {
+  return '<div class="grp">' + rows.map(function (r) { return '<div class="row"><span class="k">' + r[0] + '<small>' + r[1] + '</small></span></div>'; }).join('') + '</div>';
+}
+function handEx(codes) {
+  return '<span class="hand-ex">' + codes.split(' ').map(function (x) {
+    var r = '23456789TJQKA'.indexOf(x[0]), su = 'shdc'.indexOf(x[1]);
+    return cardHTML(r * 4 + su, 'mini');
+  }).join('') + '</span>';
+}
+
+function sheetRules(game) {
+  var h = '';
+  if (game === 'poker') {
+    var ranks = [
+      ['皇家同花順', '同花色的 10、J、Q、K、A', 'Ts Js Qs Ks As'],
+      ['同花順', '同花色的連續五張', '5h 6h 7h 8h 9h'],
+      ['四條', '四張一樣的點數', '9s 9h 9d 9c 2s'],
+      ['葫蘆', '三條加一對', 'Ks Kh Kd 4c 4s'],
+      ['同花', '同花色的任意五張', '2d 7d 9d Jd Ad'],
+      ['順子', '連續五張，花色不限；A 可以當 1', '5s 6h 7d 8c 9s'],
+      ['三條', '三張一樣的點數', '7s 7h 7d Kc 2s'],
+      ['兩對', '兩組對子', 'Js Jh 4d 4c As'],
+      ['一對', '一組對子', 'Qs Qh 9d 5c 2s'],
+      ['高牌', '什麼都沒有，比最大的那張', 'As Jh 8d 5c 3s']
+    ];
+    h = '<h3>德州撲克說明</h3><p class="desc">每人兩張底牌，加上五張公牌，選最好的五張比大小。</p>' +
+      '<div class="stat-h">牌型大小（由大到小）</div><div class="grp hand-rank">' + ranks.map(function (r, i) {
+        return '<div class="row"><span class="rk-no">' + (i + 1) + '</span><span class="k">' + r[0] + '<small>' + r[1] + '</small></span>' + handEx(r[2]) + '</div>';
+      }).join('') + '</div>' +
+      '<div class="stat-h">流程</div>' + ruleRows([
+        ['盲注', '莊家下一位付小盲、再下一位付大盲；兩人對打時莊家是小盲。每手莊家往下一位移動'],
+        ['發牌', '每人兩張底牌，接著依序翻牌（3 張）、轉牌（1 張）、河牌（1 張），每次都有一輪下注'],
+        ['行動順序', '翻牌前從大盲下一位開始；翻牌後從莊家下一位開始'],
+        ['動作', '蓋牌、過牌、跟注、加注、全下。加注至少要加到「目前注額＋上一次加的量」'],
+        ['比牌', '只看最好的五張；點數相同就平分底池，花色不分大小'],
+        ['全下與邊池', '籌碼不夠跟的人可以全下，只能贏自己跟得到的那部分，多出來的另外成為邊池'],
+        ['看自己的牌', '發牌後你的牌收在牌桌右下角，按住就會翻開，放開收回']
+      ]);
+  } else if (game === 'bj') {
+    var c = gcfg('bj');
+    h = '<h3>21 點說明</h3>' + ruleRows([
+      ['目標', '手上的點數比荷官接近 21，但不能超過 21'],
+      ['點數', '2～10 照牌面，J、Q、K 算 10，A 算 1 或 11'],
+      ['流程', '坐下後下注（' + fmt(c.minBet) + '～' + fmt(c.maxBet) + '），第一個人下注後 ' + c.betSec + ' 秒發牌'],
+      ['要牌／停牌', '輪到你時可以一直要牌，超過 21 就爆牌；每人 ' + c.turnSec + ' 秒，超時自動停牌'],
+      ['加倍', '只有前兩張可以加倍：再押一樣的注，只補一張牌'],
+      ['荷官', '所有人結束後荷官亮牌，未滿 17 點一定要補，17 點以上停'],
+      ['賠率', '黑傑克（前兩張就 21）賠 1.5 倍、贏賠 1 倍、平手退注、爆牌或比荷官小輸']
+    ]);
+  } else if (game === 'gate') {
+    var g = gcfg('gate');
+    h = '<h3>射龍門說明</h3>' + ruleRows([
+      ['1. 發門柱', '翻兩張牌當門柱。A 最大、2 最小，花色不影響'],
+      ['2. 決定', '不想射可以免費換一副；兩柱相鄰（例如 7 和 8）中間沒牌，只能換'],
+      ['3. 射門', '第三張落在中間贏；在外面輸 1 倍；剛好撞到門柱輸 2 倍'],
+      ['兩柱一樣', '猜第三張比柱子大或小，猜對贏、猜錯輸 1 倍、一樣大輸 2 倍'],
+      ['賠率', '中間越窄越難中賠越多，越寬越好中賠越少，下注前會顯示'],
+      ['下注', '每次 ' + fmt(g.minBet) + '～' + fmt(g.maxBet) + '，錢包至少要有下注的 2 倍']
+    ]);
+  } else if (game === 'slot') {
+    h = '<h3>拉霸機說明</h3>' + ruleRows([
+      ['玩法', '選下注金額按 SPIN，三個輪子停下後看中間那一條線'],
+      ['三個一樣', '💎 280 倍、🪙 140 倍、7 90 倍、⭐ 35 倍、🔔 18 倍、🍋 10 倍、🍒 5 倍'],
+      ['櫻桃', '任兩個 🍒 2 倍；只有第一格是 🍒 退 0.4 倍'],
+      ['倍數', '倍數是拿回的總額，包含本金'],
+      ['回報', '理論回報約 94%，長期玩會小輸，當作娛樂就好']
+    ]);
+  } else if (game === 'dice') {
+    var d = gcfg('dice');
+    h = '<h3>骰寶說明</h3><p class="desc">三顆骰子，先下注再擲。可以同時押很多格，賠率是淨賺倍數。</p>' + ruleRows([
+      ['大／小', '總和 11～17 是大、4～10 是小，賠 1 倍；開出豹子通殺'],
+      ['單／雙', '總和單數或雙數，賠 1 倍；開出豹子通殺'],
+      ['全圍', '三顆一樣（任何點數），賠 30 倍'],
+      ['指定豹子', '三顆都是你押的點數，賠 180 倍'],
+      ['總和', '押中總和：4 或 17 賠 60、5 或 16 賠 30、6 或 15 賠 17、7 或 14 賠 12、8 或 13 賠 8、9～12 賠 6'],
+      ['單點', '押一個點數，出現 1 顆賠 1、2 顆賠 2、3 顆賠 3'],
+      ['下注', '每格最少 ' + fmt(d.minBet) + '，一次總共最多 ' + fmt(d.maxTotal)]
+    ]);
+  }
+  openSheet(h + '<div class="acts" style="margin-top:14px"><button class="btn ghost" type="button" data-close>知道了</button></div>', function (sh) {
+    sh.querySelector('[data-close]').onclick = closeSheet;
+  });
+}
+
+/* ---------- 骰寶 ---------- */
+var DC = { bets: {}, chip: 100, last: null, rolling: false };
+var DICE_TOTAL = { 4: 60, 5: 30, 6: 17, 7: 12, 8: 8, 9: 6, 10: 6, 11: 6, 12: 6, 13: 8, 14: 12, 15: 17, 16: 30, 17: 60 };
+var PIPS = { 1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8] };
+function dieHTML(n, cls) {
+  var h = '';
+  for (var i = 0; i < 9; i++) h += '<i' + (PIPS[n].indexOf(i) >= 0 ? ' class="on"' : '') + '></i>';
+  return '<div class="die' + (n === 1 || n === 4 ? ' red' : '') + (cls ? ' ' + cls : '') + '">' + h + '</div>';
+}
+function diceTotalBet() { var t = 0; Object.keys(DC.bets).forEach(function (k) { t += DC.bets[k]; }); return t; }
+function dcell(key, label, sub, cls) {
+  var amt = DC.bets[key], win = DC.last && DC.last.detail[key] > 0, lose = DC.last && DC.last.detail[key] === 0;
+  return '<button class="dc' + (cls ? ' ' + cls : '') + (win ? ' hit' : '') + (lose ? ' miss' : '') + '" data-dk="' + key + '">' +
+    '<b>' + label + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + (amt ? '<span class="chip">' + fmt(amt) + '</span>' : '') + '</button>';
+}
+
+function renderDice(force) {
+  var c = gcfg('dice'), last = DC.last;
+  var h = gameHead('骰寶', rulesBtn('dice'));
+  var dice = last ? last.dice : [4, 5, 6];
+  h += '<div class="dice-tray' + (DC.rolling ? ' rolling' : '') + '">' + dice.map(function (n, i) { return dieHTML(n, 'd' + i); }).join('') +
+    '<div class="dice-sum">' + (last && !DC.rolling ? '總和 <b>' + (dice[0] + dice[1] + dice[2]) + '</b>　' + (last.delta >= 0 ? '<span class="up">+' + fmt(last.delta) + '</span>' : '<span class="dn">' + fmt(last.delta) + '</span>') : DC.rolling ? '擲骰中…' : '下注後按「擲骰」') + '</div></div>';
+  h += '<div class="dboard">' +
+    '<div class="drow four">' + dcell('small', '小', '4-10　1倍') + dcell('odd', '單', '1倍') + dcell('even', '雙', '1倍') + dcell('big', '大', '11-17　1倍') + '</div>' +
+    '<div class="drow">' + dcell('any', '全圍', '任何豹子　30倍', 'wide') + '</div>' +
+    '<div class="drow six">' + [1, 2, 3, 4, 5, 6].map(function (n) { return dcell('tr' + n, '<span class="mini-dice">' + dieHTML(n, 'xs') + dieHTML(n, 'xs') + dieHTML(n, 'xs') + '</span>', '180倍', 'trip'); }).join('') + '</div>' +
+    '<div class="drow seven">' + [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17].map(function (t) { return dcell('t' + t, t, DICE_TOTAL[t] + '倍', 'tot'); }).join('') + '</div>' +
+    '<div class="drow six">' + [1, 2, 3, 4, 5, 6].map(function (n) { return dcell('s' + n, dieHTML(n, 'sm'), '1/2/3倍', 'single'); }).join('') + '</div>' +
+  '</div>';
+  var chips = [c.minBet, 500, 1000, 5000].filter(function (v, k, a) { return v >= c.minBet && a.indexOf(v) === k; });
+  var total = diceTotalBet();
+  h += '<div class="g-bar dice-bar">' + walletLine() +
+    '<div class="quick">' + chips.map(function (v) { return '<button data-dchip="' + v + '" class="' + (v === DC.chip ? 'on' : '') + '">' + fmt(v) + '</button>'; }).join('') + '</div>' +
+    (c.enabled ? '<div class="act-row"><button class="btn ghost" data-dact="clear"' + (total ? '' : ' disabled') + '>清除</button>' +
+      '<button class="btn" data-dact="roll"' + (total && !DC.rolling ? '' : ' disabled') + '>擲骰　' + fmt(total) + '</button></div>'
+      : '<div class="pk-wait">骰寶目前關閉中</div>') + '</div>';
+
+  if (put('vDice', h, force)) {
+    var root = $('vDice'); bindBack(root); bindRules(root);
+    root.querySelectorAll('[data-dchip]').forEach(function (b) { b.onclick = function () { DC.chip = +b.getAttribute('data-dchip'); renderDice(true); }; });
+    root.querySelectorAll('[data-dk]').forEach(function (b) {
+      b.onclick = function () {
+        if (DC.rolling) return;
+        if (DC.last) { DC.last = null; }
+        var k = b.getAttribute('data-dk');
+        if (diceTotalBet() + DC.chip > c.maxTotal) { toast('一次最多下 ' + fmt(c.maxTotal), 'bad'); return; }
+        DC.bets[k] = (DC.bets[k] || 0) + DC.chip;
+        renderDice(true);
+      };
+    });
+    root.querySelectorAll('[data-dact]').forEach(function (b) {
+      b.onclick = function () {
+        if (b.getAttribute('data-dact') === 'clear') { DC.bets = {}; DC.last = null; renderDice(true); return; }
+        if (S.acc && S.acc.wallet < diceTotalBet()) { toast('錢包不夠', 'bad'); return; }
+        DC.rolling = true; DC.last = null; renderDice(true);
+        var t0 = Date.now();
+        call('diceRoll', { bets: DC.bets }).then(function (r) {
+          setTimeout(function () {
+            DC.rolling = false; DC.last = r;
+            toast(r.delta > 0 ? '贏了 ' + fmt(r.delta) : r.delta === 0 ? '打平' : '輸了 ' + fmt(-r.delta), r.delta > 0 ? 'good' : '');
+            renderDice(true);
+          }, Math.max(0, 1100 - (Date.now() - t0)));
+        }).catch(function (e) { DC.rolling = false; toast(e.message, 'bad'); renderDice(true); });
+      };
+    });
+  }
+}
+
+/* ---------- 圖鑑 ---------- */
+var DEX_GROUPS = [
+  { type: 'avatar', name: '人物誌', desc: '遇見過的每一張臉' },
+  { type: 'bg', name: '世界地圖', desc: '去過的地方都會亮起來' },
+  { type: 'back', name: '牌背典藏', desc: '翻過來也要好看' },
+  { type: 'dex', name: '塗鴉秘寶館', desc: '傳說中的手繪真跡，一張都別放過' }
+];
+function renderDex() {
+  var p = S.player || {}, h = '';
+  var all = 0, got = 0;
+  DEX_GROUPS.forEach(function (g) {
+    var items = CATALOG.filter(function (x) { return x.type === g.type; });
+    items.forEach(function (x) { all++; if (owns(p, x)) got++; });
+  });
+  h += '<div class="dex-hero"><div><span class="lbl">收集進度</span><div class="dex-num"><b>' + got + '</b> / ' + all + '</div></div>' +
+    '<div class="dex-bar"><i style="width:' + (all ? (got / all * 100).toFixed(1) : 0) + '%"></i></div></div>';
+  DEX_GROUPS.forEach(function (g) {
+    var items = CATALOG.filter(function (x) { return x.type === g.type; });
+    var n = items.filter(function (x) { return owns(p, x); }).length;
+    h += '<div class="sec-h"><h2>' + g.name + '</h2><span>' + n + ' / ' + items.length + '</span></div><p class="dex-desc">' + g.desc + '</p>' +
+      '<div class="dex-grid ' + g.type + '">' + items.map(function (x) {
+        var have = owns(p, x);
+        return '<button class="dex-item' + (have ? ' got' : '') + '" data-dexi="' + x.id + '">' +
+          '<div class="dex-img"><img src="' + x.img + '" alt="" loading="lazy"></div>' +
+          '<span>' + (have ? esc(x.name) : '？？？') + '</span></button>';
+      }).join('') + '</div>';
+  });
+  return h;
+}
+function bindDex() {
+  $('vMe').querySelectorAll('[data-dexi]').forEach(function (b) {
+    b.onclick = function () {
+      var it = ITEM[b.getAttribute('data-dexi')], have = owns(S.player, it);
+      openSheet('<div class="buy-prev dex-view' + (have ? '' : ' locked') + '">' + itemThumb(it.type === 'dex' ? Object.assign({}, it, { type: 'avatar' }) : it, it.type === 'bg' ? 180 : 140) + '</div>' +
+        '<h3 class="center">' + (have ? esc(it.name) : '尚未收集') + '</h3>' +
+        '<p class="desc center">' + (have ? (it.desc ? esc(it.desc) : TYPE_TXT[it.type] || '收藏') : '還沒拿到，名字也看不到。') + '</p>' +
+        '<div class="acts" style="margin-top:14px"><button class="btn ghost" type="button" data-close>關閉</button></div>', function (sh) {
+        sh.querySelector('[data-close]').onclick = closeSheet;
+      });
+    };
+  });
+}
+
+/* 21 點荷官頭像：第一個管理員 */
+function dealerAvatar(size) {
+  var pid = S.cfg && S.cfg.bootstrapPid, p = pid && S.players[pid];
+  if (!p) { for (var k in S.players) if (S.players[k].role === 'admin') { p = S.players[k]; break; } }
+  return playerAvatar(p || { name: '荷' }, size);
 }
 
 /* =====================================================================
@@ -2846,11 +3156,12 @@ document.querySelectorAll('.tab').forEach(function (b) {
 
 function switchTab(t) {
   S.tab = t;
-  var tabKey = ['bj', 'gate', 'slot'].indexOf(t) >= 0 ? 'home' : t;
+  var tabKey = ['bj', 'gate', 'slot', 'dice'].indexOf(t) >= 0 ? 'home' : t;
   document.querySelectorAll('.tab').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === tabKey); });
   $('vBj').hidden = t !== 'bj';
   $('vGate').hidden = t !== 'gate';
   $('vSlot').hidden = t !== 'slot';
+  $('vDice').hidden = t !== 'dice';
   $('vHome').hidden = t !== 'home';
   $('vBank').hidden = t !== 'bank';
   $('vPoker').hidden = t !== 'poker';
@@ -2871,6 +3182,7 @@ function render(force) {
   else if (S.tab === 'bj') renderBj(force);
   else if (S.tab === 'gate') renderGate(force);
   else if (S.tab === 'slot') renderSlot(force);
+  else if (S.tab === 'dice') renderDice(force);
   else if (S.tab === 'rank') renderRank(force);
   else renderMe(force);
 }
@@ -2957,6 +3269,7 @@ function renderHome(force) {
     '<button class="game mini-g" data-go="bj"><div class="game-suit">21</div><div class="game-txt"><h3>21 點</h3><p>' + (bjLive ? '進行中' : bjSeated ? bjSeated + ' 人在桌上' : 'AI 荷官發牌') + '</p></div></button>' +
     '<button class="game mini-g" data-go="gate"><div class="game-suit">🐉</div><div class="game-txt"><h3>射龍門</h3><p>射進兩柱中間</p></div></button>' +
     '<button class="game mini-g" data-go="slot"><div class="game-suit">🎰</div><div class="game-txt"><h3>拉霸機</h3><p>拉一把試手氣</p></div></button>' +
+    '<button class="game mini-g" data-go="dice"><div class="game-suit">🎲</div><div class="game-txt"><h3>骰寶</h3><p>大小單雙豹子</p></div></button>' +
   '</div>';
 
   if (put('vHome', h, force)) {
@@ -3066,12 +3379,12 @@ function renderMe(force) {
   var me = S.me, h = '';
   var isAdmin = me.role === 'admin';
   var mt = S.meTab || 'acct';
-  h += '<div class="seg" role="tablist">' + [['acct', '帳號'], ['shop', '商店'], ['bag', '包包'], ['closet', '衣櫃']].map(function (x) {
+  h += '<div class="seg" role="tablist">' + [['acct', '帳號'], ['shop', '商店'], ['bag', '包包'], ['closet', '衣櫃'], ['dex', '圖鑑']].map(function (x) {
     return '<button role="tab" data-mt="' + x[0] + '" class="' + (mt === x[0] ? 'on' : '') + '">' + x[1] + '</button>';
   }).join('') + '</div>';
   if (mt !== 'acct') {
-    h += '<div class="me-sub">' + (mt === 'shop' ? renderShop() : mt === 'bag' ? renderBag() : renderCloset()) + '</div>';
-    if (put('vMe', h, force)) { bindMeTabs(); bindShopCloset(); }
+    h += '<div class="me-sub">' + (mt === 'shop' ? renderShop() : mt === 'bag' ? renderBag() : mt === 'dex' ? renderDex() : renderCloset()) + '</div>';
+    if (put('vMe', h, force)) { bindMeTabs(); if (mt === 'dex') bindDex(); else bindShopCloset(); }
     return;
   }
 

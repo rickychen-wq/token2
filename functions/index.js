@@ -101,6 +101,7 @@ exports.adminSetRole = wrap(A.adminSetRole);
 exports.gateDeal = wrap(MG.gateDeal);
 exports.gateShoot = wrap(MG.gateShoot);
 exports.slotSpin = wrap(MG.slotSpin);
+exports.diceRoll = wrap(MG.diceRoll);
 exports.bjSit = wrap(BJ.sit);
 exports.bjLeave = wrap(BJ.leave);
 exports.bjBet = wrap(BJ.bet);

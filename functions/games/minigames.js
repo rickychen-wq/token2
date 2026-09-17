@@ -8,13 +8,15 @@ const { AppError } = require('../core/util');
 /* ---------- 設定 ---------- */
 const DEFAULTS = {
   gate: { enabled: true, minBet: 200, maxBet: 5000, edge: 0.05 },
-  slot: { enabled: true, bets: [100, 200, 500, 1000] }
+  slot: { enabled: true, bets: [100, 200, 500, 1000] },
+  dice: { enabled: true, minBet: 100, maxTotal: 10000 }
 };
 function gamesCfg(raw) {
   const g = (raw && raw.games) || {};
   return {
     gate: Object.assign({}, DEFAULTS.gate, g.gate),
     slot: Object.assign({}, DEFAULTS.slot, g.slot),
+    dice: Object.assign({}, DEFAULTS.dice, g.dice),
     bj: Object.assign({}, g.bj)
   };
 }
@@ -78,6 +80,36 @@ function slotRTP() {
     r += (a.w * b.w * c.w) / Math.pow(W_TOTAL, 3) * slotPayout([a.id, b.id, c.id]).mult;
   }
   return r;
+}
+
+/* ---------- 骰寶（三顆骰子，澳門標準賠率）----------
+   big/small：總和 11~17 / 4~10，豹子通殺，賠 1
+   odd/even：單雙，豹子通殺，賠 1
+   any：任何豹子，賠 30
+   tr1~tr6：指定豹子，賠 180
+   t4~t17：總和點數，賠 60/30/17/12/8/6/6/6/6/8/12/17/30/60
+   s1~s6：單點，出現 1/2/3 顆賠 1/2/3
+   賠率都是「淨賺倍數」，贏的時候拿回本金＋淨賺。 */
+const TOTAL_PAY = { 4: 60, 5: 30, 6: 17, 7: 12, 8: 8, 9: 6, 10: 6, 11: 6, 12: 6, 13: 8, 14: 12, 15: 17, 16: 30, 17: 60 };
+function diceKeys() {
+  const k = ['big', 'small', 'odd', 'even', 'any'];
+  for (let i = 1; i <= 6; i++) k.push('tr' + i, 's' + i);
+  for (let t = 4; t <= 17; t++) k.push('t' + t);
+  return k;
+}
+const DICE_KEYS = diceKeys();
+/* 回傳這個注的淨賺倍數；輸回傳 -1 */
+function diceOdds(key, d) {
+  const sum = d[0] + d[1] + d[2], triple = d[0] === d[1] && d[1] === d[2];
+  if (key === 'big') return !triple && sum >= 11 ? 1 : -1;
+  if (key === 'small') return !triple && sum <= 10 ? 1 : -1;
+  if (key === 'odd') return !triple && sum % 2 === 1 ? 1 : -1;
+  if (key === 'even') return !triple && sum % 2 === 0 ? 1 : -1;
+  if (key === 'any') return triple ? 30 : -1;
+  if (key.startsWith('tr')) return triple && d[0] === +key.slice(2) ? 180 : -1;
+  if (key.startsWith('t')) return sum === +key.slice(1) ? TOTAL_PAY[sum] : -1;
+  if (key.startsWith('s')) { const n = d.filter((x) => x === +key.slice(1)).length; return n ? n : -1; }
+  return -1;
 }
 
 function createMini({ db, now, requireSession, requireAdmin, mutate }) {
@@ -165,12 +197,47 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
       return out;
     },
 
+    async diceRoll(req) {
+      const s = await requireSession(req);
+      const D = (await loadCfg()).dice;
+      if (!D.enabled) throw new AppError('骰寶目前關閉中', 'disabled');
+      const bets = (req.data && req.data.bets) || {};
+      const keys = Object.keys(bets).filter((k) => Number(bets[k]) > 0);
+      if (!keys.length) throw new AppError('至少要下一注', 'no-bet', 'invalid-argument');
+      let total = 0;
+      keys.forEach((k) => {
+        if (DICE_KEYS.indexOf(k) < 0) throw new AppError('下注位置不對', 'bad-bet', 'invalid-argument');
+        const v = Number(bets[k]);
+        if (!Number.isInteger(v) || v < D.minBet) throw new AppError('每一注最少 ' + D.minBet, 'bad-bet', 'invalid-argument');
+        total += v;
+      });
+      if (total > D.maxTotal) throw new AppError('一次最多下 ' + D.maxTotal, 'bad-bet', 'invalid-argument');
+      let out;
+      const r = await mutate(s.pid, (acc) => {
+        if (acc.wallet < total) throw new AppError('錢包不夠', 'poor');
+        const dice = [1 + crypto.randomInt(6), 1 + crypto.randomInt(6), 1 + crypto.randomInt(6)];
+        const detail = {};
+        let back = 0;
+        keys.forEach((k) => {
+          const m = diceOdds(k, dice), v = Number(bets[k]);
+          detail[k] = m > 0 ? v + v * m : 0;
+          back += detail[k];
+        });
+        const delta = back - total;
+        acc.wallet += delta;
+        out = { dice, detail, total, back, delta };
+        return [{ type: 'game', amount: delta, wallet: acc.wallet, bank: acc.bank.balance, loans: acc.loans, note: '骰寶 ' + dice.join('-') }];
+      });
+      out.wallet = r.account.wallet;
+      return out;
+    },
+
     async adminGames(req) {
       await requireAdmin(req);
       const d = req.data || {};
       const snap = await cfgRef().get();
       const cur = gamesCfg(snap.exists ? snap.data() : null);
-      const next = { gate: cur.gate, slot: cur.slot, bj: cur.bj };
+      const next = { gate: cur.gate, slot: cur.slot, bj: cur.bj, dice: cur.dice };
       const int = (v, lo, hi, name) => { const n = Number(v); if (!Number.isInteger(n) || n < lo || n > hi) throw new AppError(name + '數值不合理', 'bad-config', 'invalid-argument'); return n; };
       if (d.gate) {
         if (d.gate.enabled !== undefined) next.gate.enabled = !!d.gate.enabled;
@@ -187,6 +254,13 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
           next.slot.bets = b.sort((x, y) => x - y);
         }
       }
+      if (d.dice) {
+        const dc = Object.assign({}, next.dice || DEFAULTS.dice);
+        if (d.dice.enabled !== undefined) dc.enabled = !!d.dice.enabled;
+        if (d.dice.minBet !== undefined) dc.minBet = int(d.dice.minBet, 1, 1e7, '骰寶最低下注');
+        if (d.dice.maxTotal !== undefined) dc.maxTotal = int(d.dice.maxTotal, 1, 1e8, '骰寶單次上限');
+        next.dice = dc;
+      }
       if (d.bj) {
         const bj = Object.assign({}, next.bj);
         if (d.bj.enabled !== undefined) bj.enabled = !!d.bj.enabled;
@@ -201,4 +275,4 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
   };
 }
 
-module.exports = { createMini, gateOdds, slotPayout, slotRTP, gamesCfg, SYMBOLS, PAY3 };
+module.exports = { createMini, gateOdds, slotPayout, slotRTP, gamesCfg, SYMBOLS, PAY3, diceOdds, DICE_KEYS };
