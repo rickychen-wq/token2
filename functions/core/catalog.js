@@ -23,22 +23,22 @@ const KEY_IMG = { 1: 'k01', 2: 'k07', 3: 'k02', 4: 'k03', 5: 'k04', 6: 'k05', 7:
 const CHEST_NAME = { 1: '秘境藍晶', 2: '霜晶王座', 3: '月影紫晶', 4: '血月惡魔', 5: '天界璀璨', 6: '熔岩龍焰', 7: '星界深淵' };
 const KEY_NAME = { 1: '冰霜星輝', 2: '星穹王座', 3: '月影紫晶', 4: '血月煉獄', 5: '天界神聖', 6: '熔火龍王', 7: '宇宙星辰' };
 const KEY_PRICE = { 1: 5, 2: 10, 3: 20, 4: 35, 5: 50, 6: null, 7: null };
-/* 寶箱跟同階鑰匙同價一起上架；神秘、管理員不販售 */
-const CHEST_PRICE = { 1: 5, 2: 10, 3: 20, 4: 35, 5: 50, 6: null, 7: null };
+/* 寶箱不販售，只能從排行獎勵和每週結算拿到；商店只賣鑰匙 */
+const CHEST_PRICE = { 1: null, 2: null, 3: null, 4: null, 5: null, 6: null, 7: null };
 
 /* ---------- 六個新道具（名稱與檔名依使用者規格，不可改） ---------- */
 const ITEMS = [
-  { id: 'bankruptcy_protection', name: '破產防護卷', sub: 'revive', file: '破產防護卷.png', tier: 3,
+  { id: 'bankruptcy_protection', name: '破產防護卷', sub: 'revive', file: 'revive.webp', tier: 3,
     desc: '總資產低於 1000 時使用，錢包直接回到 5000。持有期間不能跟銀行借款。' },
-  { id: 'forced_duel', name: '強制幹錢券', sub: 'duel', file: '強制幹錢券.png', tier: 5,
+  { id: 'forced_duel', name: '強制幹錢券', sub: 'duel', file: 'duel.webp', tier: 5,
     desc: '對同桌玩家發動抽卡對決，雙方各抽一張比大小，贏的拿 1000、輸的拿 200。' },
-  { id: 'forced_action', name: '強制下注卷', sub: 'forcebet', file: '強制下注卷.png', tier: 2,
+  { id: 'forced_action', name: '強制下注卷', sub: 'forcebet', file: 'forcebet.webp', tier: 2,
     desc: '指定同桌玩家下一回合必須跟到你的下注額（上限 500），錢不夠就 all-in。' },
-  { id: 'premium_dry_shampoo', name: '頂級的乾洗髮', sub: 'shampoo', file: '頂級的乾洗髮.png', tier: 2,
+  { id: 'premium_dry_shampoo', name: '頂級的乾洗髮', sub: 'shampoo', file: 'shampoo.webp', tier: 2,
     desc: '選一個還沒永久擁有的普通頭像，暫時解鎖 24 小時，到期自動換回原本的頭像。' },
-  { id: 'iron_bowl', name: '保硬的鐵碗公', sub: 'guard', file: '保硬的鐵碗公.png', tier: 4,
+  { id: 'iron_bowl', name: '保硬的鐵碗公', sub: 'guard', file: 'guard.webp', tier: 4,
     desc: '被干擾型道具指定時可以選擇擋下來，一次消耗一個。' },
-  { id: 'broken_bowl', name: '破損的陶碗', sub: 'shard', file: '破損的陶碗.png', tier: 1,
+  { id: 'broken_bowl', name: '破損的陶碗', sub: 'shard', file: 'shard.webp', tier: 1,
     desc: '合成碎片，湊滿 2 個會自動合成 1 個保硬的鐵碗公。' }
 ];
 
@@ -89,7 +89,7 @@ for (let r = 1; r <= 7; r++) {
   DEFAULTS.push({ id: 'key_' + r, type: 'key', rarity: r, name: RARITY[r] + '鑰匙・' + KEY_NAME[r], price: KEY_PRICE[r], onSale: KEY_PRICE[r] != null, img: 'assets/item/' + KEY_IMG[r] + '.webp' });
   DEFAULTS.push({ id: 'chest_' + r, type: 'chest', rarity: r, name: RARITY[r] + '寶箱・' + CHEST_NAME[r], price: CHEST_PRICE[r], onSale: CHEST_PRICE[r] != null, img: 'assets/item/' + CHEST_IMG[r] + '.webp', loot: lootOf(r) });
 }
-ITEMS.forEach((it) => DEFAULTS.push({ id: it.id, type: 'card', sub: it.sub, tier: it.tier, name: it.name, price: null, onSale: false, img: 'assets/items/' + it.file, desc: it.desc }));
+ITEMS.forEach((it) => DEFAULTS.push({ id: it.id, type: 'card', sub: it.sub, tier: it.tier, name: it.name, price: null, onSale: false, img: 'assets/item/' + it.file, desc: it.desc }));
 
 DEX.forEach((n, i) => DEFAULTS.push({ id: 'dex_' + pad(i + 1), type: 'dex', sub: 'doodle', name: n, price: null, onSale: false, img: 'assets/dex/d' + pad(i + 1) + '.png', desc: '塗鴉秘寶館收藏' }));
 
