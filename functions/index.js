@@ -19,6 +19,7 @@ const { createShop } = require('./core/shop');
 const { createMail } = require('./core/mail');
 const { createMini } = require('./games/minigames');
 const { createBlackjack } = require('./games/blackjack');
+const { createRewards } = require('./core/rewards');
 
 const db = admin.firestore();
 const now = () => Date.now();
@@ -32,6 +33,7 @@ const MG = createMini({ db, now, requireSession: A.requireSession, requireAdmin:
 const BJ = createBlackjack({ db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin });
 const SE = createSeason({ db, now, requireAdmin: A.requireAdmin, runInterest: EC.runInterest,
   closeTables: async (sid) => { const r = await PK.closeSeason(sid); await BJ.closeSeason(sid); return r; } });
+const RW = createRewards({ db, now, requireAdmin: A.requireAdmin });
 
 /* 把自訂錯誤轉成前端讀得到的 HttpsError，其他錯誤不外洩細節 */
 function wrap(fn) {
@@ -129,6 +131,20 @@ exports.seasonLock = onSchedule({ schedule: '0 23 * * 0', timeZone: 'Asia/Taipei
 /* 週一 00:00 結算剛結束的那一季 */
 exports.seasonSettle = onSchedule({ schedule: '1 0 * * 1', timeZone: 'Asia/Taipei', retryCount: 5 }, async () => {
   logger.info('season settle', await SE.settleEnded(Date.now()));
+});
+
+/* ---------- v13 排行榜自動發獎 ---------- */
+exports.adminSetRewards = wrap(RW.adminSetRewards);
+exports.adminRunRewards = wrap(RW.adminRunRewards);
+
+/* 每天 00:05 發前一天的排行獎勵（週一跳過，那天由週獎勵負責） */
+exports.rewardsDaily = onSchedule({ schedule: '5 0 * * *', timeZone: 'Asia/Taipei', retryCount: 3 }, async () => {
+  logger.info('rewards daily', await RW.runDaily(Date.now()));
+});
+
+/* 週一 00:05 發週獎勵，排在 seasonSettle（00:01）之後 */
+exports.rewardsWeekly = onSchedule({ schedule: '5 0 * * 1', timeZone: 'Asia/Taipei', retryCount: 5 }, async () => {
+  logger.info('rewards weekly', await RW.runWeekly(Date.now()));
 });
 
 /* 每 3 小時計息：台灣時間 00、03、06…21 點 */

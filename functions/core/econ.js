@@ -115,15 +115,45 @@ function entry(type, amount, acc, extra) {
 /* 當天的每日獎勵狀態，跨日自動歸零 */
 function rollDaily(acc, t) {
   const day = twDay(t);
-  if (!acc.daily || acc.daily.day !== day) acc.daily = { day, hands: 0, claimed: false, borrows: 0 };
+  if (!acc.daily || acc.daily.day !== day) {
+    // v13：換日時把昨天的紀錄留一份，隔天 00:05 的排行獎勵要用（避免 00:00~00:05 有人開局就把數字洗掉）
+    if (acc.daily && acc.daily.day) acc.prevDaily = { day: acc.daily.day, plays: acc.daily.plays || 0, hands: acc.daily.hands || 0 };
+    acc.daily = { day, hands: 0, plays: 0, claimed: false, borrows: 0 };
+  }
   if (typeof acc.daily.borrows !== 'number') acc.daily.borrows = 0;   // 舊帳戶補欄位
+  if (typeof acc.daily.plays !== 'number') acc.daily.plays = 0;
   return acc.daily;
 }
 
-/* 牌局結束時呼叫（第四批的德州會用到） */
+/* 牌局結束時呼叫。
+   handsPlayed 只算德州和 21 點，因為它是「本季排行榜上榜資格」的依據，這次沒有要改排行規則。
+   daily.plays 另外算，所有遊戲都計入，只給 v13 的每日排行獎勵門檻用。 */
 function recordHands(acc, t, n) {
-  rollDaily(acc, t).hands += n;
+  const d = rollDaily(acc, t);
+  d.hands += n;
+  d.plays += n;
   acc.handsPlayed = (acc.handsPlayed || 0) + n;
+}
+
+/* 小遊戲（射龍門、拉霸、骰寶）玩一次算一場，只進 daily.plays，不影響上榜資格。
+   cap 是後台設定的「單一遊戲每日計入上限」，0 代表不限。 */
+function recordPlay(acc, t, key, cap) {
+  const d = rollDaily(acc, t);
+  if (cap > 0) {
+    if (!d.byGame || typeof d.byGame !== 'object') d.byGame = {};
+    const n = (d.byGame[key] || 0) + 1;
+    d.byGame[key] = n;
+    if (n > cap) return false;
+  }
+  d.plays += 1;
+  return true;
+}
+
+/* 取某一天的場數：先看今天的紀錄，換日後看昨天留下的那份 */
+function playsOnDay(acc, day) {
+  if (acc.daily && acc.daily.day === day) return acc.daily.plays || 0;
+  if (acc.prevDaily && acc.prevDaily.day === day) return acc.prevDaily.plays || 0;
+  return 0;
 }
 
 /* 計息週期內第一次動到銀行時，記下週期起點的餘額 */
@@ -257,6 +287,6 @@ function fmt(n) { return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, 
 
 module.exports = {
   DEFAULTS, PERIOD, cfgOf, cleanEconPatch, cleanAmount, twDay, periodStart,
-  newAccount, inPlayTotal, computeNet, refresh, rollDaily, recordHands, maxDeposit,
+  newAccount, inPlayTotal, computeNet, refresh, rollDaily, recordHands, recordPlay, playsOnDay, maxDeposit,
   autoRepay, borrow, deposit, withdraw, claimDaily, adminAdjust, rankRates, applyInterest, starsFor
 };

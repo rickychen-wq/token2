@@ -63,6 +63,9 @@ input{font:inherit;color:inherit}
 
 .fld{margin-bottom:14px}
 .fld label{display:block;font-size:12.5px;color:var(--dim);margin-bottom:7px;letter-spacing:.06em}
+/* v13：表單裡的勾選欄 */
+.fld label.chk{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--fg);margin-bottom:4px;cursor:pointer}
+.fld label.chk input[type=checkbox]{width:20px;height:20px;flex:0 0 20px;margin:0;accent-color:var(--cy)}
 .fld input{
   width:100%;height:50px;padding:0 14px;border-radius:4px;font-size:16px;
   background:rgba(3,8,18,.72);border:1px solid var(--edge);color:var(--fg);
@@ -2044,6 +2047,86 @@ function sheetSeasonConfig() {
     });
 }
 
+/* ---------- v13 排行獎勵設定 ---------- */
+var REWARD_DEFAULT = {
+  enabled: true, dailyMinPlays: 20, dailyCapPerGame: 0, dailyTopNeedsPlays: false, draws: 2, expireDays: 7,
+  daily: { r1: [[6, 5], [5, 15], [4, 30], [3, 50]], r2: [[5, 20], [4, 30], [3, 50]], r3: [[5, 20], [4, 20], [3, 30], [2, 20]], other: [[4, 20], [3, 20], [2, 30], [1, 30]] },
+  weekly: { r1: [[6, 40], [5, 60]], r2: [[6, 30], [5, 50], [4, 20]], r3: [[6, 15], [5, 50], [4, 35]], other: [[5, 15], [4, 15], [3, 70]] }
+};
+var REWARD_ROWS = [['r1', '第 1 名'], ['r2', '第 2 名'], ['r3', '第 3 名'], ['other', '其他人']];
+
+/* 把 [[稀有度, 權重]] 顯示成「稀有 30 / 史詩 70」這種一行文字，好改 */
+function rwToText(t) {
+  return (t || []).map(function (x) { return RARITY[x[0]] + ' ' + x[1]; }).join('、');
+}
+function rwFromText(v) {
+  var out = [];
+  String(v || '').split(/[、,，]/).forEach(function (part) {
+    var m = String(part).trim().match(/^(\S+)\s+([\d.]+)$/);
+    if (!m) { if (String(part).trim()) throw new Error('格式要像「傳奇 20、史詩 50」'); return; }
+    var r = RARITY.indexOf(m[1]);
+    if (r < 1 || r > 6) throw new Error('「' + m[1] + '」不是可以發的稀有度（稀有～神秘）');
+    out.push([r, Number(m[2])]);
+  });
+  if (!out.length) throw new Error('至少要填一個稀有度');
+  return out;
+}
+
+function sheetRewards() {
+  var c = Object.assign({}, REWARD_DEFAULT, (S.cfg && S.cfg.rewards) || {});
+  c.daily = Object.assign({}, REWARD_DEFAULT.daily, c.daily || {});
+  c.weekly = Object.assign({}, REWARD_DEFAULT.weekly, c.weekly || {});
+  var body =
+    '<div class="fld"><label class="chk"><input id="rwOn" type="checkbox"' + (c.enabled ? ' checked' : '') + '> 啟用排行獎勵</label>' +
+    '<div class="help">關掉的話每日和每週的排程都不會發信。</div></div>' +
+    '<div class="fld-grid three">' +
+      fld('rwMin', '每日門檻（場）', 'text', ' inputmode="numeric" value="' + c.dailyMinPlays + '"') +
+      fld('rwDraws', '每份抽幾個寶箱', 'text', ' inputmode="numeric" value="' + c.draws + '"') +
+      fld('rwExp', '信件期限（天）', 'text', ' inputmode="numeric" value="' + c.expireDays + '"') +
+    '</div>' +
+    '<div class="fld"><label for="rwCap">單一小遊戲每日最多計入幾場</label><input id="rwCap" type="text" inputmode="numeric" value="' + c.dailyCapPerGame + '">' +
+    '<div class="help">0 = 不限。拉霸一分鐘能轉幾十次，被刷的話把這裡調成 10 之類的。</div></div>' +
+    '<div class="fld"><label class="chk"><input id="rwTop" type="checkbox"' + (c.dailyTopNeedsPlays ? ' checked' : '') + '> 前三名也要玩滿才給</label>' +
+    '<div class="help">預設不勾，前三名不用玩也拿得到。</div></div>' +
+    '<div class="stat-h">每日（看前一天的資產排名）</div>' +
+    REWARD_ROWS.map(function (x) { return fld('rwD_' + x[0], x[1], 'text', ' value="' + esc(rwToText(c.daily[x[0]])) + '"'); }).join('') +
+    '<div class="stat-h">每週（總積分榜與上一季資產榜各發一份）</div>' +
+    REWARD_ROWS.map(function (x) { return fld('rwW_' + x[0], x[1], 'text', ' value="' + esc(rwToText(c.weekly[x[0]])) + '"'); }).join('') +
+    '<p class="desc">格式：「傳奇 20、神話 30、史詩 50」。數字是權重，不用剛好加到 100，會照比例換算。</p>';
+  formSheet('排行獎勵設定', '每天 00:05 發前一天的排行獎勵（週一跳過），週一 00:05 發週獎勵。給的是寶箱，鑰匙要自己買。', body, '儲存', '', function () {
+    var patch = {
+      enabled: $('rwOn').checked,
+      dailyTopNeedsPlays: $('rwTop').checked,
+      dailyMinPlays: Number($('rwMin').value),
+      dailyCapPerGame: Number($('rwCap').value),
+      draws: Number($('rwDraws').value),
+      expireDays: Number($('rwExp').value),
+      daily: {}, weekly: {}
+    };
+    if (!(patch.dailyMinPlays >= 0) || !(patch.dailyCapPerGame >= 0) || !(patch.draws >= 1) || !(patch.expireDays >= 1)) {
+      toast('數字填錯了', 'bad'); return null;
+    }
+    try {
+      REWARD_ROWS.forEach(function (x) {
+        patch.daily[x[0]] = rwFromText($('rwD_' + x[0]).value);
+        patch.weekly[x[0]] = rwFromText($('rwW_' + x[0]).value);
+      });
+    } catch (e) { toast(e.message, 'bad'); return null; }
+    return call('adminSetRewards', { rewards: patch }).then(function () { return '已儲存'; });
+  });
+}
+
+function sheetRunRewards() {
+  formSheet('補發排行獎勵', '排程沒跑到時用。同一天（或同一季）已經發過就不會重複發，可以安心按。',
+    '<div class="fld"><label for="rwWhich">要補發哪一種</label><select id="rwWhich"><option value="daily">每日（前一天的資產排名）</option><option value="weekly">每週（總積分榜＋上一季資產榜）</option></select></div>',
+    '執行', '', function () {
+      return call('adminRunRewards', { which: $('rwWhich').value }).then(function (r) {
+        if (r.skipped) return '這次沒發：' + ({ disabled: '功能關閉中', monday: '週一由週獎勵負責', practice: '還在練習季', 'not-settled': '上一季還沒結算', true: '今天已經發過了' }[r.skipped] || r.skipped);
+        return '已發出 ' + (r.sent || 0) + ' 封';
+      });
+    });
+}
+
 /* =====================================================================
    德州
    ===================================================================== */
@@ -2615,6 +2698,25 @@ function rankList(rows, start) {
   }).join('') + '</div>';
 }
 
+/* v13：告訴玩家今天還差幾場就有每日獎勵 */
+function dailyRewardNote(practice) {
+  var rw = (S.cfg && S.cfg.rewards) || {};
+  if (rw.enabled === false || practice) return '';
+  var need = rw.dailyMinPlays === undefined ? 20 : rw.dailyMinPlays;
+  var today = todayTw();
+  var d = (S.acc && S.acc.daily && S.acc.daily.day === today) ? (S.acc.daily.plays || 0) : 0;
+  var txt = d >= need
+    ? '今天已經玩了 ' + d + ' 場，明天 00:05 的每日獎勵有你的份。'
+    : '今天玩了 ' + d + ' 場，再 ' + (need - d) + ' 場就有每日獎勵（前三名不用玩也有）。';
+  return '<p class="rk-note">' + txt + '　獎勵是寶箱，會寄到信箱，7 天內要領。</p>';
+}
+
+/* 台灣時間的今天，格式跟後端的 twDay 一致 */
+function todayTw() {
+  var d = new Date(Date.now() + 8 * 3600 * 1000);
+  return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d.getUTCDate()).padStart(2, '0');
+}
+
 function renderRank(force) {
   var h = '<div class="seg" role="tablist">' +
     [['now', '本季'], ['last', '上季'], ['all', '歷史']].map(function (x) {
@@ -2632,6 +2734,7 @@ function renderRank(force) {
     });
     h += '<p class="rk-note">' + (practice ? '<span class="tag warn">練習季</span> 這週不發積分，' : '') +
       '本季打滿 ' + minH + ' 手才計入名次，週一 00:00 結算。</p>';
+    h += dailyRewardNote(practice);
     var ranked = items.filter(function (x) { return x.rank; });
     h += ranked.length ? podium(ranked.slice(0, 3)) : '<div class="empty rk-empty">還沒有人打滿 ' + minH + ' 手</div>';
     h += rankList(items.slice(Math.min(3, ranked.length)));
@@ -3579,6 +3682,8 @@ function renderMe(force) {
       '<button class="row" data-act="poker"><span class="k">德州設定<small>盲注、帶入上限、思考秒數、AI 控桌</small></span><span class="chev">›</span></button>' +
       '<button class="row" data-act="seasoncfg"><span class="k">季與數據設定<small>正式季從哪一週開始、牌局數據從什麼時候記錄</small></span><span class="chev">›</span></button>' +
       '<button class="row" data-act="settle"><span class="k">結算上一季<small>週一 00:01 會自動跑，排程失敗時才需要按</small></span><span class="chev">›</span></button>' +
+      '<button class="row" data-act="rewards"><span class="k">排行獎勵設定<small>每日與每週的寶箱機率、場數門檻、信件期限</small></span><span class="chev">›</span></button>' +
+      '<button class="row" data-act="runrewards"><span class="k">補發排行獎勵<small>排程沒跑到時使用，同一天只會發一次</small></span><span class="chev">›</span></button>' +
       '<button class="row" data-act="lock"><span class="k">' + (S.season && S.season.status === 'locking' ? '解除本季鎖定' : '鎖定本季') + '<small>週日 23:00 會自動鎖定</small></span><span class="chev">›</span></button>' +
       '<button class="row" data-act="games"><span class="k">小遊戲設定<small>21 點、射龍門、拉霸機的開關與下注範圍</small></span><span class="chev">›</span></button>' +
       '<button class="row" data-act="interest"><span class="k">補算利息<small>排程沒跑到時使用，同一個時段只會算一次</small></span><span class="chev">›</span></button>' +
@@ -3622,6 +3727,8 @@ function bindMe() {
       else if (a === 'poker') sheetPokerSettings();
       else if (a === 'settle') sheetSettle();
       else if (a === 'seasoncfg') sheetSeasonConfig();
+      else if (a === 'rewards') sheetRewards();
+      else if (a === 'runrewards') sheetRunRewards();
       else if (a === 'catalog') sheetCatalog();
       else if (a === 'announce') sheetAnnounce();
       else if (a === 'mail') sheetSendMail();

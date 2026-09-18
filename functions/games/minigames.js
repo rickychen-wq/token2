@@ -4,6 +4,7 @@
 
 const crypto = require('crypto');
 const { AppError } = require('../core/util');
+const E = require('../core/econ');
 
 /* ---------- 設定 ---------- */
 const DEFAULTS = {
@@ -11,6 +12,13 @@ const DEFAULTS = {
   slot: { enabled: true, bets: [100, 200, 500, 1000] },
   dice: { enabled: true, minBet: 100, maxTotal: 10000 }
 };
+/* 後台的「單一遊戲每日最多計入幾場」，0 = 不限（預設）。
+   拉霸一分鐘可以轉幾十次，哪天發現有人在刷每日排行獎勵，把這個數字調大於 0 就好。 */
+function playCap(raw) {
+  const v = Math.floor(Number(((raw || {}).rewards || {}).dailyCapPerGame) || 0);
+  return v > 0 ? v : 0;
+}
+
 function gamesCfg(raw) {
   const g = (raw && raw.games) || {};
   return {
@@ -188,6 +196,7 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
         else { result = 'lose'; delta = -bet; }
         acc.wallet += delta;
         delete acc.gate;
+        E.recordPlay(acc, t, 'gate', playCap(raw));
         out = { card: c, result, delta, mult: odds.mult, posts: [a, b], guess };
         return [{ type: 'game', amount: delta, wallet: acc.wallet, bank: acc.bank.balance, loans: acc.loans, note: '射龍門' + { win: '射中', lose: '沒中', post: '撞柱' }[result] }];
       });
@@ -210,6 +219,7 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
         const win = Math.floor(bet * p.mult);
         const delta = win - bet;
         acc.wallet += delta;
+        E.recordPlay(acc, t, 'slot', playCap(raw));
         out = { reels, mult: p.mult, kind: p.kind, win, delta };
         return [{ type: 'game', amount: delta, wallet: acc.wallet, bank: acc.bank.balance, loans: acc.loans, note: '拉霸 ' + reels.join('/') }];
       });
@@ -245,6 +255,7 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
         });
         const delta = back - total;
         acc.wallet += delta;
+        E.recordPlay(acc, t, 'dice', playCap(raw));
         out = { dice, detail, total, back, delta };
         return [{ type: 'game', amount: delta, wallet: acc.wallet, bank: acc.bank.balance, loans: acc.loans, note: '骰寶 ' + dice.join('-') }];
       });
