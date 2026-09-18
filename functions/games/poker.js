@@ -94,6 +94,7 @@ function createPoker({ db, now, requireSession, requireAdmin }) {
       };
 
       const out = await fn(ctx);
+      if (ctx.noop) return Object.assign({ now: t }, out || {});   // 沒有改任何東西就不寫入，避免觸發所有人的監聽
 
       st.version = (st.version || 0) + 1;
       st.updatedAt = t;
@@ -249,6 +250,7 @@ function createPoker({ db, now, requireSession, requireAdmin }) {
         if (acc.inPlay && acc.inPlay.poker) {   // 資料不一致時先把錢還回去
           acc.wallet += acc.inPlay.poker.amount || 0;
           delete acc.inPlay.poker;
+          E.autoRepay(acc, ctx.cfg, ctx.t).forEach((e) => ctx.led(s.pid, { type: 'repay', amount: e.amount }));
         }
         const max = Math.min(S.buyInMax, acc.wallet);
         if (max < S.bb) throw new AppError('錢包不到 ' + S.bb + '，先到銀行借款', 'broke');
@@ -340,7 +342,7 @@ function createPoker({ db, now, requireSession, requireAdmin }) {
       return run(async (ctx) => {
         const st = ctx.st, i = seatOf(st, s.pid);
         const aid = d.actionId ? String(d.actionId).slice(0, 40) : null;
-        if (aid && (st.actionIds || []).indexOf(aid) >= 0) return { dup: true };
+        if (aid && (st.actionIds || []).indexOf(aid) >= 0) { ctx.noop = true; return { dup: true }; }
         if (i < 0) throw new AppError('你不在桌上', 'not-seated');
         if (d.handNo !== st.hand.no || st.hand.phase === 'idle') throw new AppError('這手已經結束了', 'stale');
         const res = H.act(ctx, i, String(d.type), d.amount);
@@ -357,7 +359,7 @@ function createPoker({ db, now, requireSession, requireAdmin }) {
       return run(async (ctx) => {
         const st = ctx.st, S = st.settings, t = ctx.t;
         if (st.hand.phase !== 'idle') {
-          if (!st.hand.deadline || t < st.hand.deadline) return { did: null };
+          if (!st.hand.deadline || t < st.hand.deadline) { ctx.noop = true; return { did: null }; }
           const i = st.hand.turn, seat = st.seats[i];
           const L = H.legal(st, i);
           if (!L) { st.hand.deadline = t + S.turnSec * 1000; return { did: null }; }
@@ -371,7 +373,7 @@ function createPoker({ db, now, requireSession, requireAdmin }) {
           return { did: 'timeout' };
         }
         const a = st.auto;
-        if (!a.nextHandAt || t < a.nextHandAt) return { did: null };
+        if (!a.nextHandAt || t < a.nextHandAt) { ctx.noop = true; return { did: null }; }
         const n = st.seats.filter(H.ready).length;
         if (!S.auto || n < S.minPlayers || blocked(ctx)) { a.nextHandAt = null; a.countdownStart = null; return { did: null }; }
         await begin(ctx);

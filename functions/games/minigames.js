@@ -114,10 +114,6 @@ function diceOdds(key, d) {
 
 function createMini({ db, now, requireSession, requireAdmin, mutate }) {
   const cfgRef = () => db.collection('config').doc('app');
-  async function loadCfg() {
-    const snap = await cfgRef().get();
-    return gamesCfg(snap.exists ? snap.data() : null);
-  }
   function cleanBet(v, lo, hi) {
     const n = Number(v);
     if (!Number.isInteger(n) || n < lo || n > hi) throw new AppError('下注金額要在 ' + lo + ' 到 ' + hi + ' 之間', 'bad-bet', 'invalid-argument');
@@ -130,10 +126,9 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
     /* 發門柱（也用來換牌） */
     async gateDeal(req) {
       const s = await requireSession(req);
-      const G = (await loadCfg()).gate;
-      if (!G.enabled) throw new AppError('射龍門目前關閉中', 'disabled');
       let out;
-      await mutate(s.pid, (acc) => {
+      await mutate(s.pid, (acc, cfg, t, raw) => {
+        if (!gamesCfg(raw).gate.enabled) throw new AppError('射龍門目前關閉中', 'disabled');
         let a = drawCard(), b = drawCard();
         acc.gate = { posts: [a, b], at: now() };
         const lo = Math.min(rankOf(a), rankOf(b)), hi = Math.max(rankOf(a), rankOf(b));
@@ -146,11 +141,11 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
     async gateShoot(req) {
       const s = await requireSession(req);
       const d = req.data || {};
-      const G = (await loadCfg()).gate;
-      if (!G.enabled) throw new AppError('射龍門目前關閉中', 'disabled');
-      const bet = cleanBet(d.bet, G.minBet, G.maxBet);
       let out;
-      const r = await mutate(s.pid, (acc) => {
+      const r = await mutate(s.pid, (acc, cfg, t, raw) => {
+        const G = gamesCfg(raw).gate;
+        if (!G.enabled) throw new AppError('射龍門目前關閉中', 'disabled');
+        const bet = cleanBet(d.bet, G.minBet, G.maxBet);
         if (!acc.gate || !acc.gate.posts) throw new AppError('先發門柱', 'no-posts');
         const [a, b] = acc.gate.posts;
         const lo = Math.min(rankOf(a), rankOf(b)), hi = Math.max(rankOf(a), rankOf(b));
@@ -178,12 +173,12 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
     async slotSpin(req) {
       const s = await requireSession(req);
       const d = req.data || {};
-      const SL = (await loadCfg()).slot;
-      if (!SL.enabled) throw new AppError('拉霸機目前關閉中', 'disabled');
-      const bet = Number(d.bet);
-      if (SL.bets.indexOf(bet) < 0) throw new AppError('下注金額不對', 'bad-bet', 'invalid-argument');
       let out;
-      const r = await mutate(s.pid, (acc) => {
+      const r = await mutate(s.pid, (acc, cfg, t, raw) => {
+        const SL = gamesCfg(raw).slot;
+        if (!SL.enabled) throw new AppError('拉霸機目前關閉中', 'disabled');
+        const bet = Number(d.bet);
+        if (SL.bets.indexOf(bet) < 0) throw new AppError('下注金額不對', 'bad-bet', 'invalid-argument');
         if (acc.wallet < bet) throw new AppError('錢包不夠', 'poor');
         const reels = [spinReel(), spinReel(), spinReel()];
         const p = slotPayout(reels);
@@ -199,21 +194,21 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
 
     async diceRoll(req) {
       const s = await requireSession(req);
-      const D = (await loadCfg()).dice;
-      if (!D.enabled) throw new AppError('骰寶目前關閉中', 'disabled');
       const bets = (req.data && req.data.bets) || {};
       const keys = Object.keys(bets).filter((k) => Number(bets[k]) > 0);
       if (!keys.length) throw new AppError('至少要下一注', 'no-bet', 'invalid-argument');
-      let total = 0;
-      keys.forEach((k) => {
-        if (DICE_KEYS.indexOf(k) < 0) throw new AppError('下注位置不對', 'bad-bet', 'invalid-argument');
-        const v = Number(bets[k]);
-        if (!Number.isInteger(v) || v < D.minBet) throw new AppError('每一注最少 ' + D.minBet, 'bad-bet', 'invalid-argument');
-        total += v;
-      });
-      if (total > D.maxTotal) throw new AppError('一次最多下 ' + D.maxTotal, 'bad-bet', 'invalid-argument');
       let out;
-      const r = await mutate(s.pid, (acc) => {
+      const r = await mutate(s.pid, (acc, cfg, t, raw) => {
+        const D = gamesCfg(raw).dice;
+        if (!D.enabled) throw new AppError('骰寶目前關閉中', 'disabled');
+        let total = 0;
+        keys.forEach((k) => {
+          if (DICE_KEYS.indexOf(k) < 0) throw new AppError('下注位置不對', 'bad-bet', 'invalid-argument');
+          const v = Number(bets[k]);
+          if (!Number.isInteger(v) || v < D.minBet) throw new AppError('每一注最少 ' + D.minBet, 'bad-bet', 'invalid-argument');
+          total += v;
+        });
+        if (total > D.maxTotal) throw new AppError('一次最多下 ' + D.maxTotal, 'bad-bet', 'invalid-argument');
         if (acc.wallet < total) throw new AppError('錢包不夠', 'poor');
         const dice = [1 + crypto.randomInt(6), 1 + crypto.randomInt(6), 1 + crypto.randomInt(6)];
         const detail = {};

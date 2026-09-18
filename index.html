@@ -1456,6 +1456,16 @@ function bannerHTML(p, avSize, extra) {
 }
 
 function sheetProfile(pid) {
+  if (!sheetProfile._fetching) {
+    sheetProfile._fetching = true;
+    db.collection('players').doc(pid).get().then(function (d) {
+      sheetProfile._fetching = false;
+      if (d.exists) { S.players[pid] = d.data(); }
+      showProfile(pid);
+    }).catch(function () { sheetProfile._fetching = false; showProfile(pid); });
+  }
+}
+function showProfile(pid) {
   var p = S.players[pid];
   if (!p) return;
   var st = p.stats || {}, g = (p.games && p.games.poker) || {}, ac = accOf(pid), c = econ();
@@ -2004,21 +2014,122 @@ function cardHTML(c, cls) {
   return '<div class="pc' + (s === 1 || s === 2 ? ' red' : '') + (cls ? ' ' + cls : '') + '"><b>' + RANKS[r] + '</b><i>' + SUITS[s] + '</i></div>';
 }
 
-function openPoker() {
+/* =====================================================================
+   即時監聽登記表
+   同一個 key 只會存在一組監聽；切換頁面時由 syncLive() 統一開關。
+   規則：只有「正在看的頁面」才即時同步，其他資料用一次性讀取＋快取。
+   ===================================================================== */
+var LIVE = {};
+function live(key, want, open) {
+  if (want && !LIVE[key]) LIVE[key] = open();
+  else if (!want && LIVE[key]) { try { LIVE[key](); } catch (e) {} delete LIVE[key]; }
+}
+function liveOff(prefix) {
+  Object.keys(LIVE).forEach(function (k) { if (!prefix || k.indexOf(prefix) === 0) live(k, false); });
+}
+function liveCount() { return Object.keys(LIVE).length; }
+window.__liveKeys = function () { return Object.keys(LIVE).sort(); };
+
+function syncLive() {
+  if (!S.me || !S.sid) return;
+  var t = S.tab, admin = S.me.role === 'admin', sid = S.sid;
+  live('poker', t === 'poker', openPokerLive);
+  live('bj', t === 'bj', openBjLive);
+  var needAccounts = t === 'rank' || t === 'bank' || (t === 'me' && admin);
+  Object.keys(LIVE).forEach(function (k) { if (k.indexOf('accounts:') === 0 && k !== 'accounts:' + sid) live(k, false); });
+  live('accounts:' + sid, needAccounts, function () { return openAccountsLive(sid); });
+  live('players', t === 'rank' || (t === 'me' && admin), openPlayersLive);
+  if (!needAccounts && t === 'home') refreshAccounts(false);
+  if (t !== 'rank' && !(t === 'me' && admin)) refreshPlayers(false);
+}
+
+function openPokerLive() {
   var t = db.collection('games').doc('poker').collection('tables').doc('main');
-  S.unsubs.push(t.onSnapshot(function (d) {
-    PK.st = d.exists ? d.data() : null;
-    if (S.tab === 'poker') renderPoker();
-    else if (S.tab === 'home') renderHome();
-  }, function () {}));
-  S.unsubs.push(t.collection('live').doc('emotes').onSnapshot(function (d) {
-    PK.emotes = d.exists ? d.data() : null;
-    paintBubbles();
-  }, function () {}));
-  S.unsubs.push(t.collection('holes').doc(S.me.pid).onSnapshot(function (d) {
-    PK.hole = d.exists ? d.data() : null;
-    if (S.tab === 'poker') renderPoker();
-  }, function () {}));
+  var u = [
+    t.onSnapshot(function (d) {
+      PK.st = d.exists ? d.data() : null;
+      if (S.tab === 'poker') renderPoker();
+    }, function () {}),
+    t.collection('live').doc('emotes').onSnapshot(function (d) {
+      PK.emotes = d.exists ? d.data() : null;
+      paintBubbles();
+    }, function () {}),
+    t.collection('holes').doc(S.me.pid).onSnapshot(function (d) {
+      PK.hole = d.exists ? d.data() : null;
+      if (S.tab === 'poker') renderPoker();
+    }, function () {})
+  ];
+  return function () { u.forEach(function (f) { f(); }); };
+}
+
+function openBjLive() {
+  return db.collection('games').doc('bj').collection('tables').doc('main').onSnapshot(function (d) {
+    BJ.st = d.exists ? d.data() : null;
+    if (S.tab === 'bj') renderBj();
+  }, function () {});
+}
+
+function mergeAccounts(list) {
+  var mine = null;
+  list.forEach(function (a) { if (a.pid === S.me.pid) mine = a; });
+  if (!mine && S.acc) list.push(S.acc);
+  S.accounts = list;
+  S.accountsAt = Date.now();
+}
+function openAccountsLive(sid) {
+  return db.collection('seasons').doc(sid).collection('accounts').onSnapshot(function (q) {
+    if (S.sid !== sid || !S.me) return;
+    var list = [];
+    q.forEach(function (d) { list.push(d.data()); });
+    mergeAccounts(list);
+    render();
+  }, function () {});
+}
+/* 大廳的名次用：最多 60 秒讀一次 */
+function refreshAccounts(force) {
+  if (!S.me || !S.sid) return;
+  if (!force && S.accountsAt && Date.now() - S.accountsAt < 60000) return;
+  S.accountsAt = Date.now();
+  var sid = S.sid;
+  db.collection('seasons').doc(sid).collection('accounts').get().then(function (q) {
+    if (S.sid !== sid || !S.me) return;
+    var list = [];
+    q.forEach(function (d) { list.push(d.data()); });
+    mergeAccounts(list);
+    if (S.tab === 'home') renderHome();
+  }).catch(function () {});
+}
+
+function setPlayers(list) {
+  var map = {};
+  list.forEach(function (x) { map[x.pid] = x; });
+  if (S.player) map[S.player.pid] = S.player;
+  list.sort(function (a, b) { return a.pid < b.pid ? -1 : 1; });
+  S.roster = list;
+  S.players = map;
+  S.playersAt = Date.now();
+}
+function openPlayersLive() {
+  return db.collection('players').onSnapshot(function (q) {
+    if (!S.me) return;
+    var list = [];
+    q.forEach(function (d) { list.push(d.data()); });
+    setPlayers(list);
+    render();
+  }, function () {});
+}
+/* 名字、頭像用：最多 2 分鐘讀一次 */
+function refreshPlayers(force) {
+  if (!S.me) return;
+  if (!force && S.playersAt && Date.now() - S.playersAt < 120000) return;
+  S.playersAt = Date.now();
+  db.collection('players').get().then(function (q) {
+    if (!S.me) return;
+    var list = [];
+    q.forEach(function (d) { list.push(d.data()); });
+    setPlayers(list);
+    render();
+  }).catch(function () {});
 }
 
 function mySeat() {
@@ -2039,18 +2150,24 @@ function potTotal(st) {
 }
 
 /* 自動推進：思考時間或下一手倒數到了，就請伺服器檢查 */
+/* 同一個截止時間，每台裝置最多問一次（6 秒後仍沒變才再問），並隨機延遲 0～1.5 秒，
+   讓第一台的結果先傳到其他人，其他人看到新的截止時間就不用再問。 */
+function dueTick(G, key, dueAt, fn) {
+  if (!dueAt) return;
+  if (G.tickKey !== key) { G.tickKey = key; G.tickTries = 0; G.jitter = 600 + Math.floor(Math.random() * 1500); }
+  if (serverNow() < dueAt + G.jitter) return;
+  if (G.tickTries >= 1 && Date.now() - G.lastTick < 6000) return;
+  if (G.tickTries >= 3) return;
+  G.tickTries++;
+  G.lastTick = Date.now();
+  pcall(fn).catch(function () {});
+}
 function pokerHeartbeat() {
   var st = PK.st;
-  if (!st || !S.me) return;
-  var seated = mySeat() >= 0;
-  if (!seated && S.tab !== 'poker') return;
-  var now = serverNow(), due = false;
-  if (st.hand.phase !== 'idle') due = st.hand.deadline && now > st.hand.deadline + 600;
-  else due = st.auto && st.auto.nextHandAt && now > st.auto.nextHandAt + 300;
-  if (!PK.synced && S.tab === 'poker') { due = true; PK.synced = true; }
-  if (!due || Date.now() - PK.lastTick < 2500) return;
-  PK.lastTick = Date.now();
-  pcall('pokerTick').catch(function () {});
+  if (!st || !S.me || S.tab !== 'poker') return;
+  if (!PK.synced) { PK.synced = true; pcall('pokerTick').catch(function () {}); return; }
+  if (st.hand.phase !== 'idle') dueTick(PK, 'h' + st.hand.no + ':' + st.hand.deadline, st.hand.deadline, 'pokerTick');
+  else if (st.auto && st.auto.nextHandAt) dueTick(PK, 'n' + st.auto.nextHandAt, st.auto.nextHandAt, 'pokerTick');
 }
 
 function sizePoker() {
@@ -2634,13 +2751,9 @@ function paintBjClock() {
 
 function bjHeartbeat() {
   var st = BJ.st;
-  if (!st || !S.me) return;
-  if (S.tab !== 'bj' && bjSeat() < 0) return;
+  if (!st || !S.me || S.tab !== 'bj') return;
   var R = st.round;
-  if (!R.deadline || serverNow() < R.deadline + 500) return;
-  if (Date.now() - BJ.lastTick < 2500) return;
-  BJ.lastTick = Date.now();
-  pcall('bjTick').catch(function () {});
+  dueTick(BJ, R.no + ':' + R.phase + ':' + R.deadline, R.deadline, 'bjTick');
 }
 
 /* ---------- 射龍門 ---------- */
@@ -3035,6 +3148,7 @@ function enterApp(profile) {
   S.unsubs.push(db.collection('players').doc(profile.pid).onSnapshot(function (d) {
     if (!d.exists) return;
     S.player = d.data();
+    if (S.players) S.players[profile.pid] = S.player;
     S.me.name = S.player.name;
     S.me.role = S.player.role;
     paintTop();
@@ -3045,7 +3159,7 @@ function enterApp(profile) {
     rebuildItems(d.exists ? d.data() : null);
     render(true);
   }, function () {}));
-  S.unsubs.push(db.collection('mail').orderBy('at', 'desc').limit(40).onSnapshot(function (q) {
+  S.unsubs.push(db.collection('mail').orderBy('at', 'desc').limit(20).onSnapshot(function (q) {
     var list = [];
     q.forEach(function (d) { list.push(d.data()); });
     MAIL.list = list;
@@ -3064,22 +3178,8 @@ function enterApp(profile) {
     render();
   }, function () {}));
 
-  S.unsubs.push(db.collection('players').onSnapshot(function (q) {
-    var list = [], map = {};
-    q.forEach(function (d) { var x = d.data(); list.push(x); map[x.pid] = x; });
-    list.sort(function (a, b) { return a.pid < b.pid ? -1 : 1; });
-    S.roster = list;
-    S.players = map;
-    if (S.tab === 'me' || S.tab === 'rank') render();
-  }, function () {}));
-
+  refreshPlayers(true);
   openSeason();
-  openPoker();
-  S.unsubs.push(db.collection('games').doc('bj').collection('tables').doc('main').onSnapshot(function (d) {
-    BJ.st = d.exists ? d.data() : null;
-    if (S.tab === 'bj') renderBj();
-    else if (S.tab === 'home') renderHome();
-  }, function () {}));
 
   clearInterval(S.tick);
   var beat = 0;
@@ -3116,21 +3216,21 @@ function openSeason() {
     S.season = d.exists ? d.data() : null;
     render();
   }, function () {});
-  S.seasonUnsub = db.collection('seasons').doc(sid).collection('accounts').onSnapshot(function (q) {
-    if (S.sid !== sid) return;
-    var list = [], mine = null;
-    q.forEach(function (d) {
-      var a = d.data();
-      list.push(a);
-      if (a.pid === S.me.pid) mine = a;
-    });
-    S.accounts = list;
-    if (mine) S.acc = mine;
+  S.accountsAt = 0;
+  liveOff('accounts:');
+  S.seasonUnsub = db.collection('seasons').doc(sid).collection('accounts').doc(S.me.pid).onSnapshot(function (d) {
+    if (S.sid !== sid || !d.exists) return;
+    S.acc = d.data();
+    var found = false;
+    S.accounts = S.accounts.map(function (a) { if (a.pid === S.acc.pid) { found = true; return S.acc; } return a; });
+    if (!found) S.accounts.push(S.acc);
     render();
   }, function () {});
+  syncLive();
 }
 
 function endSession() {
+  liveOff();
   S.unsubs.splice(0).forEach(function (u) { try { u(); } catch (e) {} });
   if (S.seasonUnsub) { try { S.seasonUnsub(); } catch (e) {} S.seasonUnsub = null; }
   if (S.seasonDocUnsub) { try { S.seasonDocUnsub(); } catch (e) {} S.seasonDocUnsub = null; }
@@ -3138,7 +3238,7 @@ function endSession() {
   clearInterval(S.tick);
   S.me = null; S.player = null; S.cfg = null; S.roster = [];
   S.acc = null; S.accounts = []; S.sid = null; S.tab = 'home'; S.meTab = 'acct';
-  PK.st = null; PK.hole = null; PK.synced = false; closeRaise();
+  PK.st = null; PK.hole = null; PK.synced = false; BJ.st = null; S.playersAt = 0; S.accountsAt = 0; closeRaise();
   MAIL.list = []; MAIL.claimed = {}; $('announce').hidden = true;
   _last = {};
   closeSheet();
@@ -3169,7 +3269,8 @@ function switchTab(t) {
   $('vMe').hidden = t !== 'me';
   document.body.classList.toggle('pk-mode', t === 'poker');
   window.scrollTo(0, 0);
-  if (t === 'poker') { sizePoker(); PK.synced = false; }
+  if (t === 'poker') sizePoker();
+  syncLive();
   render(true);
 }
 

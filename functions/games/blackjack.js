@@ -87,6 +87,7 @@ function createBlackjack({ db, now, requireSession, requireAdmin }) {
         async name(pid) { const p = await tx.get(playerRef(pid)); return p.exists ? p.data().name : pid; }
       };
       const out = await fn(ctx);
+      if (ctx.noop) return Object.assign({ now: t }, out || {});   // 沒有改任何東西就不寫入，避免觸發所有人的監聽
       st.version = (st.version || 0) + 1; st.updatedAt = t;
       tx.set(tableRef(), st); tx.set(secretRef(), sec);
       Object.keys(accs).forEach((k) => { const [s2, pid] = k.split('|'); E.refresh(accs[k], cfg, t); tx.set(accRef(s2, pid), accs[k]); });
@@ -186,6 +187,7 @@ function createBlackjack({ db, now, requireSession, requireAdmin }) {
           const acc = await ctx.acc(b.pid, b.sid);
           acc.wallet += b.amount;
           ctx.led(b.pid, b.sid, { type: 'game', amount: b.amount, note: '21點取消下注' });
+          E.autoRepay(acc, ctx.cfg, ctx.t).forEach((e) => ctx.led(b.pid, b.sid, { type: 'repay', amount: e.amount }));
           delete st.round.bets[i];
           if (!Object.keys(st.round.bets).length) { st.round.phase = 'idle'; st.round.deadline = 0; }
         } else if (b && st.round.phase === 'playing') {
@@ -252,7 +254,7 @@ function createBlackjack({ db, now, requireSession, requireAdmin }) {
       await requireSession(req);
       return run(async (ctx) => {
         const st = ctx.st, R = st.round;
-        if (!R.deadline || ctx.t < R.deadline) return { did: null };
+        if (!R.deadline || ctx.t < R.deadline) { ctx.noop = true; return { did: null }; }
         if (R.phase === 'betting') {
           if (!Object.keys(R.bets).length) { R.phase = 'idle'; R.deadline = 0; return { did: null }; }
           await deal(ctx); return { did: 'deal' };
@@ -266,6 +268,7 @@ function createBlackjack({ db, now, requireSession, requireAdmin }) {
           R.phase = 'idle'; R.deadline = 0; R.bets = {}; R.turn = -1;
           return { did: 'reset' };
         }
+        ctx.noop = true;
         return { did: null };
       });
     },
@@ -281,6 +284,7 @@ function createBlackjack({ db, now, requireSession, requireAdmin }) {
             const acc = await ctx.acc(b.pid, oldSid);
             acc.wallet += b.amount;
             ctx.led(b.pid, oldSid, { type: 'game', amount: b.amount, note: '21點季末退注' });
+            E.autoRepay(acc, ctx.cfg, ctx.t).forEach((e) => ctx.led(b.pid, oldSid, { type: 'repay', amount: e.amount }));
           }
           ctx.sec.hole = null;
         }

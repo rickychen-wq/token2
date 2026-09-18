@@ -25,7 +25,8 @@ function createEconomy({ db, now, requireSession, requireAdmin }) {
       if (sSnap.exists && sSnap.data().status && sSnap.data().status !== 'active') {
         throw new AppError('本季正在結算，暫停所有交易', 'season-locked');
       }
-      const cfg = E.cfgOf(cfgSnap.exists ? cfgSnap.data() : null);
+      const rawCfg = cfgSnap.exists ? cfgSnap.data() : {};
+      const cfg = E.cfgOf(rawCfg);
       const entries = [];
       let acc;
       if (aSnap.exists) {
@@ -36,8 +37,11 @@ function createEconomy({ db, now, requireSession, requireAdmin }) {
       }
       E.rollDaily(acc, t);
 
-      const produced = fn ? fn(acc, cfg, t) : [];
+      const produced = fn ? fn(acc, cfg, t, rawCfg) : [];
       entries.push.apply(entries, produced || []);
+      // 統一規則：任何流程結束後，錢包達到門檻就自動還款（登入讀帳戶時也會補做）。
+      // 收入紀錄在前、還款紀錄在後；已經還過的不會再觸發，所以重複讀取不會重複扣。
+      entries.push.apply(entries, E.autoRepay(acc, cfg, t));
       E.refresh(acc, cfg, t);
 
       if (!sSnap.exists) {
