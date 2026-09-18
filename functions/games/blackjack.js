@@ -99,8 +99,28 @@ function createBlackjack({ db, now, requireSession, requireAdmin }) {
   const seatOf = (st, pid) => st.seats.findIndex((x) => x && x.pid === pid);
   const log = (st, text) => { st.log = (st.log || []).concat([{ t: Date.now(), text }]).slice(-20); };
 
+  /* v11：只在「局與局之間」洗牌。draw() 絕對不會重建牌靴，
+     所以一局裡所有玩家和荷官的牌一定來自同一個連續的牌靴狀態。
+     門檻依實際下注人數估算本局最多會用掉的張數，確保發到荷官補完都不可能抽乾。 */
+  function reshuffleIfNeeded(ctx) {
+    const R = ctx.st.round || {};
+    const seats = Object.keys(R.bets || {}).length;
+    const need = 40 + seats * 14;                     // 每個人最多 ~11 張（含加倍），荷官 ~8 張，抓寬一點
+    const left = (ctx.sec.shoe || []).length;
+    if (left < Math.max(78, need)) {
+      ctx.sec.shoe = newShoe();
+      log(ctx.st, '荷官重新洗牌');
+      return true;
+    }
+    return false;
+  }
+
   function draw(ctx) {
-    if (!ctx.sec.shoe || ctx.sec.shoe.length < 78) { ctx.sec.shoe = newShoe(); log(ctx.st, '荷官重新洗牌'); }
+    if (!ctx.sec.shoe || !ctx.sec.shoe.length) {
+      // 理論上進不來（reshuffleIfNeeded 已經保證夠用），留著當最後防線，並記錄下來
+      ctx.sec.shoe = newShoe();
+      log(ctx.st, '荷官重新洗牌（牌靴用盡）');
+    }
     return ctx.sec.shoe.pop();
   }
 
@@ -113,6 +133,7 @@ function createBlackjack({ db, now, requireSession, requireAdmin }) {
   async function deal(ctx) {
     const st = ctx.st, R = st.round;
     R.phase = 'playing';
+    reshuffleIfNeeded(ctx);                            // 發牌前是唯一的洗牌時機
     Object.keys(R.bets).forEach((i) => { R.bets[i].cards = [draw(ctx)]; });
     const up = draw(ctx);
     Object.keys(R.bets).forEach((i) => { R.bets[i].cards.push(draw(ctx)); });

@@ -9,6 +9,7 @@ const DEFAULTS = {
   loanUnit: 2000,        // 每筆借款
   loanRepayAt: 3000,     // 手上達到這個數字就自動還一筆
   borrowBelow: 1000,     // 總資產低於這個數字才能借
+  loanPerDay: 5,         // 每天最多借幾次（台灣時間 00:00 重置）
   bankKeep: 2000,        // 存款後手上至少要留的錢
   interestMin: 0.001,    // 第一名每 3 小時利率
   interestMax: 0.006,    // 最後一名每 3 小時利率
@@ -22,7 +23,7 @@ const DEFAULTS = {
 
 const LIMITS = {
   startingMoney: [0, 1000000], loanUnit: [1, 1000000], loanRepayAt: [1, 10000000],
-  borrowBelow: [0, 1000000], bankKeep: [0, 1000000],
+  borrowBelow: [0, 1000000], bankKeep: [0, 1000000], loanPerDay: [0, 1000],
   interestMin: [0, 0.1], interestMax: [0, 0.1],
   dailyAmount: [0, 1000000], dailyHands: [0, 100], rankMinHands: [0, 10000],
   starPer: [1, 1000000], starCap: [0, 1000000], starMinHands: [0, 10000]
@@ -114,7 +115,8 @@ function entry(type, amount, acc, extra) {
 /* 當天的每日獎勵狀態，跨日自動歸零 */
 function rollDaily(acc, t) {
   const day = twDay(t);
-  if (!acc.daily || acc.daily.day !== day) acc.daily = { day, hands: 0, claimed: false };
+  if (!acc.daily || acc.daily.day !== day) acc.daily = { day, hands: 0, claimed: false, borrows: 0 };
+  if (typeof acc.daily.borrows !== 'number') acc.daily.borrows = 0;   // 舊帳戶補欄位
   return acc.daily;
 }
 
@@ -150,6 +152,10 @@ function borrow(acc, cfg, t) {
   if (Object.keys(acc.inPlay || {}).some((g) => acc.inPlay[g] && acc.inPlay[g].inHand)) {
     throw new AppError('牌局進行中不能借款，打完這手再借', 'in-hand');
   }
+  const d = rollDaily(acc, t);
+  if (cfg.loanPerDay > 0 && d.borrows >= cfg.loanPerDay) {
+    throw new AppError('今天已經借滿 ' + cfg.loanPerDay + ' 次，明天 00:00 才會重置', 'loan-limit');
+  }
   const total = acc.wallet + acc.bank.balance + inPlayTotal(acc);
   if (total >= cfg.borrowBelow) {
     throw new AppError('手上還有 ' + fmt(total) + '，低於 ' + fmt(cfg.borrowBelow) + ' 才能借款', 'not-broke');
@@ -157,7 +163,8 @@ function borrow(acc, cfg, t) {
   acc.wallet += cfg.loanUnit;
   acc.loans += 1;
   acc.everBorrowed = true;
-  return [entry('borrow', cfg.loanUnit, acc)];
+  d.borrows += 1;
+  return [entry('borrow', cfg.loanUnit, acc, { borrowsToday: d.borrows })];
 }
 
 function maxDeposit(acc, cfg) {

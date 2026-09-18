@@ -2,7 +2,7 @@
 /* core/shop.js — 星幣商店、包包、寶箱、卡片、外觀、管理員發放與商品管理 */
 
 const { AppError, cleanPid, cleanName } = require('./util');
-const { SLOT_KEY, STACKABLE, EDITABLE, RARITY, loadCatalog } = require('./catalog');
+const { SLOT_KEY, STACKABLE, EDITABLE, RARITY, DEX_FULL_STARS, loadCatalog } = require('./catalog');
 
 function inv(p) {
   const u = Object.assign({}, p.unlocked || {});
@@ -33,6 +33,37 @@ function grant(p, item, qty) {
     return value * (qty - 1);
   }
   return 0;
+}
+
+/* ---------- v11 寶箱／合成工具 ---------- */
+const rnd = () => Math.random();
+function randInt(min, max) { return min + Math.floor(rnd() * (max - min + 1)); }
+
+/* 破損的陶碗滿 2 個自動合成 1 個保硬的鐵碗公，回傳合成了幾個 */
+function fuseBowls(p) {
+  const items = Object.assign({}, p.items || {});
+  const shards = items.broken_bowl || 0;
+  const made = Math.floor(shards / 2);
+  if (made <= 0) return 0;
+  items.broken_bowl = shards - made * 2;
+  items.iron_bowl = (items.iron_bowl || 0) + made;
+  p.items = items;
+  return made;
+}
+
+/* 從目錄挑一個符合條件的商品（等機率） */
+function pickFrom(cat, test) {
+  const pool = Object.keys(cat.items).filter((id) => test(cat.items[id]));
+  if (!pool.length) return null;
+  return cat.items[pool[Math.floor(rnd() * pool.length)]];
+}
+
+/* 挑一個還沒收集到的圖鑑收藏品；全滿回傳 null */
+function pickNewDex(cat, p) {
+  const owned = (inv(p).dex) || [];
+  const pool = Object.keys(cat.items).filter((id) => cat.items[id].type === 'dex' && owned.indexOf(id) < 0);
+  if (!pool.length) return null;
+  return cat.items[pool[Math.floor(rnd() * pool.length)]];
 }
 
 function playerPatch(p) {
@@ -82,6 +113,7 @@ function createShop({ db, now, requireSession, requireAdmin }) {
         if (stars < cost) throw new AppError('星幣不夠，還差 ' + (cost - stars), 'poor');
         p.stars = stars - cost;
         grant(p, item, qty);
+        fuseBowls(p);
         bought[item.id] = (bought[item.id] || 0) + qty;
         p.bought = bought;
         tx.update(playerRef(s.pid), playerPatch(p));
@@ -148,7 +180,9 @@ function createShop({ db, now, requireSession, requireAdmin }) {
       });
     },
 
-    /* 開寶箱：鑰匙要同階或更高 */
+    /* 開寶箱：鑰匙要同階或更高。
+       v11 改成「一次全部開出」：星幣 + 每一項道具各自擲一次（p 是出現機率、min~max 是數量），
+       再加上頭像／UR 頭像／背景／圖鑑收藏品四個獨立加抽。內容與機率全部存在 config/catalog 的 loot，後台可改。 */
     async openChest(req) {
       const s = await requireSession(req);
       const d = req.data || {};
@@ -162,26 +196,51 @@ function createShop({ db, now, requireSession, requireAdmin }) {
         const chestId = 'chest_' + cr, keyId = 'key_' + kr;
         if (!((p.items || {})[chestId] > 0)) throw new AppError('你沒有' + RARITY[cr] + '寶箱', 'no-chest');
         if (!((p.items || {})[keyId] > 0)) throw new AppError('你沒有' + RARITY[kr] + '鑰匙', 'no-key');
+        const L = cat.items[chestId].loot;
+        if (!L || !Array.isArray(L.items)) throw new AppError('這個寶箱還沒設定內容', 'empty-chest');
         useCard(p, chestId); useCard(p, keyId);
-        const table = (cat.items[chestId].rewards || []).filter((r) => r && r.weight > 0);
-        if (!table.length) throw new AppError('這個寶箱還沒設定內容', 'empty-chest');
-        const total = table.reduce((a, r) => a + r.weight, 0);
-        let roll = Math.random() * total, pick = table[0];
-        for (const r of table) { if ((roll -= r.weight) < 0) { pick = r; break; } }
-        const result = { kind: pick.kind, chest: cr };
-        if (pick.kind === 'stars') {
-          const n = pick.min + Math.floor(Math.random() * (pick.max - pick.min + 1));
-          p.stars = (p.stars || 0) + n;
-          result.stars = n;
-        } else if (pick.kind === 'item' && cat.items[pick.itemId]) {
-          const q = pick.qty || 1;
-          result.itemId = pick.itemId; result.qty = q;
-          result.salvage = grant(p, cat.items[pick.itemId], q);
-        } else {
-          throw new AppError('寶箱內容設定有誤，請找管理員', 'bad-reward');
+
+        const got = [];
+        const add = (item, qty, tag) => {
+          if (!item || qty <= 0) return;
+          const salvage = grant(p, item, qty);
+          got.push({ itemId: item.id, name: item.name, img: item.img || null, type: item.type, qty, salvage, tag: tag || item.type });
+        };
+
+        /* 星幣 */
+        const stars = L.stars ? randInt(L.stars.min, L.stars.max) : 0;
+        if (stars > 0) p.stars = (p.stars || 0) + stars;
+
+        /* 道具 */
+        for (const e of L.items) {
+          const item = cat.items[e.itemId];
+          if (!item) continue;
+          const hit = e.p === undefined || e.p >= 1 || rnd() < e.p;
+          if (!hit) continue;
+          add(item, randInt(e.min, e.max), 'item');
         }
+
+        /* 額外加抽：一般頭像（女／男／迷因）、UR 頭像、背景、圖鑑 */
+        if (L.avatar > 0 && rnd() < L.avatar) {
+          add(pickFrom(cat, (it) => it.type === 'avatar' && ['female', 'male', 'meme'].indexOf(it.sub) >= 0), 1, 'avatar');
+        }
+        if (L.ur > 0 && rnd() < L.ur) {
+          add(pickFrom(cat, (it) => it.type === 'avatar' && it.sub === 'ur'), 1, 'ur');
+        }
+        if (L.bg > 0 && rnd() < L.bg) {
+          add(pickFrom(cat, (it) => it.type === 'bg'), 1, 'bg');
+        }
+        let dexFull = 0;
+        if (L.dex > 0 && rnd() < L.dex) {
+          const dx = pickNewDex(cat, p);
+          if (dx) add(dx, 1, 'dex');
+          else { dexFull = L.dexFullStars || DEX_FULL_STARS; p.stars = (p.stars || 0) + dexFull; }
+        }
+
+        const fused = fuseBowls(p);
+        const result = { chest: cr, key: kr, stars, items: got, fused, dexFull };
         tx.update(playerRef(s.pid), playerPatch(p));
-        tx.set(playerRef(s.pid).collection('logs').doc(), Object.assign({ kind: 'open', key: kr, at: now() }, result));
+        tx.set(playerRef(s.pid).collection('logs').doc(), Object.assign({ kind: 'open', at: now() }, result));
         return result;
       });
     },
@@ -205,6 +264,7 @@ function createShop({ db, now, requireSession, requireAdmin }) {
         if (item) {
           if (!STACKABLE[item.type] && inv(p)[SLOT_KEY[item.type]].indexOf(item.id) >= 0) throw new AppError('他已經有這個物品了', 'owned');
           grant(p, item, qty);
+          fuseBowls(p);
         }
         if (stars) {
           const next = (p.stars || 0) + stars;
@@ -262,6 +322,26 @@ function createShop({ db, now, requireSession, requireAdmin }) {
           if (k === 'name') { v = String(v || '').trim().slice(0, 20); if (!v) throw new AppError('名字不能空白', 'bad-config', 'invalid-argument'); }
           else if (k === 'desc' || k === 'sub') v = v == null ? null : String(v).slice(0, 80);
           else if (k === 'onSale') v = !!v;
+          else if (k === 'loot') {
+            if (!v || typeof v !== 'object' || !Array.isArray(v.items)) throw new AppError('寶箱內容格式不對', 'bad-config', 'invalid-argument');
+            const rate = (x, label) => { const n = Number(x); if (!(n >= 0 && n <= 1)) throw new AppError(label + '要在 0 到 1 之間', 'bad-config', 'invalid-argument'); return n; };
+            const sMn = Math.max(0, Math.floor(Number((v.stars || {}).min) || 0));
+            const sMx = Math.max(sMn, Math.floor(Number((v.stars || {}).max) || 0));
+            v = {
+              stars: { min: sMn, max: sMx },
+              items: v.items.map((e) => {
+                if (!cat.items[e.itemId]) throw new AppError('寶箱裡的物品不存在：' + e.itemId, 'bad-config', 'invalid-argument');
+                const mn = Math.max(0, Math.floor(Number(e.min) || 0));
+                const mx = Math.max(mn, Math.floor(Number(e.max) || 0));
+                return { itemId: e.itemId, min: mn, max: mx, p: rate(e.p === undefined ? 1 : e.p, '出現機率') };
+              }),
+              avatar: rate(v.avatar || 0, '頭像機率'),
+              ur: rate(v.ur || 0, 'UR 頭像機率'),
+              bg: rate(v.bg || 0, '背景機率'),
+              dex: rate(v.dex || 0, '圖鑑機率'),
+              dexFullStars: Math.max(0, Math.floor(Number(v.dexFullStars) || DEX_FULL_STARS))
+            };
+          }
           else if (k === 'rewards') {
             if (!Array.isArray(v) || !v.length) throw new AppError('寶箱內容至少要一項', 'bad-config', 'invalid-argument');
             v = v.map((r) => {
@@ -293,4 +373,4 @@ function createShop({ db, now, requireSession, requireAdmin }) {
   };
 }
 
-module.exports = { createShop, grant, inv, useCard, playerPatch };
+module.exports = { createShop, grant, inv, useCard, playerPatch, fuseBowls };

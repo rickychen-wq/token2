@@ -22,34 +22,51 @@ function gamesCfg(raw) {
 }
 
 /* ---------- 射龍門 ----------
-   點數 2~14（A=14），每張從 13 種點數平均抽（無限副牌，機率固定好算）。
-   兩柱不同：第三張在中間贏，落在外面輸 1 倍，撞柱（等於任一柱）輸 2 倍。
+   v11：改成真正的「單副 52 張牌」。每一輪（發門柱）洗一副新牌，門柱從牌堆 pop 兩張，
+   射出去的第三張從同一副牌剩下的 50 張再 pop 一張。同一輪三張牌不可能是同一張 card id，
+   兩柱可以同點數但一定不同花色；牌堆存在帳戶的 acc.gate.deck，伺服器是唯一判定來源。
+   card id 0~51：rank = (c/4|0)+2（2~14，A=14），suit = c%4。
+   兩柱不同：第三張在中間贏，落在外面輸 1 倍，撞柱（等於任一柱點數）輸 2 倍。
    兩柱相同：猜比柱子大或小，猜對贏，猜錯輸 1 倍，等於柱子輸 2 倍。
    兩柱相鄰（中間沒有牌）：不能射，只能換牌。
-   賠率依機率計算，保留管理員設定的莊家優勢（預設 5%）。 */
-const RANKS = 13;
-function drawCard() { return crypto.randomInt(52); }         // 0~51，rank = c/4|0 (0=2 ... 12=A)
+   賠率依「剩下 50 張」的真實機率計算，保留管理員設定的莊家優勢（預設 5%）。 */
+const REST = 50;                                               // 發完兩張門柱後牌堆剩下的張數
 const rankOf = (c) => ((c / 4) | 0) + 2;                       // 2~14
 
-/* 回傳 { pWin, pPost, mult }，mult 是贏的時候的淨賺倍數 */
-function gateOdds(lo, hi, guess, edge) {
-  let win;
-  if (lo === hi) {
-    if (guess === 'high') win = 14 - lo;
-    else if (guess === 'low') win = lo - 2;
-    else return null;
-    const pWin = win / RANKS, pPost = 1 / RANKS;
-    if (win <= 0) return { pWin: 0, pPost, mult: 0 };
-    const pLose = 1 - pWin - pPost;
-    return { pWin, pPost, mult: floor1((pLose + 2 * pPost - edge) / pWin) };
+/* 洗一副 52 張（Fisher-Yates，用 crypto 亂數） */
+function newDeck() {
+  const d = [];
+  for (let i = 0; i < 52; i++) d.push(i);
+  for (let i = 51; i > 0; i--) {
+    const j = crypto.randomInt(i + 1);
+    const x = d[i]; d[i] = d[j]; d[j] = x;
   }
-  win = hi - lo - 1;
-  const pWin = win / RANKS, pPost = 2 / RANKS;
+  return d;
+}
+
+/* 回傳 { pWin, pPost, mult }，mult 是贏的時候的淨賺倍數。
+   機率基準是「剛發完門柱、牌堆剩 50 張」，所以前端算出來的跟伺服器結算完全一致。 */
+function gateOdds(lo, hi, guess, edge) {
+  let win, post;
+  if (lo === hi) {
+    post = 2;                                    // 同點數的四張裡兩張當了門柱，還剩兩張
+    if (guess === 'high') win = (14 - lo) * 4;
+    else if (guess === 'low') win = (lo - 2) * 4;
+    else return null;
+  } else {
+    post = 6;                                    // 兩個點數各被抽走一張，各還剩三張
+    win = (hi - lo - 1) * 4;
+  }
+  const pWin = win / REST, pPost = post / REST;
   if (win <= 0) return { pWin: 0, pPost, mult: 0 };
   const pLose = 1 - pWin - pPost;
   return { pWin, pPost, mult: floor1((pLose + 2 * pPost - edge) / pWin) };
 }
-function floor1(x) { return Math.max(0.1, Math.floor(x * 10) / 10); }
+/* 賠率無條件捨去到小數第二位。
+   v11 說明：改成有限牌組後，撞柱機率從 2/13 掉到 6/50，極端門柱（22 猜大、AA 猜小）
+   的理論賠率只有 0.03 倍，舊的「最低 0.1 倍」會讓那種注變成正期望值（玩家 +1.6%），
+   所以下限跟著改成 0.01，莊家優勢才會在每一種門柱上都成立。 */
+function floor1(x) { return Math.max(0.01, Math.floor(x * 100) / 100); }
 
 /* ---------- 拉霸 ----------
    三個輪子，每個輪子獨立依權重抽符號。理論回報率約 94.4%。 */
@@ -129,8 +146,9 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
       let out;
       await mutate(s.pid, (acc, cfg, t, raw) => {
         if (!gamesCfg(raw).gate.enabled) throw new AppError('射龍門目前關閉中', 'disabled');
-        let a = drawCard(), b = drawCard();
-        acc.gate = { posts: [a, b], at: now() };
+        const deck = newDeck();
+        const a = deck.pop(), b = deck.pop();
+        acc.gate = { posts: [a, b], deck, at: now() };
         const lo = Math.min(rankOf(a), rankOf(b)), hi = Math.max(rankOf(a), rankOf(b));
         out = { posts: [a, b], pair: lo === hi, adjacent: hi - lo === 1 };
         return [];
@@ -147,6 +165,12 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
         if (!G.enabled) throw new AppError('射龍門目前關閉中', 'disabled');
         const bet = cleanBet(d.bet, G.minBet, G.maxBet);
         if (!acc.gate || !acc.gate.posts) throw new AppError('先發門柱', 'no-posts');
+        if (!Array.isArray(acc.gate.deck) || !acc.gate.deck.length) {
+          // 舊版（無限副牌）留下來的殘局沒有牌堆資料，不能拿來結算。
+          // 這裡丟錯誤讓 transaction 整個回滾（所以不需要也不能在這裡改帳戶），
+          // 玩家按「換牌」呼叫 gateDeal 就會拿到新的一副牌。
+          throw new AppError('牌組已更新，請按換牌重新發門柱', 'stale-deck');
+        }
         const [a, b] = acc.gate.posts;
         const lo = Math.min(rankOf(a), rankOf(b)), hi = Math.max(rankOf(a), rankOf(b));
         const guess = lo === hi ? (d.guess === 'high' || d.guess === 'low' ? d.guess : null) : null;
@@ -154,7 +178,8 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
         const odds = gateOdds(lo, hi, guess, G.edge);
         if (!odds || odds.pWin <= 0) throw new AppError('這副門柱射不進，請換牌', 'no-gap');
         if (acc.wallet < bet * 2) throw new AppError('撞柱要賠 2 倍，錢包至少要有 ' + (bet * 2), 'poor');
-        const c = drawCard(), v = rankOf(c);
+        const deck = acc.gate.deck.slice();
+        const c = deck.pop(), v = rankOf(c);
         let result, delta;
         const post = lo === hi ? v === lo : (v === lo || v === hi);
         const inside = lo === hi ? (guess === 'high' ? v > lo : v < lo) : (v > lo && v < hi);
