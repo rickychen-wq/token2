@@ -21,17 +21,19 @@ const DEFAULTS = {
   dailyTopNeedsPlays: false, // 前三名是否也要玩滿才給（預設否，照使用者原本的規格）
   draws: 2,                 // 每一份獎勵抽幾次（規格的 ×2）
   expireDays: 7,            // 信件期限
+  // 機率表的一列是 { r: 稀有度, w: 權重 }。
+  // 不能用 [稀有度, 權重] 這種陣列，因為 Firestore 不收「陣列裡面放陣列」。
   daily: {
-    r1: [[6, 5], [5, 15], [4, 30], [3, 50]],
-    r2: [[5, 20], [4, 30], [3, 50]],
-    r3: [[5, 20], [4, 20], [3, 30], [2, 20]],   // 規格寫的加起來是 90，當權重正規化 → 22.2/22.2/33.3/22.2
-    other: [[4, 20], [3, 20], [2, 30], [1, 30]]
+    r1: [{ r: 6, w: 5 }, { r: 5, w: 15 }, { r: 4, w: 30 }, { r: 3, w: 50 }],
+    r2: [{ r: 5, w: 20 }, { r: 4, w: 30 }, { r: 3, w: 50 }],
+    r3: [{ r: 5, w: 20 }, { r: 4, w: 20 }, { r: 3, w: 30 }, { r: 2, w: 20 }],   // 規格寫的加起來是 90，當權重正規化 → 22.2/22.2/33.3/22.2
+    other: [{ r: 4, w: 20 }, { r: 3, w: 20 }, { r: 2, w: 30 }, { r: 1, w: 30 }]
   },
   weekly: {
-    r1: [[6, 40], [5, 60]],
-    r2: [[6, 30], [5, 50], [4, 20]],
-    r3: [[6, 15], [5, 50], [4, 35]],
-    other: [[5, 15], [4, 15], [3, 70]]
+    r1: [{ r: 6, w: 40 }, { r: 5, w: 60 }],
+    r2: [{ r: 6, w: 30 }, { r: 5, w: 50 }, { r: 4, w: 20 }],
+    r3: [{ r: 6, w: 15 }, { r: 5, w: 50 }, { r: 4, w: 35 }],
+    other: [{ r: 5, w: 15 }, { r: 4, w: 15 }, { r: 3, w: 70 }]
   }
 };
 
@@ -45,15 +47,15 @@ function cfgOf(raw) {
   return out;
 }
 
-/* 依 [[稀有度, 權重], ...] 抽一個稀有度。
+/* 依 [{ r: 稀有度, w: 權重 }, ...] 抽一個稀有度。
    權重不需要剛好加到 100，會照總和正規化。 */
 function rollRarity(table) {
-  const rows = (table || []).filter((x) => Array.isArray(x) && x[1] > 0);
+  const rows = (table || []).filter((x) => x && x.r >= 1 && x.w > 0);
   if (!rows.length) return null;
-  const total = rows.reduce((a, x) => a + x[1], 0);
-  let r = Math.random() * total;
-  for (const x of rows) { if ((r -= x[1]) < 0) return x[0]; }
-  return rows[rows.length - 1][0];
+  const total = rows.reduce((a, x) => a + x.w, 0);
+  let n = Math.random() * total;
+  for (const x of rows) { if ((n -= x.w) < 0) return x.r; }
+  return rows[rows.length - 1].r;
 }
 
 /* 抽 n 個寶箱，回傳 { chest_3: 2 } 這種數量表 */
@@ -215,12 +217,12 @@ function createRewards({ db, now, requireAdmin }) {
   function cleanTable(v, label) {
     if (!Array.isArray(v) || !v.length) throw new AppError(label + '至少要有一列', 'bad-config', 'invalid-argument');
     const out = v.map((x) => {
-      const r = Math.floor(Number(x[0])), pct = Number(x[1]);
+      const r = Math.floor(Number(x && x.r)), w = Number(x && x.w);
       if (!(r >= 1 && r <= 6)) throw new AppError(label + '的稀有度要在 1 到 6 之間', 'bad-config', 'invalid-argument');
-      if (!(pct >= 0 && pct <= 100)) throw new AppError(label + '的機率要在 0 到 100 之間', 'bad-config', 'invalid-argument');
-      return [r, Math.round(pct * 100) / 100];
+      if (!(w >= 0 && w <= 100)) throw new AppError(label + '的機率要在 0 到 100 之間', 'bad-config', 'invalid-argument');
+      return { r: r, w: Math.round(w * 100) / 100 };
     });
-    const sum = out.reduce((a, x) => a + x[1], 0);
+    const sum = out.reduce((a, x) => a + x.w, 0);
     if (sum <= 0) throw new AppError(label + '的機率全是 0', 'bad-config', 'invalid-argument');
     // 加起來不是 100 也收，當成權重照比例正規化（規格裡每日第三名那組就是 90）
     return out;
