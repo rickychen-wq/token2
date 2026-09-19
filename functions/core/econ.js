@@ -15,8 +15,6 @@ const DEFAULTS = {
   bankKeep: 2000,        // 存款後手上至少要留的錢
   interestMin: 0.001,    // 第一名每 3 小時利率
   interestMax: 0.006,    // 最後一名每 3 小時利率
-  dailyAmount: 500,      // 每日獎勵
-  dailyHands: 3,         // 當天要打幾手才能領
   rankMinHands: 20,      // 本季至少打幾手才計入排名和積分
   starPer: 100,          // 本季淨資產每多少換 1 星幣（無條件進位）
   starCap: 0,            // 一季最多換幾顆，0 = 不限
@@ -28,7 +26,7 @@ const LIMITS = {
   borrowBelow: [0, 1000000], bankKeep: [0, 1000000], loanPerDay: [0, 1000],
   reviveBelow: [0, 1000000], reviveTo: [0, 10000000],
   interestMin: [0, 0.1], interestMax: [0, 0.1],
-  dailyAmount: [0, 1000000], dailyHands: [0, 100], rankMinHands: [0, 10000],
+  rankMinHands: [0, 10000],
   starPer: [1, 1000000], starCap: [0, 1000000], starMinHands: [0, 10000]
 };
 
@@ -251,17 +249,6 @@ function withdraw(acc, cfg, amount, t) {
   return [entry('withdraw', amount, acc)].concat(autoRepay(acc, cfg, t));
 }
 
-function claimDaily(acc, cfg, t) {
-  const d = rollDaily(acc, t);
-  if (d.claimed) throw new AppError('今天已經領過了，明天 00:00 重置', 'claimed');
-  if (d.hands < cfg.dailyHands) {
-    throw new AppError('今天再打 ' + (cfg.dailyHands - d.hands) + ' 手就能領', 'not-enough-hands');
-  }
-  d.claimed = true;
-  acc.wallet += cfg.dailyAmount;
-  return [entry('daily', cfg.dailyAmount, acc)].concat(autoRepay(acc, cfg, t));
-}
-
 function adminAdjust(acc, cfg, delta, t) {
   const n = Number(delta);
   if (!Number.isInteger(n) || n === 0 || Math.abs(n) > MAX_AMOUNT) throw new AppError('調整金額要是非零整數', 'bad-amount', 'invalid-argument');
@@ -314,5 +301,5 @@ function fmt(n) { return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, 
 module.exports = {
   DEFAULTS, PERIOD, cfgOf, cleanEconPatch, cleanAmount, twDay, periodStart,
   newAccount, inPlayTotal, computeNet, refresh, rollDaily, recordHands, recordPlay, playsOnDay, maxDeposit, useRevive,
-  autoRepay, borrow, deposit, withdraw, claimDaily, adminAdjust, rankRates, applyInterest, starsFor
+  autoRepay, borrow, deposit, withdraw, adminAdjust, rankRates, applyInterest, starsFor
 };

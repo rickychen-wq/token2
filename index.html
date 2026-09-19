@@ -302,23 +302,7 @@ button.row:active{background:rgba(63,199,255,.06)}
 .skel-line.w40{width:40%}.skel-line.w70{width:70%}.skel-line.big{height:46px;width:60%;margin:14px 0 22px}
 @keyframes shimmer{to{background-position:-200% 0}}
 
-/* ---------- 每日獎勵 ---------- */
-.daily{
-  display:flex;align-items:center;gap:14px;margin-top:12px;border-radius:8px;padding:14px 16px;
-  background:linear-gradient(160deg,var(--glass),var(--glass2));border:1px solid var(--edge);
-  transition:border-color .2s,box-shadow .2s;
-}
-.daily.ready{border-color:rgba(75,227,143,.5);box-shadow:0 0 28px rgba(75,227,143,.12)}
-.daily.done{opacity:.72}
-.daily-k{flex:1;min-width:0}
-.daily-k h3{font-size:15px;font-weight:700}
-.daily-k h3 .plus{font-family:var(--ui);font-size:17px;color:var(--grn);margin-left:4px}
-.daily-k p{font-size:12.5px;color:var(--faint);margin-top:1px}
-.pips{display:flex;gap:5px;margin-top:8px}
-.pips i{width:24px;height:5px;border-radius:3px;background:rgba(63,199,255,.14)}
-.pips i.on{background:var(--cy);box-shadow:0 0 8px rgba(63,199,255,.8)}
 .btn.sm{flex:none;width:auto;min-height:42px;padding:0 18px;font-size:14px;letter-spacing:.06em}
-.daily.ready .btn.sm{background:linear-gradient(135deg,#B5F7D0,var(--grn) 55%,#23B96A);color:#03170B;box-shadow:0 6px 22px rgba(75,227,143,.3)}
 
 /* ---------- 銀行 ---------- */
 .lbl{font-size:12.5px;color:var(--faint)}
@@ -1342,7 +1326,7 @@ $('gateForm').addEventListener('submit', function (ev) {
    ===================================================================== */
 var ECON_DEF = {
   startingMoney: 5000, loanUnit: 2000, loanRepayAt: 3000, borrowBelow: 1000, bankKeep: 2000,
-  interestMin: 0.001, interestMax: 0.006, dailyAmount: 500, dailyHands: 3, rankMinHands: 20,
+  interestMin: 0.001, interestMax: 0.006, rankMinHands: 20,
   starPer: 100, starCap: 0, starMinHands: 20
 };
 var PERIOD = 3 * 3600000;
@@ -1556,11 +1540,15 @@ function showProfile(pid) {
 }
 
 /* ---------- v12 任務 ---------- */
-var TASKS = { data: null, cat: 'daily', loading: false };
+var TASKS = { data: null, cat: 'daily', loading: false, error: null };
 var TASK_CAT = [['daily', '每日'], ['weekly', '每週'], ['career', '生涯']];
 
 function taskEntry() {
   var d = TASKS.data;
+  if (!d && TASKS.error) {
+    return '<button class="game task-entry" id="goTasks"><div class="game-bg">✦</div><div class="game-suit">✦</div>' +
+      '<div class="game-txt"><h3>任務</h3><p>載入失敗，點一下重試</p></div><span class="chev">›</span></button>';
+  }
   if (d && !d.active) {
     return '<button class="game task-entry" id="goTasks"><div class="game-bg">✦</div><div class="game-suit">✦</div>' +
       '<div class="game-txt"><h3>任務</h3><p>' + esc(d.startsFrom.replace('-W', ' 第 ') + ' 週') + '開始</p></div><span class="chev">›</span></button>';
@@ -1574,12 +1562,19 @@ function taskEntry() {
 function loadTasks(then) {
   if (TASKS.loading) return;
   TASKS.loading = true;
+  TASKS.error = null;
   call('taskList', {}).then(function (r) {
     TASKS.data = r.tasks;
     TASKS.loading = false;
+    TASKS.error = null;
     if (then) then();
     if (S.tab === 'home') renderHome(true);
-  }).catch(function () { TASKS.loading = false; });
+  }).catch(function (e) {
+    TASKS.loading = false;
+    TASKS.error = (e && e.message) || '任務載入失敗';
+    if (then) then(e);
+    if (S.tab === 'home') renderHome(true);
+  });
 }
 
 function taskRow(x) {
@@ -1599,6 +1594,19 @@ function taskRow(x) {
 function sheetTasks() {
   var render = function () {
     var d = TASKS.data;
+    if (!d && TASKS.error) {
+      return openSheet('<h3 class="center">任務</h3>' +
+        '<p class="desc center">' + esc(TASKS.error) + '</p>' +
+        '<div class="acts"><button class="btn" type="button" data-retry>重新載入</button>' +
+        '<button class="btn ghost" type="button" data-close>關閉</button></div>', function (sh) {
+          sh.querySelector('[data-close]').onclick = closeSheet;
+          sh.querySelector('[data-retry]').onclick = function () {
+            TASKS.error = null;
+            loadTasks(render);
+            render();
+          };
+        });
+    }
     if (!d) return openSheet('<p class="desc center">載入中…</p>', function () {});
     if (!d.active) {
       return openSheet('<h3 class="center">任務</h3>' +
@@ -1637,7 +1645,13 @@ function sheetTasks() {
         });
       });
   };
-  if (!TASKS.data) loadTasks(render); else { render(); loadTasks(); }
+  if (!TASKS.data) {
+    if (!TASKS.error) loadTasks(render);
+    render();
+  } else {
+    render();
+    loadTasks();
+  }
 }
 
 /* ---------- v11b 破產防護卷 ---------- */
@@ -3874,22 +3888,6 @@ function renderHome(force) {
     '</div>';
   }
 
-  if (a) {
-    var today = twDay(Date.now());
-    var d = a.daily && a.daily.day === today ? a.daily : { hands: 0, claimed: false };
-    var need = c.dailyHands, done = Math.min(d.hands, need), ready = !d.claimed && d.hands >= need;
-    var pips = '';
-    for (var i = 0; i < need; i++) pips += '<i' + (i < done ? ' class="on"' : '') + '></i>';
-    h += '<div class="daily' + (ready ? ' ready' : '') + (d.claimed ? ' done' : '') + '">' +
-      '<div class="daily-k"><h3>每日獎勵 <span class="plus">+' + fmt(c.dailyAmount) + '</span></h3>' +
-      '<p>' + (d.claimed ? '今天領過了，明天 00:00 重置'
-        : need === 0 ? '今天可以直接領'
-        : '今天打了 ' + d.hands + ' / ' + need + ' 手') + '</p>' +
-      (need > 0 ? '<div class="pips">' + pips + '</div>' : '') + '</div>' +
-      '<button class="btn sm' + (ready ? '' : ' ghost') + '" id="claimBtn"' + (ready ? '' : ' disabled') + '>' +
-        (d.claimed ? '已領取' : '領取') + '</button></div>';
-  }
-
   h += taskEntry();
 
   h += '<div class="sec-h"><h2>遊戲</h2></div>';
@@ -3913,13 +3911,6 @@ function renderHome(force) {
     if (gt) gt.onclick = sheetTasks;
     $('vHome').querySelectorAll('[data-go]').forEach(function (b) { b.onclick = function () { switchTab(b.getAttribute('data-go')); }; });
     $('vHome').querySelector('.idcard').onclick = function () { sheetProfile(S.me.pid); };
-    var cb = $('claimBtn');
-    if (cb) cb.onclick = function () {
-      busy(cb, true);
-      call('econClaimDaily').then(function () {
-        toast('領到 ' + fmt(econ().dailyAmount), 'good');
-      }).catch(function (e) { busy(cb, false); toast(e.message, 'bad'); });
-    };
   }
   paintSeason();
 }
@@ -4043,7 +4034,7 @@ function renderMe(force) {
       '<div class="row"><span class="k">開放註冊<small>開啟時，任何人都能用沒被用過的編號自己註冊</small></span>' +
       '<button class="switch" role="switch" id="regSwitch" aria-checked="' + open + '" aria-label="開放註冊"></button></div>' +
       '<button class="row" data-act="create"><span class="k">開帳號<small>先建好編號和名字，本人第一次登入時自己設密碼</small></span><span class="chev">›</span></button>' +
-      '<button class="row" data-act="econ"><span class="k">經濟設定<small>起始資金、借款、銀行、利率、每日獎勵</small></span><span class="chev">›</span></button>' +
+      '<button class="row" data-act="econ"><span class="k">經濟設定<small>起始資金、借款、銀行、利率</small></span><span class="chev">›</span></button>' +
       '<button class="row" data-act="poker"><span class="k">德州設定<small>盲注、帶入上限、思考秒數、AI 控桌</small></span><span class="chev">›</span></button>' +
       '<button class="row" data-act="seasoncfg"><span class="k">季與數據設定<small>正式季從哪一週開始、牌局數據從什麼時候記錄</small></span><span class="chev">›</span></button>' +
       '<button class="row" data-act="settle"><span class="k">結算上一季<small>週一 00:01 會自動跑，排程失敗時才需要按</small></span><span class="chev">›</span></button>' +
@@ -4406,8 +4397,6 @@ function sheetEcon() {
       num('eUnit', '每筆借款', c.loanUnit) +
       num('eRepay', '自動還款門檻', c.loanRepayAt) +
       num('eBelow', '低於多少可以借', c.borrowBelow) +
-      num('eDaily', '每日獎勵', c.dailyAmount) +
-      num('eHands', '每日需打手數', c.dailyHands, '設 0 可以直接領') +
       num('eRank', '計入排名最少手數', c.rankMinHands) +
       num('sPer', '每多少資產換 1 星幣', c.starPer, '無條件進位') +
       num('sCap', '一季最多星幣', c.starCap, '0 = 不限') +
@@ -4416,7 +4405,7 @@ function sheetEcon() {
       num('eMax', '最後一名利率 %', pv(c.interestMax), '每 3 小時') +
     '</div>',
     '儲存設定', '', function () {
-      var ints = { eStart: 'startingMoney', eKeep: 'bankKeep', eUnit: 'loanUnit', eRepay: 'loanRepayAt', eBelow: 'borrowBelow', eDaily: 'dailyAmount', eHands: 'dailyHands', eRank: 'rankMinHands', sPer: 'starPer', sCap: 'starCap', sMinH: 'starMinHands' };
+      var ints = { eStart: 'startingMoney', eKeep: 'bankKeep', eUnit: 'loanUnit', eRepay: 'loanRepayAt', eBelow: 'borrowBelow', eRank: 'rankMinHands', sPer: 'starPer', sCap: 'starCap', sMinH: 'starMinHands' };
       var patch = {}, bad = null;
       Object.keys(ints).forEach(function (id) {
         var v = $(id).value.trim();

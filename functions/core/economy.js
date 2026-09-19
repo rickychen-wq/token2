@@ -143,11 +143,6 @@ function createEconomy({ db, now, requireSession, requireAdmin }) {
       return view(await mutate(s.pid, (acc, cfg, t) => E.withdraw(acc, cfg, amount, t)));
     },
 
-    async claimDaily(req) {
-      const s = await requireSession(req);
-      return view(await mutate(s.pid, (acc, cfg, t) => E.claimDaily(acc, cfg, t)));
-    },
-
     /* ---------- 主辦 ---------- */
 
     async adminAdjust(req) {

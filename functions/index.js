@@ -67,7 +67,6 @@ exports.econAccount = wrap(EC.account);
 exports.econBorrow = wrap(EC.borrow);
 exports.econDeposit = wrap(EC.deposit);
 exports.econWithdraw = wrap(EC.withdraw);
-exports.econClaimDaily = wrap(EC.claimDaily);
 exports.econUseRevive = wrap(EC.useRevive);
 exports.taskList = wrap(EC.taskList);
 exports.taskClaim = wrap(EC.taskClaim);
