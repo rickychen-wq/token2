@@ -660,6 +660,20 @@ button.game:active{transform:scale(.99)}
 .prize-cell small{font-size:11px;color:var(--dim);text-align:center}
 .prize-cell.dup{opacity:.72}
 .bj-dealer-id[data-dealer]{cursor:pointer}
+/* v11b 幹錢券選牌 */
+.pick-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:5px;margin:14px 0;max-height:46vh;overflow-y:auto;padding:2px}
+.pick-card{padding:0;border:0;background:none;cursor:pointer;aspect-ratio:2/3}
+.pick-card .pc.back{width:100%;height:100%;border-radius:4px}
+.pick-card:disabled{opacity:.25;cursor:default}
+.pick-card:not(:disabled):active{transform:scale(.94)}
+/* v11b 乾洗髮選頭像 */
+.closet-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px;margin:12px 0;max-height:46vh;overflow-y:auto;padding:2px}
+.closet-cell{display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 4px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid var(--edge);color:var(--fg);cursor:pointer}
+.closet-cell b{font-size:11.5px;font-weight:600;text-align:center;line-height:1.2}
+.closet-cell:active{transform:scale(.96)}
+.duel-cards{display:flex;justify-content:center;gap:28px;margin:18px 0}
+.duel-cards>div{display:flex;flex-direction:column;align-items:center;gap:8px}
+.duel-cards .lbl{font-size:12px;color:var(--dim)}
 .stat-grid .unk{color:var(--dim);font-size:13px;letter-spacing:.5px}
 @keyframes fxShake{0%,100%{transform:rotate(0)}20%{transform:rotate(-8deg) scale(1.05)}40%{transform:rotate(8deg) scale(1.08)}60%{transform:rotate(-6deg) scale(1.1)}80%{transform:rotate(5deg) scale(1.12)}}
 @keyframes fxOut{to{transform:scale(1.6);opacity:0;filter:brightness(3)}}
@@ -1526,26 +1540,196 @@ function showProfile(pid) {
   });
 }
 
-/* 點牌桌上的人：有換座位卡時先問要做什麼 */
-function seatTap(pid) {
-  var st = PK.st, me = mySeat();
-  var can = pid !== S.me.pid && me >= 0 && st && st.hand.phase === 'idle' && countOf(S.player, 'card_seat') > 0;
-  if (!can) return sheetProfile(pid);
+/* ---------- v11b 破產防護卷 ---------- */
+function reviveCard(a, c) {
+  var n = countOf(S.player, 'bankruptcy_protection');
+  if (!n) return '';
+  var total = (a.wallet || 0) + ((a.bank && a.bank.balance) || 0) + inPlaySum(a);
+  var below = c.reviveBelow === undefined ? 1000 : c.reviveBelow;
+  var to = c.reviveTo === undefined ? 5000 : c.reviveTo;
+  var why = a.loans > 0 ? '有 ' + a.loans + ' 筆借款沒還完，還完才能用'
+    : total >= below ? '手上還有 ' + fmt(total) + '，低於 ' + fmt(below) + ' 才能用' : '';
+  return '<div class="sec-h"><h2>破產防護卷</h2><span>持有 ' + n + ' 張</span></div>' +
+    '<div class="loan">' +
+      '<p>總資產低於 ' + fmt(below) + ' 時使用，錢包直接回到 ' + fmt(to) + '。持有期間不能跟銀行借款。</p>' +
+      '<button class="btn' + (why ? ' ghost' : '') + '" data-b="revive"' + (why ? ' disabled' : '') + '>' +
+        (why || '用一張，錢包回到 ' + fmt(to)) + '</button>' +
+    '</div>';
+}
+function inPlaySum(a) {
+  var n = 0, ip = (a && a.inPlay) || {};
+  Object.keys(ip).forEach(function (k) { n += (ip[k] && ip[k].amount) || 0; });
+  return n;
+}
+function sheetRevive() {
+  var it = ITEM.bankruptcy_protection;
+  openSheet('<div class="buy-prev">' + (it ? itemThumb(it, 110) : '') + '</div>' +
+    '<h3 class="center">用一張破產防護卷？</h3>' +
+    '<p class="desc center">錢包會直接回到 ' + fmt(econ().reviveTo || 5000) + '，用掉就沒了。</p>' +
+    '<div class="acts" style="margin-top:16px"><button class="btn ghost" type="button" data-close>取消</button>' +
+    '<button class="btn" type="button" data-go>確定使用</button></div>', function (sh) {
+    sh.querySelector('[data-close]').onclick = closeSheet;
+    sh.querySelector('[data-go]').onclick = function () {
+      closeSheet();
+      call('econUseRevive', {}).then(function () { toast('錢包已經回到 ' + fmt(econ().reviveTo || 5000), 'good'); })
+        .catch(function (e) { toast(e.message, 'bad'); });
+    };
+  });
+}
+
+/* ---------- v11b 干擾型道具 ---------- */
+var CONTEST_CARDS = [
+  { kind: 'seat', id: 'card_seat', name: '換座位卡', desc: '跟他交換座位', games: ['poker'] },
+  { kind: 'forcebet', id: 'forced_action', name: '強制下注卷', desc: '他下一手必須跟到你的下注（上限 500）', games: ['poker'] },
+  { kind: 'money', id: 'forced_duel', name: '強制幹錢券', desc: '抽卡對決，贏的拿 1000、輸的拿 200', games: ['poker', 'bj'] }
+];
+
+/* 點牌桌上的人：兩手之間而且身上有干擾卡的話，先問要做什麼 */
+function seatTap(pid, game) {
+  game = game || 'poker';
+  var st = game === 'bj' ? BJ.st : PK.st;
+  var idle = st && (game === 'bj' ? st.round.phase === 'idle' : st.hand.phase === 'idle');
+  var mine = game === 'bj' ? bjSeat() : mySeat();
+  var usable = CONTEST_CARDS.filter(function (c) {
+    return c.games.indexOf(game) >= 0 && countOf(S.player, c.id) > 0;
+  });
+  if (pid === S.me.pid || mine < 0 || !idle || !usable.length) return sheetProfile(pid);
   var p = S.players[pid] || { name: pid };
+  var rows = '<button class="row" data-s="prof"><span class="k">查看生涯檔案</span><span class="chev">›</span></button>';
+  usable.forEach(function (c) {
+    rows += '<button class="row" data-use="' + c.kind + '"><span class="k">使用' + c.name +
+      '<small>持有 ' + countOf(S.player, c.id) + ' 個・' + c.desc + '。對方有保硬的鐵碗公可以擋下來，你的卡一樣會用掉</small></span><span class="chev">›</span></button>';
+  });
   openSheet('<div class="who" style="margin-bottom:16px">' + playerAvatar(p, 48) + '<div><b>' + esc(p.name) + '</b><br><span>#' + esc(idOf(p)) + '</span></div></div>' +
-    '<div class="grp">' +
-      '<button class="row" data-s="prof"><span class="k">查看生涯檔案</span><span class="chev">›</span></button>' +
-      '<button class="row" data-s="swap"><span class="k">使用換座位卡<small>持有 ' + countOf(S.player, 'card_seat') + ' 張；對方也有卡的話會被擋下，你的卡一樣會用掉</small></span><span class="chev">›</span></button>' +
-    '</div><div class="acts" style="margin-top:14px"><button class="btn ghost" type="button" data-close>取消</button></div>',
+    '<div class="grp">' + rows + '</div>' +
+    '<div class="acts" style="margin-top:14px"><button class="btn ghost" type="button" data-close>取消</button></div>',
     function (sh) {
       sh.querySelector('[data-close]').onclick = closeSheet;
       sh.querySelector('[data-s=prof]').onclick = function () { sheetProfile(pid); };
-      sh.querySelector('[data-s=swap]').onclick = function () {
+      sh.querySelectorAll('[data-use]').forEach(function (b) {
+        b.onclick = function () {
+          closeSheet();
+          var kind = b.getAttribute('data-use');
+          var fn = game === 'bj' ? 'bjUseCard' : 'pokerUseCard';
+          pcall(fn, { kind: kind, pid: pid }).then(function (r) {
+            if (r.applied) toast(contestDoneText(r.applied, p.name), 'good');
+            else toast('已送出，等 ' + p.name + ' 決定要不要擋');
+          }).catch(function (e) { toast(e.message, 'bad'); });
+        };
+      });
+    });
+}
+
+function contestDoneText(a, name) {
+  if (!a) return '完成';
+  if (a.kind === 'seat') return '已經跟 ' + name + ' 換位子';
+  if (a.kind === 'forcebet') return name + ' 下一手必須跟到你的下注';
+  if (a.kind === 'money') return a.winner === S.me.pid ? '對決贏了，拿到 1000' : '對決輸了，拿到 200';
+  return '完成';
+}
+
+/* 牌桌狀態更新時呼叫：該我防禦或該我選牌就自動跳出視窗 */
+var CONTEST_UI = { key: null, shown: {} };
+function contestWatch(st, game) {
+  var c = st && st.contest;
+  if (!CONTEST_UI.shown) CONTEST_UI.shown = {};
+  if (!c) { CONTEST_UI.key = null; return; }
+  var inIt = c.from === S.me.pid || c.to === S.me.pid;
+  if (c.phase === 'done') {
+    CONTEST_UI.key = null;
+    // 結束時兩邊都要看到結果，不能只有最後動作的那個人看到
+    if (inIt && c.result && !CONTEST_UI.shown[c.id]) {
+      CONTEST_UI.shown[c.id] = 1;
+      if (c.kind === 'money') sheetDuelResult(c);
+      else if (c.from === S.me.pid) toast(contestDoneText({ kind: c.kind }, c.toName), 'good');
+    }
+    if (inIt && c.blocked && !CONTEST_UI.shown[c.id]) {
+      CONTEST_UI.shown[c.id] = 1;
+      if (c.from === S.me.pid) toast(c.toName + ' 用鐵碗公擋下來了', 'bad');
+    }
+    return;
+  }
+  var mine = c.from === S.me.pid ? c.to : c.from;
+  // 把「對方選了沒」也放進 key，對方一選牌就重畫，那張才會變成不能點
+  var key = c.id + '|' + c.phase + '|' + (c.picks && c.picks[mine] !== undefined ? 'x' : '');
+  if (CONTEST_UI.key === key) return;
+  // 只改 key，不要整個換掉物件，不然 shown 會不見
+  if (c.phase === 'guard' && c.to === S.me.pid) {
+    CONTEST_UI.key = key;
+    sheetGuard(c, game);
+  } else if (c.phase === 'pick' && (c.from === S.me.pid || c.to === S.me.pid) && c.picks[S.me.pid] === undefined) {
+    CONTEST_UI.key = key;
+    sheetPickCard(c, game);
+  }
+}
+
+/* 要不要用鐵碗公擋下來 */
+function sheetGuard(c, game) {
+  var n = countOf(S.player, 'iron_bowl');
+  var img = ITEM.iron_bowl ? itemThumb(ITEM.iron_bowl, 96) : '';
+  openSheet('<div class="buy-prev">' + img + '</div>' +
+    '<h3 class="center">' + esc(c.fromName) + ' 對你用了' + esc(c.name) + '</h3>' +
+    '<p class="desc center">要用保硬的鐵碗公擋下來嗎？你手上有 ' + n + ' 個。<br>沒有在時間內決定就當作不擋。</p>' +
+    '<div class="acts" style="margin-top:16px">' +
+      '<button class="btn ghost" type="button" data-pass>不擋</button>' +
+      '<button class="btn" type="button" data-block' + (n > 0 ? '' : ' disabled') + '>用鐵碗公擋</button></div>',
+    function (sh) {
+      var send = function (block) {
         closeSheet();
-        pcall('pokerSwapSeat', { pid: pid }).then(function (r) {
-          toast(r.blocked ? p.name + ' 用換座位卡擋下了' : '已經跟 ' + p.name + ' 換位子', r.blocked ? 'bad' : 'good');
-        }).catch(function (e) { toast(e.message, 'bad'); });
+        pcall(game === 'bj' ? 'bjContestRespond' : 'pokerContestRespond', { block: block })
+          .then(function (r) { if (r.blocked) toast('擋下來了', 'good'); })
+          .catch(function (e) { toast(e.message, 'bad'); });
       };
+      sh.querySelector('[data-pass]').onclick = function () { send(false); };
+      var bb = sh.querySelector('[data-block]');
+      if (n > 0) bb.onclick = function () { send(true); };
+    });
+}
+
+/* 對決結果：兩張牌翻開比大小 */
+function sheetDuelResult(c) {
+  var r = c.result || {}, mineWon = r.winner === S.me.pid;
+  var myCard = (c.picks || {})[S.me.pid], other = c.from === S.me.pid ? c.to : c.from;
+  var otherCard = (c.picks || {})[other];
+  var otherName = c.from === S.me.pid ? c.toName : c.fromName;
+  openSheet('<h3 class="center">' + (mineWon ? '對決贏了' : '對決輸了') + '</h3>' +
+    '<div class="duel-cards">' +
+      '<div><span class="lbl">你</span>' + cardHTML(myCard) + '</div>' +
+      '<div><span class="lbl">' + esc(otherName) + '</span>' + cardHTML(otherCard) + '</div>' +
+    '</div>' +
+    '<p class="desc center">' + (mineWon ? '拿到 ' + fmt(r.win) : '拿到 ' + fmt(r.lose)) +
+    (c.autoPicked ? '<br>有人沒在時間內選，系統代選了' : '') + '</p>' +
+    '<div class="acts" style="margin-top:14px"><button class="btn" type="button" data-close>收下</button></div>',
+    function (sh) { sh.querySelector('[data-close]').onclick = closeSheet; });
+}
+
+/* 幹錢券：從 52 張牌背裡選一張 */
+function sheetPickCard(c, game) {
+  var other = c.from === S.me.pid ? c.to : c.from;
+  var taken = c.picks[other];
+  var cells = '';
+  for (var i = 0; i < 52; i++) {
+    cells += '<button class="pick-card" data-c="' + i + '"' + (i === taken ? ' disabled' : '') + '><span class="pc back"></span></button>';
+  }
+  openSheet('<h3 class="center">抽卡對決</h3>' +
+    '<p class="desc center">跟 ' + esc(c.from === S.me.pid ? c.toName : c.fromName) + ' 比大小。點一張牌背，翻開比點數，同點數比花色。<br>' +
+    '贏的拿 1000、輸的拿 200。沒選的話系統會幫你隨機選。</p>' +
+    '<div class="pick-grid">' + cells + '</div>' +
+    '<div class="acts" style="margin-top:12px"><button class="btn ghost" type="button" data-close>先不選</button></div>',
+    function (sh) {
+      sh.classList.add('flush');
+      sh.querySelector('[data-close]').onclick = closeSheet;
+      sh.querySelectorAll('[data-c]').forEach(function (b) {
+        if (b.disabled) return;
+        b.onclick = function () {
+          closeSheet();
+          pcall(game === 'bj' ? 'bjContestPick' : 'pokerContestPick', { card: +b.getAttribute('data-c') })
+            .then(function (r) {
+              if (r.applied) toast(contestDoneText(r.applied), r.applied.winner === S.me.pid ? 'good' : 'bad');
+              else toast('選好了，等對方');
+            }).catch(function (e) { toast(e.message, 'bad'); });
+        };
+      });
     });
 }
 
@@ -1770,6 +1954,30 @@ function showChestResult(chest, res) {
 /* v11：還沒開放使用的道具，點開先看說明（六個新道具的功能在 v11b） */
 function sheetCardInfo(it) {
   if (!it) { toast('這張卡的功能還沒開放'); return; }
+  if (it.id === 'premium_dry_shampoo') return sheetShampoo();
+  if (it.id === 'bankruptcy_protection') return sheetRevive();
+  if (it.id === 'iron_bowl') {
+    return openSheet('<div class="buy-prev">' + itemThumb(it, 120) + '</div><h3 class="center">' + esc(it.name) + '</h3>' +
+      '<p class="desc center">' + esc(it.desc) + '</p>' +
+      '<p class="desc center" style="opacity:.7">持有 ' + countOf(S.player, it.id) + ' 個・不用主動使用，別人對你用干擾道具時會跳出來問</p>' +
+      '<div class="acts" style="margin-top:14px"><button class="btn ghost" type="button" data-close>關閉</button></div>',
+      function (sh) { sh.querySelector('[data-close]').onclick = closeSheet; });
+  }
+  if (it.id === 'forced_duel' || it.id === 'forced_action') {
+    return openSheet('<div class="buy-prev">' + itemThumb(it, 120) + '</div><h3 class="center">' + esc(it.name) + '</h3>' +
+      '<p class="desc center">' + esc(it.desc) + '</p>' +
+      '<p class="desc center" style="opacity:.7">持有 ' + countOf(S.player, it.id) + ' 個・在牌桌上兩手之間，點對方的頭像使用' +
+      (it.id === 'forced_action' ? '（只有德州能用）' : '（德州和 21 點都能用）') + '</p>' +
+      '<div class="acts" style="margin-top:14px"><button class="btn ghost" type="button" data-close>關閉</button></div>',
+      function (sh) { sh.querySelector('[data-close]').onclick = closeSheet; });
+  }
+  if (it.id === 'broken_bowl') {
+    return openSheet('<div class="buy-prev">' + itemThumb(it, 120) + '</div><h3 class="center">' + esc(it.name) + '</h3>' +
+      '<p class="desc center">' + esc(it.desc) + '</p>' +
+      '<p class="desc center" style="opacity:.7">持有 ' + countOf(S.player, it.id) + ' 個・湊滿 2 個會自動合成，不用手動操作</p>' +
+      '<div class="acts" style="margin-top:14px"><button class="btn ghost" type="button" data-close>關閉</button></div>',
+      function (sh) { sh.querySelector('[data-close]').onclick = closeSheet; });
+  }
   openSheet('<div class="buy-prev">' + itemThumb(it, 120) + '</div>' +
     '<h3 class="center">' + esc(it.name) + '</h3>' +
     '<p class="desc center">' + esc(it.desc || '尚未開放') + '</p>' +
@@ -1777,6 +1985,39 @@ function sheetCardInfo(it) {
     '<div class="acts" style="margin-top:14px"><button class="btn ghost" type="button" data-close>關閉</button></div>', function (sh) {
     sh.querySelector('[data-close]').onclick = closeSheet;
   });
+}
+
+/* 乾洗髮：挑一個還沒擁有的一般頭像，暫時戴 24 小時 */
+function sheetShampoo() {
+  var n = countOf(S.player, 'premium_dry_shampoo');
+  var owned = ((S.player && S.player.unlocked && S.player.unlocked.avatars) || []);
+  var pool = CATALOG.filter(function (x) {
+    return x.type === 'avatar' && ['female', 'male', 'meme'].indexOf(x.sub) >= 0 && owned.indexOf(x.id) < 0;
+  });
+  var tp = (S.player && S.player.temp && S.player.temp.avatar) || null;
+  var cur = tp && tp.until > Date.now()
+    ? '<p class="desc center">現在暫時戴著「' + esc((ITEM[tp.itemId] || {}).name || tp.itemId) + '」，還有 ' +
+      Math.max(1, Math.round((tp.until - Date.now()) / 3600000)) + ' 小時。再用一張會換掉並重新計時。</p>' : '';
+  var grid = pool.length
+    ? '<div class="closet-grid">' + pool.map(function (x) {
+        return '<button class="closet-cell" data-sh="' + x.id + '">' + itemThumb(x, 72) + '<b>' + esc(x.name) + '</b></button>';
+      }).join('') + '</div>'
+    : '<p class="desc center">你已經擁有全部的一般頭像了，這張卡用不到。</p>';
+  openSheet('<h3 class="center">頂級的乾洗髮</h3>' +
+    '<p class="desc center">選一個還沒擁有的一般頭像，暫時戴 24 小時，到期自動換回。持有 ' + n + ' 張。</p>' + cur + grid +
+    '<div class="acts" style="margin-top:12px"><button class="btn ghost" type="button" data-close>關閉</button></div>',
+    function (sh) {
+      sh.classList.add('flush');
+      sh.querySelector('[data-close]').onclick = closeSheet;
+      sh.querySelectorAll('[data-sh]').forEach(function (b) {
+        b.onclick = function () {
+          closeSheet();
+          call('shopUseShampoo', { itemId: b.getAttribute('data-sh') }).then(function () {
+            toast('戴上了，24 小時後自動換回', 'good');
+          }).catch(function (e) { toast(e.message, 'bad'); });
+        };
+      });
+    });
 }
 
 function sheetRename2() {
@@ -2190,6 +2431,7 @@ function openPokerLive() {
     t.onSnapshot(function (d) {
       PK.st = d.exists ? d.data() : null;
       if (S.tab === 'poker') renderPoker();
+      contestWatch(PK.st, 'poker');      // 該我防禦或選牌就自動跳視窗
     }, function () {}),
     t.collection('live').doc('emotes').onSnapshot(function (d) {
       PK.emotes = d.exists ? d.data() : null;
@@ -2207,6 +2449,7 @@ function openBjLive() {
   return db.collection('games').doc('bj').collection('tables').doc('main').onSnapshot(function (d) {
     BJ.st = d.exists ? d.data() : null;
     if (S.tab === 'bj') renderBj();
+    contestWatch(BJ.st, 'bj');
   }, function () {});
 }
 
@@ -2849,7 +3092,7 @@ function renderBj(force) {
     if (!s) { h += '<div class="bj-seat empty"><span>空位</span></div>'; continue; }
     var p = S.players[s.pid] || { name: s.name, pid: s.pid };
     h += '<div class="bj-seat' + (i === me ? ' me' : '') + (R.phase === 'playing' && R.turn === i ? ' turn' : '') + (b && b.result ? ' r-' + b.result : '') + '">' +
-      '<div class="bj-who">' + playerAvatar(p, 26) + '<b>' + esc(p.name) + '</b></div>' +
+      '<div class="bj-who" data-bjpid="' + esc(s.pid) + '" role="button" tabindex="0">' + playerAvatar(p, 26) + '<b>' + esc(p.name) + '</b></div>' +
       (b ? '<div class="bj-cards sm">' + (b.cards || []).map(function (x) { return cardHTML(x, 'mini'); }).join('') + '</div>' +
         '<div class="bj-meta"><span class="bj-bet">' + fmt(b.amount) + (b.doubled ? ' ×2' : '') + '</span>' +
         ((b.cards || []).length ? '<span class="bj-pts">' + bjHV(b.cards) + '</span>' : '') + '</div>' +
@@ -2884,6 +3127,9 @@ function renderBj(force) {
     var root = $('vBj'); bindBack(root);
     var dl = root.querySelector('[data-dealer]');
     if (dl) { dl.onclick = sheetDealer; dl.onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); sheetDealer(); } }; }
+    root.querySelectorAll('[data-bjpid]').forEach(function (b) {
+      b.onclick = function () { seatTap(b.getAttribute('data-bjpid'), 'bj'); };
+    });
     root.querySelectorAll('[data-bjamt]').forEach(function (b) { b.onclick = function () { BJ.bet = +b.getAttribute('data-bjamt'); renderBj(true); }; });
     root.querySelectorAll('[data-bj]').forEach(function (b) {
       b.onclick = function () {
@@ -3621,6 +3867,7 @@ function renderBank(force) {
     '<button class="btn' + (can ? ' danger' : ' ghost') + '" data-b="borrow"' + (can ? '' : ' disabled') + '>' +
       (can ? '借 ' + fmt(c.loanUnit) : '低於 ' + fmt(c.borrowBelow) + ' 才能借') + '</button>' +
   '</div>';
+  h += reviveCard(a, c);
 
   h += '<div class="sec-h"><h2>規則</h2></div><div class="grp">' +
     '<div class="row"><span class="k">計息時間<small>每天 00、03、06、09、12、15、18、21 點，睡覺也會算</small></span></div>' +
@@ -3634,6 +3881,7 @@ function renderBank(force) {
         var k = b.getAttribute('data-b');
         if (k === 'dep') sheetDeposit();
         else if (k === 'wd') sheetWithdraw();
+        else if (k === 'revive') sheetRevive();
         else sheetBorrow();
       };
     });

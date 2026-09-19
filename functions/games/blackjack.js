@@ -6,6 +6,7 @@
 const crypto = require('crypto');
 const { AppError, seasonId } = require('../core/util');
 const E = require('../core/econ');
+const CT = require('./contest');
 
 const DEFAULTS = { enabled: true, minBet: 200, maxBet: 5000, betSec: 30, turnSec: 20, resultSec: 6, seatCount: 5 };
 const TABLE_ID = 'main';
@@ -67,8 +68,14 @@ function createBlackjack({ db, now, requireSession, requireAdmin }) {
       st.settings = Object.assign({}, DEFAULTS, st.settings, (raw.games && raw.games.bj) || {});
       const sec = sSnap.exists ? sSnap.data() : { shoe: [], hole: null };
       const cfg = E.cfgOf(raw);
-      const accs = {}, ledger = [];
+      const accs = {}, ledger = [], players = {}, plPatch = {};
       const ctx = {
+        rawCfg: raw,
+        async player(pid) {
+          if (players[pid] === undefined) { const snap = await tx.get(playerRef(pid)); players[pid] = snap.exists ? snap.data() : null; }
+          return players[pid];
+        },
+        patchPlayer(pid, patch) { plPatch[pid] = Object.assign(plPatch[pid] || {}, patch); },
         t, sid, st, sec, cfg, seasonStatus: seasonSnap.exists ? (seasonSnap.data().status || 'active') : 'active',
         async acc(pid, asSid) {
           const k = (asSid || sid) + '|' + pid;
@@ -92,11 +99,48 @@ function createBlackjack({ db, now, requireSession, requireAdmin }) {
       tx.set(tableRef(), st); tx.set(secretRef(), sec);
       Object.keys(accs).forEach((k) => { const [s2, pid] = k.split('|'); E.refresh(accs[k], cfg, t); tx.set(accRef(s2, pid), accs[k]); });
       ledger.forEach(([k, e]) => { const [s2, pid] = k.split('|'); tx.set(accRef(s2, pid).collection('ledger').doc(), Object.assign(e, { at: t, by: pid, note: e.note || null })); });
+      Object.keys(plPatch).forEach((pid) => { if (players[pid]) tx.update(playerRef(pid), plPatch[pid]); });
       return Object.assign({ now: t }, out || {});
     });
   }
 
   const seatOf = (st, pid) => st.seats.findIndex((x) => x && x.pid === pid);
+  const seatedPids = (st) => st.seats.filter(Boolean).map((x) => x.pid);
+  const DUEL_PRIZE = (ctx) => {
+    const I = (ctx.rawCfg || {}).items || {};
+    return { win: Math.max(0, Math.floor(Number(I.duelWin) || 1000)), lose: Math.max(0, Math.floor(Number(I.duelLose) || 200)) };
+  };
+
+  /* v11b 幹錢券：21 點只開放「結算後、下一局下注前」發動 */
+  async function cancelContest(ctx, reason) {
+    const c = CT.current(ctx.st);
+    if (!c) return null;
+    const from = await ctx.player(c.from);
+    CT.cancel(ctx.st, reason, from);
+    if (from) ctx.patchPlayer(c.from, { items: from.items });
+    log(ctx.st, c.fromName + ' 的' + c.name + '沒用成，卡片退回');
+    return c;
+  }
+  async function sweepContest(ctx) {
+    const c = CT.current(ctx.st);
+    if (!c) return;
+    const why = CT.staleReason(ctx.st, c, ctx.t, seatedPids(ctx.st));
+    if (why) await cancelContest(ctx, why);
+  }
+  async function applyContest(ctx) {
+    const st = ctx.st, c = CT.current(st);
+    if (!c || c.phase !== 'exec' || c.kind !== 'money') return null;
+    const a = c.picks[c.from], b = c.picks[c.to];
+    const fromWins = CT.beats(a, b);
+    const winner = fromWins ? c.from : c.to, loser = fromWins ? c.to : c.from;
+    const W = DUEL_PRIZE(ctx);
+    const wa = await ctx.acc(winner), la = await ctx.acc(loser);
+    wa.wallet += W.win; ctx.led(winner, null, { type: 'duel', amount: W.win });
+    la.wallet += W.lose; ctx.led(loser, null, { type: 'duel', amount: W.lose });
+    log(st, c.fromName + ' 和 ' + c.toName + ' 抽卡對決，' + (winner === c.from ? c.fromName : c.toName) + ' 贏了' + (c.autoPicked ? '（有人逾時，系統代選）' : ''));
+    CT.finish(st, { winner, loser, cards: { [c.from]: a, [c.to]: b }, win: W.win, lose: W.lose });
+    return { kind: 'money', winner, loser, cards: { [c.from]: a, [c.to]: b } };
+  }
   const log = (st, text) => { st.log = (st.log || []).concat([{ t: Date.now(), text }]).slice(-20); };
 
   /* v11：只在「局與局之間」洗牌。draw() 絕對不會重建牌靴，
@@ -132,6 +176,7 @@ function createBlackjack({ db, now, requireSession, requireAdmin }) {
 
   async function deal(ctx) {
     const st = ctx.st, R = st.round;
+    await cancelContest(ctx, 'new-hand');
     R.phase = 'playing';
     reshuffleIfNeeded(ctx);                            // 發牌前是唯一的洗牌時機
     Object.keys(R.bets).forEach((i) => { R.bets[i].cards = [draw(ctx)]; });
@@ -220,6 +265,61 @@ function createBlackjack({ db, now, requireSession, requireAdmin }) {
       });
     },
 
+    /* v11b 幹錢券：只能在 idle（結算後、下一局下注前）發動 */
+    async useCard(req) {
+      const s = await requireSession(req);
+      const d = req.data || {};
+      if (String(d.kind || '') !== 'money') throw new AppError('21 點只能用強制幹錢券', 'bad-item', 'invalid-argument');
+      const target = String(d.pid || '');
+      return run(async (ctx) => {
+        const st = ctx.st;
+        await sweepContest(ctx);
+        const i = seatOf(st, s.pid), j = seatOf(st, target);
+        if (i < 0) throw new AppError('你要先入座', 'not-seated');
+        if (j < 0) throw new AppError('對方不在桌上', 'not-seated');
+        if (st.round.phase !== 'idle') throw new AppError('只能在兩局之間用道具', 'in-hand');
+        const me = await ctx.player(s.pid), other = await ctx.player(target);
+        const c = CT.begin(st, {
+          kind: 'money', from: s.pid, to: target,
+          fromName: st.seats[i].name, toName: st.seats[j].name,
+          fromPlayer: me, toPlayer: other
+        }, ctx.t);
+        ctx.patchPlayer(s.pid, { items: me.items });
+        log(st, st.seats[i].name + ' 對 ' + st.seats[j].name + ' 用了' + c.name);
+        return { contest: st.contest };
+      });
+    },
+
+    async contestRespond(req) {
+      const s = await requireSession(req);
+      const block = !!(req.data && req.data.block);
+      return run(async (ctx) => {
+        await sweepContest(ctx);
+        const c = CT.current(ctx.st);
+        if (!c) throw new AppError('這個道具已經結束了', 'no-contest');
+        const me = await ctx.player(s.pid);
+        CT.respondGuard(ctx.st, s.pid, block, me, ctx.t);
+        if (block) {
+          ctx.patchPlayer(s.pid, { items: me.items });
+          log(ctx.st, c.toName + ' 用保硬的鐵碗公擋下了 ' + c.fromName + ' 的' + c.name);
+          return { blocked: true, contest: ctx.st.contest };
+        }
+        return { blocked: false, contest: ctx.st.contest };
+      });
+    },
+
+    async contestPick(req) {
+      const s = await requireSession(req);
+      const card = (req.data || {}).card;
+      return run(async (ctx) => {
+        await sweepContest(ctx);
+        if (!CT.current(ctx.st)) throw new AppError('這個道具已經結束了', 'no-contest');
+        const r = CT.pick(ctx.st, s.pid, card, ctx.t);
+        const done = r.phase === 'exec' ? await applyContest(ctx) : null;
+        return { contest: ctx.st.contest, applied: done };
+      });
+    },
+
     async bet(req) {
       const s = await requireSession(req);
       return run(async (ctx) => {
@@ -275,6 +375,13 @@ function createBlackjack({ db, now, requireSession, requireAdmin }) {
       await requireSession(req);
       return run(async (ctx) => {
         const st = ctx.st, R = st.round;
+        // v11b：道具對抗的逾時優先處理（guard 逾時＝不擋、pick 逾時＝系統代選）
+        await sweepContest(ctx);
+        if (CT.tickContest(st, ctx.t)) {
+          const done = await applyContest(ctx);
+          return { did: 'contest', contest: st.contest, applied: done };
+        }
+        if (CT.current(st)) { ctx.noop = true; return { did: null }; }
         if (!R.deadline || ctx.t < R.deadline) { ctx.noop = true; return { did: null }; }
         if (R.phase === 'betting') {
           if (!Object.keys(R.bets).length) { R.phase = 'idle'; R.deadline = 0; return { did: null }; }

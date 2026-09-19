@@ -3,6 +3,7 @@
    每個操作都是一個 transaction：讀牌桌 + 牌組 + 需要的帳戶 → 跑引擎 → 全部寫回 */
 
 const { AppError, seasonId } = require('../core/util');
+const CT = require('./contest');
 const E = require('../core/econ');
 const H = require('./holdem');
 const C = require('./cards');
@@ -116,6 +117,72 @@ function createPoker({ db, now, requireSession, requireAdmin }) {
   }
 
   const seatOf = (st, pid) => st.seats.findIndex((s) => s && s.pid === pid);
+  const seatedPids = (st) => st.seats.filter(Boolean).map((x) => x.pid);
+  /* v11b 道具數值，後台可改 */
+  const FORCE_CAP = (ctx) => Math.max(1, Math.floor(Number(((ctx.rawCfg || {}).items || {}).forceBetCap) || 500));
+  const DUEL_PRIZE = (ctx) => {
+    const I = (ctx.rawCfg || {}).items || {};
+    return { win: Math.max(0, Math.floor(Number(I.duelWin) || 1000)), lose: Math.max(0, Math.floor(Number(I.duelLose) || 200)) };
+  };
+
+  /* ---------- v11b 道具對抗 ---------- */
+
+  /* 作廢進行中的對抗並把卡退還給發動方 */
+  async function cancelContest(ctx, reason) {
+    const c = CT.current(ctx.st);
+    if (!c) return null;
+    const from = await ctx.player(c.from);
+    CT.cancel(ctx.st, reason, from);
+    if (from) ctx.patchPlayer(c.from, { items: from.items });
+    ctx.st.log = (ctx.st.log || []).concat([{ t: ctx.t, text: c.fromName + ' 的' + c.name + '沒用成，卡片退回' }]).slice(-30);
+    return c;
+  }
+
+  /* 只要不是對抗自己造成的狀態改變，都先檢查一下該不該作廢 */
+  async function sweepContest(ctx) {
+    const c = CT.current(ctx.st);
+    if (!c) return;
+    const why = CT.staleReason(ctx.st, c, ctx.t, seatedPids(ctx.st));
+    if (why) await cancelContest(ctx, why);
+  }
+
+  /* 對抗走到 exec 就執行效果 */
+  async function applyContest(ctx) {
+    const st = ctx.st, c = CT.current(st);
+    if (!c || c.phase !== 'exec') return null;
+    if (c.kind === 'seat') {
+      const i = seatOf(st, c.from), j = seatOf(st, c.to);
+      if (i < 0 || j < 0) { await cancelContest(ctx, 'left-table'); return null; }
+      const tmp = st.seats[i]; st.seats[i] = st.seats[j]; st.seats[j] = tmp;
+      st.log = (st.log || []).concat([{ t: ctx.t, text: c.fromName + ' 和 ' + c.toName + ' 換了座位' }]).slice(-30);
+      CT.finish(st, { swapped: true });
+      return { kind: 'seat', swapped: true };
+    }
+    if (c.kind === 'forcebet') {
+      const j = seatOf(st, c.to);
+      if (j < 0) { await cancelContest(ctx, 'left-table'); return null; }
+      const cap = FORCE_CAP(ctx);
+      // 標在座位上，下一手生效。handNo 先填「下一手」的編號
+      st.seats[j].forced = { by: c.from, handNo: (st.hand.no || 0) + 1, cap, card: c.card };
+      st.log = (st.log || []).concat([{ t: ctx.t, text: c.toName + ' 下一手必須跟到 ' + c.fromName + ' 的下注（上限 ' + cap + '）' }]).slice(-30);
+      CT.finish(st, { forced: true, cap });
+      return { kind: 'forcebet', cap };
+    }
+    if (c.kind === 'money') {
+      const a = c.picks[c.from], b = c.picks[c.to];
+      const fromWins = CT.beats(a, b);
+      const winner = fromWins ? c.from : c.to, loser = fromWins ? c.to : c.from;
+      const W = DUEL_PRIZE(ctx);
+      const wa = await ctx.acc(winner), la = await ctx.acc(loser);
+      wa.wallet += W.win; ctx.led(winner, { type: 'duel', amount: W.win });
+      la.wallet += W.lose; ctx.led(loser, { type: 'duel', amount: W.lose });
+      const wName = winner === c.from ? c.fromName : c.toName;
+      st.log = (st.log || []).concat([{ t: ctx.t, text: c.fromName + ' 和 ' + c.toName + ' 抽卡對決，' + wName + ' 贏了' + (c.autoPicked ? '（有人逾時，系統代選）' : '') }]).slice(-30);
+      CT.finish(st, { winner, loser, cards: { [c.from]: a, [c.to]: b }, win: W.win, lose: W.lose });
+      return { kind: 'money', winner, loser, cards: { [c.from]: a, [c.to]: b } };
+    }
+    return null;
+  }
   const readyPids = (st) => st.seats.filter(H.ready).map((s) => s.pid).sort().join(',');
 
   /* AI 控桌：決定下一手什麼時候開 */
@@ -143,10 +210,11 @@ function createPoker({ db, now, requireSession, requireAdmin }) {
     return null;
   }
 
-  function begin(ctx) {
+  async function begin(ctx) {
     const st = ctx.st;
     const why = blocked(ctx);
     if (why) throw new AppError(why, 'season-locked');
+    await cancelContest(ctx, 'new-hand');      // 道具只在兩手之間有效，開新的一手就作廢
     H.startHand(ctx, C.shuffledDeck());
     st.auto.lastSig = st.seats.filter((s) => s && s.inHand).map((s) => s.pid).sort().join(',');
     st.auto.nextHandAt = null;
@@ -167,6 +235,25 @@ function createPoker({ db, now, requireSession, requireAdmin }) {
     seat.stack = 0;
   }
 
+  /* v11b：一手結束時清掉強制下注的標記。
+     如果目標整手都沒有被逼著跟過（例如他發完牌就 all-in、或牌局提早結束沒輪到他），
+     效果等於沒發生，把卡退還給發動方。 */
+  async function settleForced(ctx) {
+    const st = ctx.st;
+    for (const seat of st.seats) {
+      if (!seat || !seat.forced) continue;
+      if (seat.forced.handNo > st.hand.no) continue;        // 還沒到生效的那一手
+      const f = seat.forced;
+      delete seat.forced;
+      if (f.used) continue;
+      const from = await ctx.player(f.by);
+      if (!from) continue;
+      from.items = CT.refund(from, f.card);
+      ctx.patchPlayer(f.by, { items: from.items });
+      st.log = (st.log || []).concat([{ t: ctx.t, text: seat.name + ' 這一手沒有需要跟的注，強制下注卷退回' }]).slice(-30);
+    }
+  }
+
   /* 牌局中途或結束後：推進計時、結算帳戶 */
   async function after(ctx, res) {
     const st = ctx.st, S = st.settings;
@@ -174,6 +261,7 @@ function createPoker({ db, now, requireSession, requireAdmin }) {
       if (st.hand.phase !== 'idle') st.hand.deadline = ctx.t + S.turnSec * 1000;
       return null;
     }
+    await settleForced(ctx);
     const cfg = ctx.cfg;
     const record = !res.aborted && ctx.t >= (ctx.rawCfg.statsFrom || 0);
     const statOf = {};
@@ -311,6 +399,8 @@ function createPoker({ db, now, requireSession, requireAdmin }) {
         }
         cashOut(ctx, acc, seat);
         st.seats[i] = null;
+        const c = CT.current(st);
+        if (c && (c.from === s.pid || c.to === s.pid)) await cancelContest(ctx, 'left-table');
         schedule(ctx, 'roster');
         return { later: false };
       });
@@ -358,6 +448,13 @@ function createPoker({ db, now, requireSession, requireAdmin }) {
       await requireSession(req);
       return run(async (ctx) => {
         const st = ctx.st, S = st.settings, t = ctx.t;
+        // v11b：道具對抗的逾時（guard 逾時＝不擋、pick 逾時＝系統選牌）優先處理
+        await sweepContest(ctx);
+        if (CT.tickContest(st, t)) {
+          const done = await applyContest(ctx);
+          return { did: 'contest', contest: st.contest, applied: done };
+        }
+        if (CT.current(st)) { ctx.noop = true; return { did: null }; }
         if (st.hand.phase !== 'idle') {
           if (!st.hand.deadline || t < st.hand.deadline) { ctx.noop = true; return { did: null }; }
           const i = st.hand.turn, seat = st.seats[i];
@@ -426,29 +523,68 @@ function createPoker({ db, now, requireSession, requireAdmin }) {
       });
     },
 
-    /* 換座位卡：兩手之間跟桌上的人換位子；對方也有卡的話，自動用掉對方的卡擋下 */
-    async swapSeat(req) {
+    /* v11b：干擾型道具統一入口。kind = seat | forcebet | money
+       發動就扣卡，對方有鐵碗公就先問要不要擋，沒有的話直接執行。 */
+    async useCard(req) {
       const s = await requireSession(req);
-      const target = String((req.data && req.data.pid) || '');
-      if (target === s.pid) throw new AppError('不能跟自己換', 'self');
+      const d = req.data || {};
+      const kind = String(d.kind || '');
+      const target = String(d.pid || '');
+      if (!CT.KINDS[kind]) throw new AppError('未知的道具', 'bad-item', 'invalid-argument');
       return run(async (ctx) => {
-        const st = ctx.st, i = seatOf(st, s.pid), j = seatOf(st, target);
+        const st = ctx.st;
+        await sweepContest(ctx);
+        const i = seatOf(st, s.pid), j = seatOf(st, target);
         if (i < 0) throw new AppError('你要先入座', 'not-seated');
         if (j < 0) throw new AppError('對方不在桌上', 'not-seated');
-        if (st.hand.phase !== 'idle') throw new AppError('只能在兩手之間換座位', 'in-hand');
+        if (st.hand.phase !== 'idle') throw new AppError('只能在兩手之間用道具', 'in-hand');
         const me = await ctx.player(s.pid), other = await ctx.player(target);
-        const mine = (me.items && me.items.card_seat) || 0;
-        if (mine <= 0) throw new AppError('你沒有換座位卡', 'no-card');
-        ctx.patchPlayer(s.pid, { items: Object.assign({}, me.items, { card_seat: mine - 1 }) });
-        const theirs = (other && other.items && other.items.card_seat) || 0;
-        if (theirs > 0) {
-          ctx.patchPlayer(target, { items: Object.assign({}, other.items, { card_seat: theirs - 1 }) });
-          st.log = (st.log || []).concat([{ t: ctx.t, text: st.seats[j].name + ' 用換座位卡擋下了 ' + st.seats[i].name }]).slice(-30);
-          return { blocked: true };
+        const c = CT.begin(st, {
+          kind, from: s.pid, to: target,
+          fromName: st.seats[i].name, toName: st.seats[j].name,
+          fromPlayer: me, toPlayer: other,
+          payload: d.payload || {}
+        }, ctx.t);
+        ctx.patchPlayer(s.pid, { items: me.items });
+        st.log = (st.log || []).concat([{ t: ctx.t, text: st.seats[i].name + ' 對 ' + st.seats[j].name + ' 用了' + c.name }]).slice(-30);
+        const done = await applyContest(ctx);
+        schedule(ctx, 'contest');
+        return { contest: st.contest, applied: done };
+      });
+    },
+
+    /* 目標選擇擋或不擋 */
+    async contestRespond(req) {
+      const s = await requireSession(req);
+      const block = !!(req.data && req.data.block);
+      return run(async (ctx) => {
+        await sweepContest(ctx);
+        const c = CT.current(ctx.st);
+        if (!c) throw new AppError('這個道具已經結束了', 'no-contest');
+        const me = await ctx.player(s.pid);
+        const r = CT.respondGuard(ctx.st, s.pid, block, me, ctx.t);
+        if (block) {
+          ctx.patchPlayer(s.pid, { items: me.items });
+          ctx.st.log = (ctx.st.log || []).concat([{ t: ctx.t, text: c.toName + ' 用保硬的鐵碗公擋下了 ' + c.fromName + ' 的' + c.name }]).slice(-30);
+          schedule(ctx, 'contest');
+          return { blocked: true, contest: ctx.st.contest };
         }
-        const tmp = st.seats[i]; st.seats[i] = st.seats[j]; st.seats[j] = tmp;
-        st.log = (st.log || []).concat([{ t: ctx.t, text: st.seats[j].name + ' 和 ' + st.seats[i].name + ' 換了座位' }]).slice(-30);
-        return { blocked: false };
+        const done = await applyContest(ctx);
+        schedule(ctx, 'contest');
+        return Object.assign({ blocked: false, contest: ctx.st.contest }, done || {});
+      });
+    },
+
+    /* 幹錢券：雙方各自從牌背裡選一張 */
+    async contestPick(req) {
+      const s = await requireSession(req);
+      const card = (req.data || {}).card;
+      return run(async (ctx) => {
+        await sweepContest(ctx);
+        if (!CT.current(ctx.st)) throw new AppError('這個道具已經結束了', 'no-contest');
+        const r = CT.pick(ctx.st, s.pid, card, ctx.t);
+        const done = r.phase === 'exec' ? await applyContest(ctx) : null;
+        return { contest: ctx.st.contest, applied: done };
       });
     },
 

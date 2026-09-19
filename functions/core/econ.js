@@ -10,6 +10,8 @@ const DEFAULTS = {
   loanRepayAt: 3000,     // 手上達到這個數字就自動還一筆
   borrowBelow: 1000,     // 總資產低於這個數字才能借
   loanPerDay: 5,         // 每天最多借幾次（台灣時間 00:00 重置）
+  reviveBelow: 1000,     // 破產防護卷：總資產低於這個數字才能用
+  reviveTo: 5000,        // 破產防護卷：錢包補到這個數字
   bankKeep: 2000,        // 存款後手上至少要留的錢
   interestMin: 0.001,    // 第一名每 3 小時利率
   interestMax: 0.006,    // 最後一名每 3 小時利率
@@ -24,6 +26,7 @@ const DEFAULTS = {
 const LIMITS = {
   startingMoney: [0, 1000000], loanUnit: [1, 1000000], loanRepayAt: [1, 10000000],
   borrowBelow: [0, 1000000], bankKeep: [0, 1000000], loanPerDay: [0, 1000],
+  reviveBelow: [0, 1000000], reviveTo: [0, 10000000],
   interestMin: [0, 0.1], interestMax: [0, 0.1],
   dailyAmount: [0, 1000000], dailyHands: [0, 100], rankMinHands: [0, 10000],
   starPer: [1, 1000000], starCap: [0, 1000000], starMinHands: [0, 10000]
@@ -156,6 +159,23 @@ function playsOnDay(acc, day) {
   return 0;
 }
 
+/* v11b 破產防護卷：總資產低於門檻、而且沒有欠款時，錢包直接補到 reviveTo。
+   有欠款不給用，因為自動還款會在錢一進錢包時就扣走，用了等於白用。 */
+function useRevive(acc, cfg, t, pl) {
+  if (!(((pl && pl.items) || {}).bankruptcy_protection > 0)) throw new AppError('你沒有破產防護卷', 'no-card');
+  if (acc.loans > 0) {
+    throw new AppError('還有 ' + acc.loans + ' 筆欠款，還完才能用防護卷（不然錢一進來就會被自動還款扣走）', 'has-debt');
+  }
+  const total = acc.wallet + acc.bank.balance + inPlayTotal(acc);
+  if (total >= cfg.reviveBelow) {
+    throw new AppError('手上還有 ' + fmt(total) + '，低於 ' + fmt(cfg.reviveBelow) + ' 才能用', 'not-broke');
+  }
+  const delta = cfg.reviveTo - acc.wallet;
+  if (delta <= 0) throw new AppError('錢包已經超過 ' + fmt(cfg.reviveTo) + ' 了', 'not-broke');
+  acc.wallet += delta;
+  return [entry('revive', delta, acc)];
+}
+
 /* 計息週期內第一次動到銀行時，記下週期起點的餘額 */
 function touchBank(acc, t) {
   const P = periodStart(t);
@@ -178,9 +198,13 @@ function autoRepay(acc, cfg, t) {
   return out;
 }
 
-function borrow(acc, cfg, t) {
+function borrow(acc, cfg, t, pl) {
   if (Object.keys(acc.inPlay || {}).some((g) => acc.inPlay[g] && acc.inPlay[g].inHand)) {
     throw new AppError('牌局進行中不能借款，打完這手再借', 'in-hand');
+  }
+  // v11b：身上有破產防護卷就先用卡，不能跟銀行借
+  if (((pl && pl.items) || {}).bankruptcy_protection > 0) {
+    throw new AppError('身上還有破產防護卷，先用掉才能借款', 'has-revive');
   }
   const d = rollDaily(acc, t);
   if (cfg.loanPerDay > 0 && d.borrows >= cfg.loanPerDay) {
@@ -287,6 +311,6 @@ function fmt(n) { return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, 
 
 module.exports = {
   DEFAULTS, PERIOD, cfgOf, cleanEconPatch, cleanAmount, twDay, periodStart,
-  newAccount, inPlayTotal, computeNet, refresh, rollDaily, recordHands, recordPlay, playsOnDay, maxDeposit,
+  newAccount, inPlayTotal, computeNet, refresh, rollDaily, recordHands, recordPlay, playsOnDay, maxDeposit, useRevive,
   autoRepay, borrow, deposit, withdraw, claimDaily, adminAdjust, rankRates, applyInterest, starsFor
 };

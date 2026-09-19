@@ -82,14 +82,32 @@ function post(st, i, amount) {
 }
 
 /* ---------- 動作 ---------- */
+/* v11b 強制下注卷：被指定的人在那一手不能蓋牌也不能過牌，必須跟到發動方的下注額。
+   要跟的金額超過上限（預設 500）就整張失效，恢復自由行動。
+   回傳 { on, need, by } 讓前端和 act() 共用同一份判斷。 */
+function forcedOn(st, i) {
+  const s = st.seats[i], H = st.hand;
+  if (!s || !s.forced || s.forced.handNo !== H.no) return null;
+  const j = st.seats.findIndex((x) => x && x.pid === s.forced.by);
+  if (j < 0) return null;                                   // 發動方已經離座
+  const by = st.seats[j];
+  const need = Math.max(0, H.currentBet - s.bet);
+  if (need <= 0) return null;                               // 沒有要跟的，強制不生效
+  if (by.bet <= 0) return null;                             // 發動方這一手還沒下注
+  if (need > (s.forced.cap || 500)) return null;            // 超過上限 → 整張失效
+  return { on: true, need: Math.min(need, s.stack), by: by.name };
+}
+
 function legal(st, i) {
   const s = st.seats[i], H = st.hand;
   if (H.phase === 'idle' || H.turn !== i || !canAct(s)) return null;
   const need = Math.max(0, H.currentBet - s.bet);
   const max = s.bet + s.stack;
+  const f = forcedOn(st, i);
   return {
-    check: need === 0, call: Math.min(need, s.stack),
-    canRaise: max > H.currentBet, min: Math.min(H.currentBet + H.minRaise, max), max
+    check: need === 0 && !f, call: Math.min(need, s.stack),
+    canRaise: max > H.currentBet, min: Math.min(H.currentBet + H.minRaise, max), max,
+    forced: f ? { need: f.need, by: f.by } : null
   };
 }
 
@@ -99,6 +117,11 @@ function act(ctx, i, type, amount) {
   if (H.turn !== i) throw new AppError('還沒輪到你', 'not-turn');
   if (!canAct(s)) throw new AppError('你現在不能動作', 'cannot-act');
   const need = H.currentBet - s.bet;
+
+  const forced = forcedOn(st, i);
+  if (forced && (type === 'fold' || type === 'check')) {
+    throw new AppError('被 ' + forced.by + ' 的強制下注卷指定，這一手必須跟到 ' + fmt(forced.need), 'forced');
+  }
 
   if (type === 'fold') {
     s.folded = true;
@@ -111,6 +134,7 @@ function act(ctx, i, type, amount) {
     s.stack -= pay; s.bet += pay;
     if (s.stack === 0) s.allIn = true;
     log(st, s.name + (pay === 0 ? ' 過牌' : s.allIn ? ' 全下跟注 ' + fmt(pay) : ' 跟注 ' + fmt(pay)));
+    if (forced) { s.forced = Object.assign({}, s.forced, { used: true }); log(st, s.name + ' 被強制下注卷逼著跟了這一注'); }
   } else if (type === 'raise' || type === 'allin') {
     const max = s.bet + s.stack;
     const target = type === 'allin' ? max : Math.round(Number(amount));
@@ -309,4 +333,4 @@ function abort(ctx) {
   return { ended: true, players, aborted: true };
 }
 
-module.exports = { startHand, act, foldOut, legal, abort, buildPots, ready, inHand, canAct, nextIdx };
+module.exports = { startHand, act, foldOut, legal, abort, buildPots, ready, inHand, canAct, nextIdx, forcedOn };

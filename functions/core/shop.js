@@ -67,7 +67,35 @@ function pickNewDex(cat, p) {
 }
 
 function playerPatch(p) {
-  return { stars: p.stars || 0, items: p.items || {}, unlocked: inv(p), bought: p.bought || {} };
+  return { stars: p.stars || 0, items: p.items || {}, unlocked: inv(p), bought: p.bought || {}, temp: p.temp || {} };
+}
+
+/* ---------- v11b 頂級的乾洗髮：暫時解鎖頭像 ---------- */
+const SHAMPOO_HOURS = 24;
+const TEMP_AVATAR_SUBS = ['female', 'male', 'meme'];   // UR 和管理員頭像不能用乾洗髮
+
+/* 這個頭像現在可以裝備嗎？永久擁有或還在乾洗髮有效期內都算 */
+function canWear(p, id, t) {
+  if (inv(p).avatars.indexOf(id) >= 0) return true;
+  const tp = (p.temp || {}).avatar;
+  return !!(tp && tp.itemId === id && tp.until > t);
+}
+
+/* 乾洗髮到期就收回：清掉暫時解鎖，如果正在戴就換回一個永久擁有的頭像。
+   純看時間，不管人在不在牌桌。回傳有沒有真的收回。 */
+function expireTemp(p, t) {
+  const tp = (p.temp || {}).avatar;
+  if (!tp || tp.until > t) return false;
+  const temp = Object.assign({}, p.temp);
+  delete temp.avatar;
+  p.temp = temp;
+  const eq = Object.assign({}, p.equipped || {});
+  if (eq.avatar === tp.itemId) {
+    const owned = inv(p).avatars;
+    eq.avatar = owned.length ? owned[0] : null;
+    p.equipped = eq;
+  }
+  return true;
 }
 
 function useCard(p, id) {
@@ -136,15 +164,42 @@ function createShop({ db, now, requireSession, requireAdmin }) {
         const cat = await loadCatalog(db, tx);
         const snap = await tx.get(playerRef(s.pid));
         const p = snap.data();
+        const t = now();
+        const expired = expireTemp(p, t);
         if (id) {
           const item = cat.items[id];
           if (!item || item.type !== slot) throw new AppError('這個物品不能放在這裡', 'bad-item', 'invalid-argument');
-          if (inv(p)[SLOT_KEY[slot]].indexOf(id) < 0) throw new AppError('你還沒有這個物品', 'not-owned');
+          const ok = slot === 'avatar' ? canWear(p, id, t) : inv(p)[SLOT_KEY[slot]].indexOf(id) >= 0;
+          if (!ok) throw new AppError('你還沒有這個物品', 'not-owned');
         }
-        const eq = Object.assign({ avatar: null, frame: null, bg: null, back: null }, p.equipped || {});
-        eq[slot] = id;
-        tx.update(playerRef(s.pid), { equipped: eq });
-        return { equipped: eq };
+        const eq = Object.assign({ avatar: null, frame: null, bg: null, back: null }, p.equipped || {}, { [slot]: id });
+        p.equipped = eq;
+        tx.update(playerRef(s.pid), expired ? { equipped: eq, temp: p.temp || {} } : { equipped: eq });
+        return { equipped: eq, temp: p.temp || {} };
+      });
+    },
+
+    /* v11b 頂級的乾洗髮：選一個還沒永久擁有的一般頭像，暫時解鎖 24 小時並直接戴上。
+       同一時間只會有一個暫時頭像，再用一張就是換掉並重新計時。 */
+    async useShampoo(req) {
+      const s = await requireSession(req);
+      const id = String((req.data && req.data.itemId) || '');
+      return db.runTransaction(async (tx) => {
+        const cat = await loadCatalog(db, tx);
+        const snap = await tx.get(playerRef(s.pid));
+        const p = snap.data();
+        const t = now();
+        expireTemp(p, t);
+        const item = cat.items[id];
+        if (!item || item.type !== 'avatar') throw new AppError('這不是頭像', 'bad-item', 'invalid-argument');
+        if (TEMP_AVATAR_SUBS.indexOf(item.sub) < 0) throw new AppError('乾洗髮只能用在一般頭像上', 'bad-item');
+        if (inv(p).avatars.indexOf(id) >= 0) throw new AppError('你已經永久擁有這個頭像了', 'owned');
+        if (!useCard(p, 'premium_dry_shampoo')) throw new AppError('你沒有頂級的乾洗髮', 'no-card');
+        const until = t + SHAMPOO_HOURS * 3600000;
+        p.temp = Object.assign({}, p.temp, { avatar: { itemId: id, until } });
+        p.equipped = Object.assign({ avatar: null, frame: null, bg: null, back: null }, p.equipped || {}, { avatar: id });
+        tx.update(playerRef(s.pid), Object.assign(playerPatch(p), { equipped: p.equipped }));
+        return { itemId: id, until, equipped: p.equipped };
       });
     },
 
@@ -373,4 +428,4 @@ function createShop({ db, now, requireSession, requireAdmin }) {
   };
 }
 
-module.exports = { createShop, grant, inv, useCard, playerPatch, fuseBowls };
+module.exports = { createShop, grant, inv, useCard, playerPatch, fuseBowls, expireTemp, canWear, SHAMPOO_HOURS, TEMP_AVATAR_SUBS };

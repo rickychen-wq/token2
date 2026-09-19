@@ -4,6 +4,7 @@
 
 const { AppError, seasonId, seasonRange, cleanPid } = require('./util');
 const E = require('./econ');
+const { expireTemp } = require('./shop');
 
 function createEconomy({ db, now, requireSession, requireAdmin }) {
   const cfgRef = () => db.collection('config').doc('app');
@@ -12,7 +13,9 @@ function createEconomy({ db, now, requireSession, requireAdmin }) {
   const playerRef = (pid) => db.collection('players').doc(pid);
 
   /* 在 transaction 裡對某個玩家的當季帳戶做事。
-     fn(acc, cfg, t) 回傳流水帳陣列；帳戶不存在會自動以起始資金建立 */
+     fn(acc, cfg, t, rawCfg, pl, setPlayer) 回傳流水帳陣列；帳戶不存在會自動以起始資金建立。
+     pl 是玩家永久資料（背包、裝備）的唯讀快照；要改的話呼叫 setPlayer(patch)，
+     patch 會跟本來就會寫的 stats 一起用一次 update 送出。 */
   async function mutate(pid, fn, meta) {
     return db.runTransaction(async (tx) => {
       const t = now();
@@ -37,7 +40,12 @@ function createEconomy({ db, now, requireSession, requireAdmin }) {
       }
       E.rollDaily(acc, t);
 
-      const produced = fn ? fn(acc, cfg, t, rawCfg) : [];
+      const plPatch = {};
+      const setPlayer = (patch) => { Object.assign(plPatch, patch || {}); };
+      // v11b：乾洗髮純看時間，任何一次動到帳戶（登入讀帳戶也會走這裡）都順手檢查有沒有到期
+      const pl = pSnap.data();
+      if (expireTemp(pl, t)) { plPatch.temp = pl.temp || {}; plPatch.equipped = pl.equipped || {}; }
+      const produced = fn ? fn(acc, cfg, t, rawCfg, pl, setPlayer) : [];
       entries.push.apply(entries, produced || []);
       // 統一規則：任何流程結束後，錢包達到門檻就自動還款（登入讀帳戶時也會補做）。
       // 收入紀錄在前、還款紀錄在後；已經還過的不會再觸發，所以重複讀取不會重複扣。
@@ -56,8 +64,10 @@ function createEconomy({ db, now, requireSession, requireAdmin }) {
 
       const st = pSnap.data().stats || {};
       if (acc.peakNet > (st.peakNet || 0)) {
-        tx.update(playerRef(pid), { 'stats.peakNet': acc.peakNet, 'stats.peakNetSeason': sid });
+        plPatch['stats.peakNet'] = acc.peakNet;
+        plPatch['stats.peakNetSeason'] = sid;
       }
+      if (Object.keys(plPatch).length) tx.update(playerRef(pid), plPatch);
       return { sid, account: acc, cfg };
     });
   }
@@ -77,7 +87,20 @@ function createEconomy({ db, now, requireSession, requireAdmin }) {
 
     async borrow(req) {
       const s = await requireSession(req);
-      return view(await mutate(s.pid, (acc, cfg, t) => E.borrow(acc, cfg, t)));
+      return view(await mutate(s.pid, (acc, cfg, t, raw, pl) => E.borrow(acc, cfg, t, pl)));
+    },
+
+    /* v11b 破產防護卷 */
+    async useRevive(req) {
+      const s = await requireSession(req);
+      const r = await mutate(s.pid, (acc, cfg, t, raw, pl, setPlayer) => {
+        const out = E.useRevive(acc, cfg, t, pl);
+        const items = Object.assign({}, pl.items);
+        items.bankruptcy_protection = (items.bankruptcy_protection || 0) - 1;
+        setPlayer({ items });
+        return out;
+      });
+      return Object.assign(view(r), { used: 'bankruptcy_protection' });
     },
 
     async deposit(req) {

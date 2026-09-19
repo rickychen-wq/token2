@@ -68,6 +68,7 @@ exports.econBorrow = wrap(EC.borrow);
 exports.econDeposit = wrap(EC.deposit);
 exports.econWithdraw = wrap(EC.withdraw);
 exports.econClaimDaily = wrap(EC.claimDaily);
+exports.econUseRevive = wrap(EC.useRevive);
 
 exports.adminAdjust = wrap(EC.adminAdjust);
 exports.adminSetEcon = wrap(EC.adminSetEcon);
@@ -93,7 +94,10 @@ exports.shopEquip = wrap(SH.equip);
 exports.shopRename = wrap(SH.rename);
 exports.shopVanity = wrap(SH.vanity);
 exports.shopOpenChest = wrap(SH.openChest);
-exports.pokerSwapSeat = wrap(PK.swapSeat);
+exports.shopUseShampoo = wrap(SH.useShampoo);
+exports.pokerUseCard = wrap(PK.useCard);
+exports.pokerContestRespond = wrap(PK.contestRespond);
+exports.pokerContestPick = wrap(PK.contestPick);
 exports.adminGrant = wrap(SH.adminGrant);
 exports.adminRevoke = wrap(SH.adminRevoke);
 exports.adminCatalog = wrap(SH.adminCatalog);
@@ -109,6 +113,9 @@ exports.bjLeave = wrap(BJ.leave);
 exports.bjBet = wrap(BJ.bet);
 exports.bjAct = wrap(BJ.act);
 exports.bjTick = wrap(BJ.tick);
+exports.bjUseCard = wrap(BJ.useCard);
+exports.bjContestRespond = wrap(BJ.contestRespond);
+exports.bjContestPick = wrap(BJ.contestPick);
 exports.adminGames = wrap(MG.adminGames);
 
 /* ---------- 公告、信箱 ---------- */
