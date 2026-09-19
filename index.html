@@ -1394,7 +1394,7 @@ DEFAULT_ITEMS.push(
   { id: 'av_test_3', type: 'avatar', sub: 'test_rank', tier: 1, name: '測試服第三名限定頭像', price: null, onSale: false, img: 'assets/av/test03.webp', desc: '測試服排行限定，只能由管理員手動發放。' }
 );
 var BASIC_EMOTES = ["👍","😂","😮","😡","🤡","🔥","🙏","😭"];
-var EDITABLE = ["name","price","onSale","tier","desc","stock","perUser","startAt","endAt","salvage","rewards","sub"];
+var EDITABLE = ["name","price","onSale","tier","desc","stock","perUser","startAt","endAt","salvage","rewards","loot","sub"];
 var RARITY = ["","稀有","極稀有","史詩","神話","傳奇","神秘","管理員"];
 var ITEM = {}, CATALOG = [], SOLD = {};
 function rebuildItems(doc) {
@@ -2200,7 +2200,19 @@ function paintBubbles() {
 /* =====================================================================
    公告與信箱
    ===================================================================== */
-var MAIL = { list: [], claimed: {} };
+var MAIL = { list: [], broadcast: [], personal: [], claimed: {} };
+
+function mergeMailLists() {
+  var seen = {}, list = [];
+  (MAIL.broadcast || []).concat(MAIL.personal || []).forEach(function (m) {
+    if (!m || !m.id || seen[m.id]) return;
+    seen[m.id] = true;
+    list.push(m);
+  });
+  list.sort(function (a, b) { return (b.at || 0) - (a.at || 0); });
+  MAIL.list = list;
+  paintMailBadge();
+}
 
 function paintAnnounce() {
   var a = S.cfg && S.cfg.announce, el = $('announce');
@@ -2251,7 +2263,8 @@ function sheetMail() {
       b.onclick = function () {
         busy(b, true);
         call('mailClaim', { id: b.getAttribute('data-claim') }).then(function (r) {
-          toast('已領取' + (r.salvage ? '，重複的物品換成 ★ ' + fmt(r.salvage) : ''), 'good');
+          toast('已領取' + (r.fused ? '，並自動合成 ' + r.fused + ' 個保硬的鐵碗公' : '') +
+            (r.salvage ? '，重複的物品換成 ★ ' + fmt(r.salvage) : ''), 'good');
           b.classList.remove('busy'); b.textContent = '已領取'; b.classList.add('ghost');
         }).catch(function (e) { busy(b, false); toast(e.message, 'bad'); });
       };
@@ -2357,7 +2370,7 @@ function dtLocal(ms) { return ms ? new Date(ms + TW).toISOString().slice(0, 16) 
 function fromLocal(v) { return v ? Date.parse(v + ':00Z') - TW : null; }
 
 function sheetEditItem(it) {
-  var rw = it.type === 'chest' ? JSON.stringify(it.rewards || [], null, 1) : '';
+  var rw = it.type === 'chest' ? JSON.stringify(it.loot || { stars: { min: 0, max: 0 }, items: [], avatar: 0, ur: 0, bg: 0, dex: 0, dexFullStars: 30 }, null, 1) : '';
   var body = '<div class="buy-prev">' + (it.img ? itemThumb(it, it.type === 'bg' ? 160 : 90) : '') + '</div>' +
     fld('eName', '名字', 'text', ' maxlength="20" autocomplete="off" value="' + esc(it.name) + '"') +
     '<div class="fld-grid">' + fld('ePrice', '價格（留空＝不能買）', 'text', ' inputmode="numeric" value="' + (it.price == null ? '' : it.price) + '"') +
@@ -2371,7 +2384,7 @@ function sheetEditItem(it) {
     '</div>' +
     fld('eDesc', '說明', 'text', ' maxlength="80" autocomplete="off" value="' + esc(it.desc || '') + '"') +
     (it.type === 'chest' ? '<div class="fld"><label for="eRw">寶箱內容</label><textarea id="eRw" class="ta mono" rows="6">' + esc(rw) + '</textarea>' +
-      '<div class="help">星幣：{"kind":"stars","min":20,"max":40,"weight":70}　物品：{"kind":"item","itemId":"av_u01","qty":1,"weight":5}，weight 是機率權重</div></div>' : '');
+      '<div class="help">新版格式：stars 是星幣範圍；items 每項使用 itemId、min、max、p（0～1）；avatar、ur、bg、dex 是額外掉落機率。</div></div>' : '');
   formSheet('編輯商品', '編號：' + it.id, body, '儲存', '', function () {
     var num = function (id) { var v = $(id).value.trim(); return v === '' ? null : Number(v); };
     var patch = {
@@ -2382,7 +2395,7 @@ function sheetEditItem(it) {
     if ($('eTier')) patch.tier = num('eTier');
     if (!patch.name) { toast('名字不能空白', 'bad'); return null; }
     if ($('eRw')) {
-      try { patch.rewards = JSON.parse($('eRw').value); } catch (e) { toast('寶箱內容格式不對', 'bad'); return null; }
+      try { patch.loot = JSON.parse($('eRw').value); } catch (e) { toast('寶箱內容格式不對', 'bad'); return null; }
     }
     return call('adminCatalog', { itemId: it.id, patch: patch }).then(function () { setTimeout(sheetCatalog, 280); return '已儲存'; });
   });
@@ -3721,11 +3734,18 @@ function enterApp(profile) {
     rebuildItems(d.exists ? d.data() : null);
     render(true);
   }, function () {}));
-  S.unsubs.push(db.collection('mail').orderBy('at', 'desc').limit(20).onSnapshot(function (q) {
+  /* 全服信與自己的個人信分開查，避免其他玩家的排行獎勵把自己的信擠出最新 20 封。 */
+  S.unsubs.push(db.collection('mail').where('all', '==', true).orderBy('at', 'desc').limit(20).onSnapshot(function (q) {
     var list = [];
     q.forEach(function (d) { list.push(d.data()); });
-    MAIL.list = list;
-    paintMailBadge();
+    MAIL.broadcast = list;
+    mergeMailLists();
+  }, function () {}));
+  S.unsubs.push(db.collection('mail').where('toList', 'array-contains', profile.pid).orderBy('at', 'desc').limit(50).onSnapshot(function (q) {
+    var list = [];
+    q.forEach(function (d) { list.push(d.data()); });
+    MAIL.personal = list;
+    mergeMailLists();
   }, function () {}));
   S.unsubs.push(db.collection('players').doc(profile.pid).collection('mailClaims').onSnapshot(function (q) {
     var m = {};
@@ -3801,7 +3821,7 @@ function endSession() {
   S.me = null; S.player = null; S.cfg = null; S.roster = [];
   S.acc = null; S.accounts = []; S.sid = null; S.tab = 'home'; S.meTab = 'acct';
   PK.st = null; PK.hole = null; PK.synced = false; BJ.st = null; S.playersAt = 0; S.accountsAt = 0; closeRaise();
-  MAIL.list = []; MAIL.claimed = {}; $('announce').hidden = true;
+  MAIL.list = []; MAIL.broadcast = []; MAIL.personal = []; MAIL.claimed = {}; $('announce').hidden = true;
   _last = {};
   closeSheet();
   showGate();

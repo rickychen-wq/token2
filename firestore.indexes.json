@@ -1,4 +1,21 @@
 {
-  "indexes": [],
+  "indexes": [
+    {
+      "collectionGroup": "mail",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "all", "order": "ASCENDING" },
+        { "fieldPath": "at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "mail",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "toList", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "at", "order": "DESCENDING" }
+      ]
+    }
+  ],
   "fieldOverrides": []
 }

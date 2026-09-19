@@ -136,9 +136,11 @@ exports.seasonLock = onSchedule({ schedule: '0 23 * * 0', timeZone: 'Asia/Taipei
   logger.info('season lock', await SE.lock(Date.now()));
 });
 
-/* 週一 00:00 結算剛結束的那一季 */
+/* 週一 00:01 結算剛結束的那一季；成功後立刻發週獎勵。 */
 exports.seasonSettle = onSchedule({ schedule: '1 0 * * 1', timeZone: 'Asia/Taipei', retryCount: 5 }, async () => {
-  logger.info('season settle', await SE.settleEnded(Date.now()));
+  const settled = await SE.settleEnded(Date.now());
+  const rewards = await RW.runWeekly(Date.now());
+  logger.info('season settle', { settled, rewards });
 });
 
 /* ---------- v13 排行榜自動發獎 ---------- */
@@ -150,8 +152,8 @@ exports.rewardsDaily = onSchedule({ schedule: '5 0 * * *', timeZone: 'Asia/Taipe
   logger.info('rewards daily', await RW.runDaily(Date.now()));
 });
 
-/* 週一 00:05 發週獎勵，排在 seasonSettle（00:01）之後 */
-exports.rewardsWeekly = onSchedule({ schedule: '5 0 * * 1', timeZone: 'Asia/Taipei', retryCount: 5 }, async () => {
+/* 週一 00:15 備援補發；正常情況 seasonSettle 結束後已經發完。 */
+exports.rewardsWeekly = onSchedule({ schedule: '15 0 * * 1', timeZone: 'Asia/Taipei', retryCount: 5 }, async () => {
   logger.info('rewards weekly', await RW.runWeekly(Date.now()));
 });
 

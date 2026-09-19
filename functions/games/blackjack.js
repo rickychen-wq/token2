@@ -84,7 +84,7 @@ function createBlackjack({ db, now, requireSession, requireAdmin }) {
             const snap = await tx.get(accRef(asSid || sid, pid));
             accs[k] = snap.exists ? snap.data() : E.newAccount(pid, cfg, t);
             if (!snap.exists) ledger.push([k, { type: 'start', amount: cfg.startingMoney, wallet: accs[k].wallet, bank: 0, loans: 0 }]);
-            E.rollDaily(accs[k], t);
+            E.rollDaily(accs[k], t, cfg);
           }
           return accs[k];
         },

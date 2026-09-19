@@ -83,7 +83,7 @@ function createPoker({ db, now, requireSession, requireAdmin }) {
               a = E.newAccount(pid, cfg, t);
               ledger.push([k, { type: 'start', amount: cfg.startingMoney, wallet: a.wallet, bank: 0, loans: 0 }]);
             }
-            E.rollDaily(a, t);
+            E.rollDaily(a, t, cfg);
             accs[k] = a;
           }
           return accs[k];

@@ -3,8 +3,9 @@
 
 const { AppError, cleanPid, seasonId } = require('./util');
 const E = require('./econ');
+const T = require('./tasks');
 const { loadCatalog } = require('./catalog');
-const { grant, playerPatch } = require('./shop');
+const { grant, playerPatch, fuseBowls } = require('./shop');
 
 function createMail({ db, now, requireSession, requireAdmin }) {
   const mailRef = (id) => db.collection('mail').doc(id);
@@ -77,13 +78,19 @@ function createMail({ db, now, requireSession, requireAdmin }) {
           accRef = db.collection('seasons').doc(sid).collection('accounts').doc(s.pid);
           const aSnap = await tx.get(accRef);
           acc = aSnap.exists ? aSnap.data() : E.newAccount(s.pid, cfg, t);
-          E.rollDaily(acc, t);
+          E.rollDaily(acc, t, cfg);
         }
-        let salvage = 0;
+        let salvage = 0, gotCard = false;
         if (m.stars > 0) p.stars = (p.stars || 0) + m.stars;
         Object.keys(m.items || {}).forEach((itemId) => {
-          if (cat.items[itemId]) salvage += grant(p, cat.items[itemId], m.items[itemId]);
+          const item = cat.items[itemId];
+          if (item) {
+            salvage += grant(p, item, m.items[itemId]);
+            if (item.type === 'card' && m.items[itemId] > 0) gotCard = true;
+          }
         });
+        const fused = fuseBowls(p, t);
+        if (gotCard) T.bump(p, t, 'firstItem');
         tx.update(playerRef(s.pid), playerPatch(p));
         if (acc) {
           acc.wallet += m.money;
@@ -94,7 +101,7 @@ function createMail({ db, now, requireSession, requireAdmin }) {
           repaid.forEach((e) => tx.set(accRef.collection('ledger').doc(), Object.assign(e, { at: t, by: 'mail', note: null })));
         }
         tx.set(cRef, { at: t });
-        return { money: m.money, stars: m.stars, items: m.items, salvage };
+        return { money: m.money, stars: m.stars, items: m.items, salvage, fused };
       });
     }
   };

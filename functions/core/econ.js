@@ -114,11 +114,15 @@ function entry(type, amount, acc, extra) {
 }
 
 /* 當天的每日獎勵狀態，跨日自動歸零 */
-function rollDaily(acc, t) {
+function rollDaily(acc, t, cfg) {
   const day = twDay(t);
   if (!acc.daily || acc.daily.day !== day) {
-    // v13：換日時把昨天的紀錄留一份，隔天 00:05 的排行獎勵要用（避免 00:00~00:05 有人開局就把數字洗掉）
-    if (acc.daily && acc.daily.day) acc.prevDaily = { day: acc.daily.day, plays: acc.daily.plays || 0, hands: acc.daily.hands || 0 };
+    // 換日時把昨天的紀錄與「換日前淨資產」一起留下。
+    // 隔天 00:05 的排行只能看這份快照，不能讓凌晨後的操作改到昨天名次。
+    if (acc.daily && acc.daily.day) {
+      const net = cfg ? computeNet(acc, cfg) : (Number.isFinite(acc.net) ? acc.net : null);
+      acc.prevDaily = { day: acc.daily.day, plays: acc.daily.plays || 0, hands: acc.daily.hands || 0, net };
+    }
     acc.daily = { day, hands: 0, plays: 0, claimed: false, borrows: 0 };
   }
   if (typeof acc.daily.borrows !== 'number') acc.daily.borrows = 0;   // 舊帳戶補欄位
@@ -157,6 +161,13 @@ function playsOnDay(acc, day) {
   if (acc.daily && acc.daily.day === day) return acc.daily.plays || 0;
   if (acc.prevDaily && acc.prevDaily.day === day) return acc.prevDaily.plays || 0;
   return 0;
+}
+
+/* 取指定日期結束時的淨資產。新版使用 prevDaily.net；舊帳戶第一次執行時才退回目前值。 */
+function netOnDay(acc, day, cfg) {
+  if (acc.prevDaily && acc.prevDaily.day === day && Number.isFinite(acc.prevDaily.net)) return acc.prevDaily.net;
+  if (acc.daily && acc.daily.day === day) return computeNet(acc, cfg);
+  return computeNet(acc, cfg);
 }
 
 /* v11b 破產防護卷：總資產低於門檻、而且沒有欠款時，錢包直接補到 reviveTo。
@@ -300,6 +311,6 @@ function fmt(n) { return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, 
 
 module.exports = {
   DEFAULTS, PERIOD, cfgOf, cleanEconPatch, cleanAmount, twDay, periodStart,
-  newAccount, inPlayTotal, computeNet, refresh, rollDaily, recordHands, recordPlay, playsOnDay, maxDeposit, useRevive,
+  newAccount, inPlayTotal, computeNet, refresh, rollDaily, recordHands, recordPlay, playsOnDay, netOnDay, maxDeposit, useRevive,
   autoRepay, borrow, deposit, withdraw, adminAdjust, rankRates, applyInterest, starsFor
 };

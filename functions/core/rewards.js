@@ -3,7 +3,7 @@
    每日：台灣時間 00:05，依「前一天結束時的本季資產排名」發寶箱到信箱，期限 7 天。
          前三名直接拿；其他人當天要玩滿 dailyMinPlays 場（所有遊戲都算）才有。
          週一跳過，因為那天凌晨剛做完週結算，資產已經重置，而且週獎勵同時會發。
-   每週：台灣時間週一 00:05（在 seasonSettle 之後），發兩份——
+   每週：季結算成功後立刻發；週一 00:15 另有備援排程，發兩份——
          「總積分排行榜」和「剛結算完那一季的資產排行榜」，兩份互相獨立，同一個人可以都拿到。
    練習季（sid < rankFrom）完全不發。
    每一份獎勵都是抽 draws 次、每次依機率表抽一個稀有度的寶箱；鑰匙要自己買。
@@ -11,7 +11,7 @@
 
 const { AppError, seasonId } = require('./util');
 const E = require('./econ');
-const { rankSeason, DEFAULT_RANK_FROM } = require('./season');
+const { DEFAULT_RANK_FROM } = require('./season');
 
 /* 稀有度：1 稀有、2 極稀有、3 史詩、4 神話、5 傳奇、6 神秘、7 管理員（管理員寶箱不會發） */
 const DEFAULTS = {
@@ -85,131 +85,131 @@ function createRewards({ db, now, requireAdmin }) {
   const seasonRef = (sid) => db.collection('seasons').doc(sid);
   const logRef = (id) => db.collection('rewardRuns').doc(id);
 
-  /* 建立信件。每個人的抽獎結果不一樣，所以一人一封。 */
-  async function sendMails(rows, t, expireDays, titleOf, bodyOf) {
+  /* 在同一個 transaction 裡排入信件。固定文件 ID 讓同一輪、同一玩家永遠只有一封。 */
+  function queueMails(tx, runId, rows, t, expireDays, titleOf, bodyOf) {
     let sent = 0;
-    const batchSize = 400;
-    for (let i = 0; i < rows.length; i += batchSize) {
-      const batch = db.batch();
-      rows.slice(i, i + batchSize).forEach((r) => {
-        if (!Object.keys(r.items).length) return;
-        const ref = db.collection('mail').doc();
-        batch.set(ref, {
-          id: ref.id, title: titleOf(r), body: bodyOf(r),
-          money: 0, stars: 0, items: r.items,
-          to: [r.pid], all: false, toList: [r.pid],
-          at: t, expiresAt: t + expireDays * 86400000, by: 'system', kind: r.kind
-        });
-        sent++;
+    rows.forEach((r) => {
+      if (!Object.keys(r.items).length) return;
+      const id = runId + '-' + r.kind + '-' + r.pid;
+      const ref = db.collection('mail').doc(id);
+      tx.set(ref, {
+        id, title: titleOf(r), body: bodyOf(r),
+        money: 0, stars: 0, items: r.items,
+        to: [r.pid], all: false, toList: [r.pid],
+        at: t, expiresAt: t + expireDays * 86400000, by: 'system', kind: r.kind, runId
       });
-      await batch.commit();
-    }
+      sent++;
+    });
     return sent;
-  }
-
-  /* 已經跑過就不再跑，排程重試或手動補跑都安全 */
-  async function once(runId, t, fn) {
-    const snap = await logRef(runId).get();
-    if (snap.exists) return Object.assign({ runId, skipped: true }, snap.data().result || {});
-    const result = await fn();
-    await logRef(runId).set({ id: runId, at: t, result });
-    return Object.assign({ runId }, result);
   }
 
   /* ---------- 每日 ---------- */
   async function runDaily(t) {
-    const cfgSnap = await cfgRef().get();
-    const rawCfg = cfgSnap.exists ? cfgSnap.data() : {};
-    const C = cfgOf(rawCfg);
-    if (!C.enabled) return { skipped: 'disabled' };
     if (twDow(t) === 0) return { skipped: 'monday' };          // 週一由週獎勵負責
 
     const endedDay = E.twDay(t - 86400000);                     // 剛結束的那一天
     const sid = seasonId(t);
-    if (sid < (rawCfg.rankFrom || DEFAULT_RANK_FROM)) return { skipped: 'practice', sid };
+    const runId = 'daily-' + endedDay;
+    const cfgSnap = await cfgRef().get();
+    const rawCfg = cfgSnap.exists ? cfgSnap.data() : {};
+    const C = cfgOf(rawCfg);
+    if (!C.enabled) return { runId, skipped: 'disabled' };
+    if (sid < (rawCfg.rankFrom || DEFAULT_RANK_FROM)) return { runId, skipped: 'practice', sid };
 
-    return once('daily-' + endedDay, t, async () => {
-      const ecfg = E.cfgOf(rawCfg);
-      const accSnap = await seasonRef(sid).collection('accounts').get();
-      const plSnap = await db.collection('players').get();
-      const accounts = [], players = {};
-      accSnap.forEach((d) => { const a = d.data(); E.refresh(a, ecfg, t); accounts.push(a); });
-      plSnap.forEach((d) => { players[d.id] = d.data(); });
-      if (!accounts.length) return { day: endedDay, sid, sent: 0 };
+    const ecfg = E.cfgOf(rawCfg);
+    const accSnap = await seasonRef(sid).collection('accounts').get();
+    const accounts = [];
+    accSnap.forEach((d) => {
+      const a = d.data();
+      E.rollDaily(a, t, ecfg);
+      E.refresh(a, ecfg, t);
+      a.dailyNet = E.netOnDay(a, endedDay, ecfg);
+      accounts.push(a);
+    });
 
-      // 每日榜看「目前持有的資產」，不看手數門檻
-      const byNet = accounts.slice().sort((a, b) => b.net - a.net);
-      const rankOf = {};
-      let prev = null, rank = 0;
-      byNet.forEach((a, i) => { if (a.net !== prev) { rank = i + 1; prev = a.net; } rankOf[a.pid] = rank; });
+    // 每日榜只看昨天換日瞬間保存的淨資產，不讓 00:00 後的操作改寫昨天名次。
+    const byNet = accounts.slice().sort((a, b) => b.dailyNet - a.dailyNet);
+    const rankOf = {};
+    let prev = null, rank = 0;
+    byNet.forEach((a, i) => { if (a.dailyNet !== prev) { rank = i + 1; prev = a.dailyNet; } rankOf[a.pid] = rank; });
 
-      const rows = [];
-      accounts.forEach((a) => {
-        const rk = rankOf[a.pid];
-        const plays = E.playsOnDay(a, endedDay);
-        const top3 = rk <= 3;
-        if (top3 && C.dailyTopNeedsPlays && plays < C.dailyMinPlays) return;
-        if (!top3 && plays < C.dailyMinPlays) return;
-        rows.push({
-          pid: a.pid, kind: 'dailyRank', rank: rk, plays, net: a.net,
-          items: drawChests(tableFor(C.daily, rk), C.draws)
-        });
+    const rows = [];
+    accounts.forEach((a) => {
+      const rk = rankOf[a.pid];
+      const plays = E.playsOnDay(a, endedDay);
+      const top3 = rk <= 3;
+      if (top3 && C.dailyTopNeedsPlays && plays < C.dailyMinPlays) return;
+      if (!top3 && plays < C.dailyMinPlays) return;
+      rows.push({
+        pid: a.pid, kind: 'dailyRank', rank: rk, plays, net: a.dailyNet,
+        items: drawChests(tableFor(C.daily, rk), C.draws)
       });
+    });
 
-      const sent = await sendMails(rows, t, C.expireDays,
+    // 只有「完成紀錄＋全部信件」放進 transaction；排名快照不鎖住所有帳戶，避免玩家在線時一直衝突重試。
+    return db.runTransaction(async (tx) => {
+      const doneSnap = await tx.get(logRef(runId));
+      if (doneSnap.exists) return Object.assign({ runId, skipped: true }, doneSnap.data().result || {});
+      const sent = queueMails(tx, runId, rows, t, C.expireDays,
         (r) => '每日排行獎勵・' + endedDay.slice(5).replace('-', '/'),
         (r) => (r.rank <= 3 ? '昨天資產排行第 ' + r.rank + ' 名' : '昨天玩了 ' + r.plays + ' 場')
           + '，這是你的獎勵。鑰匙要自己去商店買喔。');
-      return { day: endedDay, sid, players: accounts.length, sent };
+      const result = { day: endedDay, sid, players: accounts.length, sent };
+      tx.set(logRef(runId), { id: runId, at: t, status: 'done', result });
+      return Object.assign({ runId }, result);
     });
   }
 
   /* ---------- 每週 ---------- */
   async function runWeekly(t) {
+    const endedSid = seasonId(t - 86400000);                    // 剛結束的那一季
+    const runId = 'weekly-' + endedSid;
     const cfgSnap = await cfgRef().get();
     const rawCfg = cfgSnap.exists ? cfgSnap.data() : {};
     const C = cfgOf(rawCfg);
-    if (!C.enabled) return { skipped: 'disabled' };
+    if (!C.enabled) return { runId, skipped: 'disabled' };
+    if (endedSid < (rawCfg.rankFrom || DEFAULT_RANK_FROM)) return { runId, skipped: 'practice', sid: endedSid };
+    const sSnap = await seasonRef(endedSid).get();
+    // 尚未結算不能留下完成紀錄；00:15 備援或手動補發才能再次嘗試。
+    if (!sSnap.exists || sSnap.data().status !== 'closed') return { runId, sid: endedSid, skipped: 'not-settled', sent: 0 };
+    const final = sSnap.data().final || [];
+    const plSnap = await db.collection('players').get();
+    const players = {};
+    plSnap.forEach((d) => { players[d.id] = d.data(); });
 
-    const endedSid = seasonId(t - 86400000);                    // 剛結束的那一季
-    if (endedSid < (rawCfg.rankFrom || DEFAULT_RANK_FROM)) return { skipped: 'practice', sid: endedSid };
+    // (a) 剛結算完那一季的資產排行榜：沿用結算時寫好的名次，沒上榜的不給
+    const assetRows = final.filter((r) => r.rank).map((r) => ({
+      pid: r.pid, kind: 'weeklyAsset', rank: r.rank,
+      items: drawChests(tableFor(C.weekly, r.rank), C.draws)
+    }));
 
-    return once('weekly-' + endedSid, t, async () => {
-      const sSnap = await seasonRef(endedSid).get();
-      if (!sSnap.exists || sSnap.data().status !== 'closed') return { sid: endedSid, skipped: 'not-settled', sent: 0 };
-      const final = sSnap.data().final || [];
-      const plSnap = await db.collection('players').get();
-      const players = {};
-      plSnap.forEach((d) => { players[d.id] = d.data(); });
+    // (b) 總積分排行榜：資格跟 (a) 一樣，要在上一季有上榜，避免沒在玩的人也領
+    const eligible = {};
+    final.forEach((r) => { if (r.rank) eligible[r.pid] = true; });
+    const pts = Object.keys(players)
+      .filter((pid) => eligible[pid])
+      .map((pid) => ({ pid, points: ((players[pid].stats || {}).points) || 0 }))
+      .sort((a, b) => b.points - a.points);
+    let pPrev = null, pRank = 0;
+    pts.forEach((x, i) => { if (x.points !== pPrev) { pRank = i + 1; pPrev = x.points; } x.rank = pRank; });
+    const pointRows = pts.map((x) => ({
+      pid: x.pid, kind: 'weeklyPoints', rank: x.rank, points: x.points,
+      items: drawChests(tableFor(C.weekly, x.rank), C.draws)
+    }));
 
-      // (a) 剛結算完那一季的資產排行榜：沿用結算時寫好的名次，沒上榜的不給
-      const assetRows = final.filter((r) => r.rank).map((r) => ({
-        pid: r.pid, kind: 'weeklyAsset', rank: r.rank,
-        items: drawChests(tableFor(C.weekly, r.rank), C.draws)
-      }));
-
-      // (b) 總積分排行榜：資格跟 (a) 一樣，要在上一季有上榜，避免沒在玩的人也領
-      const eligible = {};
-      final.forEach((r) => { if (r.rank) eligible[r.pid] = true; });
-      const pts = Object.keys(players)
-        .filter((pid) => eligible[pid])
-        .map((pid) => ({ pid, points: ((players[pid].stats || {}).points) || 0 }))
-        .sort((a, b) => b.points - a.points);
-      let pPrev = null, pRank = 0;
-      pts.forEach((x, i) => { if (x.points !== pPrev) { pRank = i + 1; pPrev = x.points; } x.rank = pRank; });
-      const pointRows = pts.map((x) => ({
-        pid: x.pid, kind: 'weeklyPoints', rank: x.rank, points: x.points,
-        items: drawChests(tableFor(C.weekly, x.rank), C.draws)
-      }));
-
+    return db.runTransaction(async (tx) => {
+      const doneSnap = await tx.get(logRef(runId));
+      if (doneSnap.exists) return Object.assign({ runId, skipped: true }, doneSnap.data().result || {});
       const week = endedSid.split('-W')[1];
-      const sentA = await sendMails(assetRows, t, C.expireDays,
+      const sentA = queueMails(tx, runId, assetRows, t, C.expireDays,
         () => '第 ' + parseInt(week, 10) + ' 週結算獎勵',
         (r) => '上一季資產排行第 ' + r.rank + ' 名，辛苦了。');
-      const sentB = await sendMails(pointRows, t, C.expireDays,
+      const sentB = queueMails(tx, runId, pointRows, t, C.expireDays,
         () => '總積分排行獎勵',
         (r) => '總積分排行第 ' + r.rank + ' 名（' + r.points + ' 分）。');
-      return { sid: endedSid, asset: sentA, points: sentB, sent: sentA + sentB };
+      const result = { sid: endedSid, asset: sentA, points: sentB, sent: sentA + sentB };
+      tx.set(logRef(runId), { id: runId, at: t, status: 'done', result });
+      return Object.assign({ runId }, result);
     });
   }
 

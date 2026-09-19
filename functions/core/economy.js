@@ -39,7 +39,7 @@ function createEconomy({ db, now, requireSession, requireAdmin }) {
         acc = E.newAccount(pid, cfg, t);
         entries.push({ type: 'start', amount: cfg.startingMoney, wallet: acc.wallet, bank: 0, loans: 0 });
       }
-      E.rollDaily(acc, t);
+      E.rollDaily(acc, t, cfg);
 
       const plPatch = {};
       const setPlayer = (patch) => { Object.assign(plPatch, patch || {}); };
@@ -212,6 +212,9 @@ function createEconomy({ db, now, requireSession, requireAdmin }) {
       let total = 0, count = 0;
       accounts.forEach((acc) => {
         const r = rates[acc.pid];
+        // 00:00 計息屬於新一天的第一筆系統操作；先保存昨天結束瞬間的淨資產，
+        // 才不會讓這筆利息倒回去改寫昨天的每日排行。
+        E.rollDaily(acc, t, cfg);
         const gain = E.applyInterest(acc, P, r.rate);
         if (gain <= 0) return;
         total += gain; count++;
