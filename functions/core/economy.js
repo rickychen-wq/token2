@@ -96,26 +96,30 @@ function createEconomy({ db, now, requireSession, requireAdmin }) {
     /* ---------- v12 任務 ---------- */
     async taskList(req) {
       const s = await requireSession(req);
+      let tasks = null;
       const r = await mutate(s.pid, (acc, cfg, t, raw, pl, setPlayer) => {
-        setPlayer({ tasks: pl.tasks });     // 讀的時候順便把換日／換週的歸零寫回去
+        // 9/21 啟用前，登入事件不會建立 pl.tasks。先跑 progress()，由 roll()
+        // 建立完整容器後再寫回，避免把 undefined 交給 Firestore 而造成 internal error。
+        tasks = T.progress(pl, acc, t, raw);
+        setPlayer({ tasks: pl.tasks });
         return [];
       });
-      const [snap, cfg] = [await db.collection('players').doc(s.pid).get(), await db.collection('config').doc('app').get()];
-      return { tasks: T.progress(snap.data(), r.account, now(), cfg.exists ? cfg.data() : {}), account: r.account };
+      return { tasks, account: r.account };
     },
 
     async taskClaim(req) {
       const s = await requireSession(req);
       const id = String((req.data && req.data.id) || '');
       let got = null;
+      let tasks = null;
       const r = await mutate(s.pid, (acc, cfg, t, raw, pl, setPlayer) => {
         const out = T.claim(pl, acc, t, id, raw);
         got = out.task;
+        tasks = T.progress(pl, acc, t, raw);
         setPlayer({ tasks: pl.tasks, stars: pl.stars || 0 });
         return out.entries;
       });
-      const [snap, cfg] = [await db.collection('players').doc(s.pid).get(), await db.collection('config').doc('app').get()];
-      return { got, tasks: T.progress(snap.data(), r.account, now(), cfg.exists ? cfg.data() : {}), account: r.account };
+      return { got, tasks, account: r.account };
     },
 
     /* v11b 破產防護卷 */
