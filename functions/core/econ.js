@@ -82,7 +82,7 @@ function newAccount(pid, cfg, t) {
     loans: 0,
     inPlay: {},
     daily: { day: null, hands: 0, claimed: false },
-    handsPlayed: 0,
+    handsPlayed: 0, plays: 0,
     everBorrowed: false,
     net: cfg.startingMoney,
     peakNet: cfg.startingMoney,
@@ -135,6 +135,7 @@ function recordHands(acc, t, n) {
   const d = rollDaily(acc, t);
   d.hands += n;
   d.plays += n;
+  acc.plays = (acc.plays || 0) + n;          // 本季＝本週的場數，給每週任務用
   acc.handsPlayed = (acc.handsPlayed || 0) + n;
 }
 
@@ -149,6 +150,7 @@ function recordPlay(acc, t, key, cap) {
     if (n > cap) return false;
   }
   d.plays += 1;
+  acc.plays = (acc.plays || 0) + 1;
   return true;
 }
 

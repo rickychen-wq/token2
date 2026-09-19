@@ -7,6 +7,7 @@ const crypto = require('crypto');
 const { AppError, seasonId } = require('../core/util');
 const E = require('../core/econ');
 const CT = require('./contest');
+const TK = require('../core/tasks');
 
 const DEFAULTS = { enabled: true, minBet: 200, maxBet: 5000, betSec: 30, turnSec: 20, resultSec: 6, seatCount: 5 };
 const TABLE_ID = 'main';
@@ -204,6 +205,8 @@ function createBlackjack({ db, now, requireSession, requireAdmin }) {
       const acc = await ctx.acc(b.pid, b.sid);
       acc.wallet += r.pay;
       E.recordHands(acc, ctx.t, 1);
+      const pd = await ctx.player(b.pid);                   // v12 任務：生涯場數
+      if (pd && TK.bump(pd, ctx.t, 'play', 1, ctx.rawCfg)) ctx.patchPlayer(b.pid, { tasks: pd.tasks });
       if (r.pay) ctx.led(b.pid, b.sid, { type: 'game', amount: r.pay, note: '21點派彩（' + { win: '贏', blackjack: '黑傑克', push: '平手', lose: '輸', bust: '爆牌' }[r.result] + '）' });
       E.autoRepay(acc, ctx.cfg, ctx.t).forEach((e) => ctx.led(b.pid, b.sid, { type: 'repay', amount: e.amount }));
     }

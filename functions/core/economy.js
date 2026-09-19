@@ -5,6 +5,7 @@
 const { AppError, seasonId, seasonRange, cleanPid } = require('./util');
 const E = require('./econ');
 const { expireTemp } = require('./shop');
+const T = require('./tasks');
 
 function createEconomy({ db, now, requireSession, requireAdmin }) {
   const cfgRef = () => db.collection('config').doc('app');
@@ -45,6 +46,8 @@ function createEconomy({ db, now, requireSession, requireAdmin }) {
       // v11b：乾洗髮純看時間，任何一次動到帳戶（登入讀帳戶也會走這裡）都順手檢查有沒有到期
       const pl = pSnap.data();
       if (expireTemp(pl, t)) { plPatch.temp = pl.temp || {}; plPatch.equipped = pl.equipped || {}; }
+      // v12：任何一次動到帳戶（登入讀帳戶也會走這裡）就算今天登入過
+      if (T.bump(pl, t, 'login', 1, rawCfg)) plPatch.tasks = pl.tasks;
       const produced = fn ? fn(acc, cfg, t, rawCfg, pl, setPlayer) : [];
       entries.push.apply(entries, produced || []);
       // 統一規則：任何流程結束後，錢包達到門檻就自動還款（登入讀帳戶時也會補做）。
@@ -88,6 +91,31 @@ function createEconomy({ db, now, requireSession, requireAdmin }) {
     async borrow(req) {
       const s = await requireSession(req);
       return view(await mutate(s.pid, (acc, cfg, t, raw, pl) => E.borrow(acc, cfg, t, pl)));
+    },
+
+    /* ---------- v12 任務 ---------- */
+    async taskList(req) {
+      const s = await requireSession(req);
+      const r = await mutate(s.pid, (acc, cfg, t, raw, pl, setPlayer) => {
+        setPlayer({ tasks: pl.tasks });     // 讀的時候順便把換日／換週的歸零寫回去
+        return [];
+      });
+      const [snap, cfg] = [await db.collection('players').doc(s.pid).get(), await db.collection('config').doc('app').get()];
+      return { tasks: T.progress(snap.data(), r.account, now(), cfg.exists ? cfg.data() : {}), account: r.account };
+    },
+
+    async taskClaim(req) {
+      const s = await requireSession(req);
+      const id = String((req.data && req.data.id) || '');
+      let got = null;
+      const r = await mutate(s.pid, (acc, cfg, t, raw, pl, setPlayer) => {
+        const out = T.claim(pl, acc, t, id, raw);
+        got = out.task;
+        setPlayer({ tasks: pl.tasks, stars: pl.stars || 0 });
+        return out.entries;
+      });
+      const [snap, cfg] = [await db.collection('players').doc(s.pid).get(), await db.collection('config').doc('app').get()];
+      return { got, tasks: T.progress(snap.data(), r.account, now(), cfg.exists ? cfg.data() : {}), account: r.account };
     },
 
     /* v11b 破產防護卷 */

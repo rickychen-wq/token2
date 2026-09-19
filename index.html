@@ -577,8 +577,9 @@ button.game:active{transform:scale(.99)}
 .pav-ch{font-weight:700;color:#A8EEFF;text-shadow:0 0 12px rgba(63,199,255,.7);line-height:1}
 .pav.t1{border-color:rgba(168,238,255,.6)}
 .pav.t2{border:2px solid #FFD37A;box-shadow:0 0 16px rgba(255,211,122,.45),0 4px 14px rgba(0,0,0,.45)}
-.pav.t4{border:2px solid #FF6BD8;box-shadow:0 0 20px rgba(255,107,216,.5),0 4px 14px rgba(0,0,0,.45);animation:godGlow 2.4s ease-in-out infinite}
-@keyframes godGlow{50%{box-shadow:0 0 34px rgba(255,107,216,.8),0 4px 14px rgba(0,0,0,.45)}}
+/* 四階（終焉神域／荷官）改成白色光環，原本的粉紅太跳 */
+.pav.t4{border:2px solid #FFFFFF;box-shadow:0 0 20px rgba(255,255,255,.55),0 4px 14px rgba(0,0,0,.45);animation:godGlow 2.4s ease-in-out infinite}
+@keyframes godGlow{50%{box-shadow:0 0 34px rgba(255,255,255,.85),0 4px 14px rgba(0,0,0,.45)}}
 .pav-crown,.pav svg{display:none}
 
 .banner{position:relative;width:100%;aspect-ratio:3/1;border-radius:10px 10px 0 0;background-size:cover;background-position:center;overflow:hidden}
@@ -674,6 +675,20 @@ button.game:active{transform:scale(.99)}
 .duel-cards{display:flex;justify-content:center;gap:28px;margin:18px 0}
 .duel-cards>div{display:flex;flex-direction:column;align-items:center;gap:8px}
 .duel-cards .lbl{font-size:12px;color:var(--dim)}
+/* v12 任務 */
+.task-list{max-height:52vh;overflow-y:auto;margin:10px 0;display:flex;flex-direction:column;gap:8px;padding:2px}
+.task{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:rgba(3,8,18,.55);border:1px solid var(--edge-soft)}
+.task.ready{border-color:rgba(75,227,143,.5);background:rgba(75,227,143,.07)}
+.task.claimed{opacity:.5}
+.task-k{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.task-k b{font-size:14px;font-weight:600}
+.task-k small{font-size:11.5px;color:var(--dim);line-height:1.3}
+.task-bar{height:4px;border-radius:2px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:3px}
+.task-bar i{display:block;height:100%;background:var(--cy);border-radius:2px;transition:width .3s}
+.task-num{font-size:11px;color:var(--faint)}
+.task-r{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:none}
+.task-rew{font-size:12px;color:var(--gold);white-space:nowrap}
+.seg .dot{display:inline-block;min-width:16px;padding:0 4px;border-radius:8px;background:var(--grn);color:#04070F;font-size:10.5px;font-weight:700;line-height:16px;text-align:center}
 .stat-grid .unk{color:var(--dim);font-size:13px;letter-spacing:.5px}
 @keyframes fxShake{0%,100%{transform:rotate(0)}20%{transform:rotate(-8deg) scale(1.05)}40%{transform:rotate(8deg) scale(1.08)}60%{transform:rotate(-6deg) scale(1.1)}80%{transform:rotate(5deg) scale(1.12)}}
 @keyframes fxOut{to{transform:scale(1.6);opacity:0;filter:brightness(3)}}
@@ -1538,6 +1553,91 @@ function showProfile(pid) {
     var m = sh.querySelector('[data-manage]');
     if (m) m.onclick = function () { sheetPlayer(pid); };
   });
+}
+
+/* ---------- v12 任務 ---------- */
+var TASKS = { data: null, cat: 'daily', loading: false };
+var TASK_CAT = [['daily', '每日'], ['weekly', '每週'], ['career', '生涯']];
+
+function taskEntry() {
+  var d = TASKS.data;
+  if (d && !d.active) {
+    return '<button class="game task-entry" id="goTasks"><div class="game-bg">✦</div><div class="game-suit">✦</div>' +
+      '<div class="game-txt"><h3>任務</h3><p>' + esc(d.startsFrom.replace('-W', ' 第 ') + ' 週') + '開始</p></div><span class="chev">›</span></button>';
+  }
+  var n = d ? d.summary.total : 0;
+  return '<button class="game task-entry" id="goTasks"><div class="game-bg">✦</div><div class="game-suit">✦</div>' +
+    '<div class="game-txt"><h3>任務' + (n ? '<span class="tag live">' + n + ' 個可領</span>' : '') + '</h3>' +
+    '<p>' + (d ? (n ? '有獎勵等著你拿' : '每日、每週、生涯任務') : '載入中…') + '</p></div><span class="chev">›</span></button>';
+}
+
+function loadTasks(then) {
+  if (TASKS.loading) return;
+  TASKS.loading = true;
+  call('taskList', {}).then(function (r) {
+    TASKS.data = r.tasks;
+    TASKS.loading = false;
+    if (then) then();
+    if (S.tab === 'home') renderHome(true);
+  }).catch(function () { TASKS.loading = false; });
+}
+
+function taskRow(x) {
+  var pct = Math.round(Math.min(1, x.have / x.need) * 100);
+  var reward = [];
+  if (x.money) reward.push(fmt(x.money));
+  if (x.stars) reward.push('★ ' + x.stars);
+  return '<div class="task' + (x.claimed ? ' claimed' : x.done ? ' ready' : '') + '">' +
+    '<div class="task-k"><b>' + esc(x.name) + '</b><small>' + esc(x.desc) + '</small>' +
+    '<div class="task-bar"><i style="width:' + pct + '%"></i></div>' +
+    '<span class="task-num">' + x.have + ' / ' + x.need + '</span></div>' +
+    '<div class="task-r"><span class="task-rew">' + reward.join('　') + '</span>' +
+    '<button class="btn sm' + (x.done && !x.claimed ? '' : ' ghost') + '" data-claim="' + x.id + '"' +
+      (x.done && !x.claimed ? '' : ' disabled') + '>' + (x.claimed ? '已領' : '領取') + '</button></div></div>';
+}
+
+function sheetTasks() {
+  var render = function () {
+    var d = TASKS.data;
+    if (!d) return openSheet('<p class="desc center">載入中…</p>', function () {});
+    if (!d.active) {
+      return openSheet('<h3 class="center">任務</h3>' +
+        '<p class="desc center">任務系統從 ' + esc(d.startsFrom) + ' 那一週（9/21）開始，現在還是測試期，進度不會計算。</p>' +
+        '<div class="acts" style="margin-top:14px"><button class="btn ghost" type="button" data-close>關閉</button></div>',
+        function (sh) { sh.querySelector('[data-close]').onclick = closeSheet; });
+    }
+    var tabs = '<div class="seg" role="tablist">' + TASK_CAT.map(function (x) {
+      var n = d.summary[x[0]];
+      return '<button role="tab" data-tc="' + x[0] + '" class="' + (TASKS.cat === x[0] ? 'on' : '') + '">' +
+        x[1] + (n ? ' <span class="dot">' + n + '</span>' : '') + '</button>';
+    }).join('') + '</div>';
+    var rows = d[TASKS.cat].map(taskRow).join('');
+    openSheet('<h3 class="center">任務</h3>' + tabs + '<div class="task-list">' + rows + '</div>' +
+      '<div class="acts" style="margin-top:12px"><button class="btn ghost" type="button" data-close>關閉</button></div>',
+      function (sh) {
+        sh.classList.add('flush');
+        sh.querySelector('[data-close]').onclick = closeSheet;
+        sh.querySelectorAll('[data-tc]').forEach(function (b) {
+          b.onclick = function () { TASKS.cat = b.getAttribute('data-tc'); render(); };
+        });
+        sh.querySelectorAll('[data-claim]').forEach(function (b) {
+          if (b.disabled) return;
+          b.onclick = function () {
+            b.disabled = true;
+            call('taskClaim', { id: b.getAttribute('data-claim') }).then(function (r) {
+              TASKS.data = r.tasks;
+              var g = r.got, msg = [];
+              if (g.money) msg.push(fmt(g.money) + ' 遊戲幣');
+              if (g.stars) msg.push('★ ' + g.stars);
+              toast(g.name + '：' + msg.join(' ＋ '), 'good');
+              render();
+              if (S.tab === 'home') renderHome(true);
+            }).catch(function (e) { b.disabled = false; toast(e.message, 'bad'); });
+          };
+        });
+      });
+  };
+  if (!TASKS.data) loadTasks(render); else { render(); loadTasks(); }
 }
 
 /* ---------- v11b 破產防護卷 ---------- */
@@ -2423,6 +2523,7 @@ function syncLive() {
   live('players', t === 'rank' || (t === 'me' && admin), openPlayersLive);
   if (!needAccounts && t === 'home') refreshAccounts(false);
   if (t !== 'rank' && !(t === 'me' && admin)) refreshPlayers(false);
+  if (t === 'home' && !TASKS.data) loadTasks();      // v12：大廳顯示可領數量
 }
 
 function openPokerLive() {
@@ -3789,6 +3890,8 @@ function renderHome(force) {
         (d.claimed ? '已領取' : '領取') + '</button></div>';
   }
 
+  h += taskEntry();
+
   h += '<div class="sec-h"><h2>遊戲</h2></div>';
   var seated = PK.st ? PK.st.seats.filter(Boolean).length : 0;
   var playing = PK.st && PK.st.hand.phase !== 'idle';
@@ -3806,6 +3909,8 @@ function renderHome(force) {
 
   if (put('vHome', h, force)) {
     $('goPoker').onclick = function () { switchTab('poker'); };
+    var gt = $('goTasks');
+    if (gt) gt.onclick = sheetTasks;
     $('vHome').querySelectorAll('[data-go]').forEach(function (b) { b.onclick = function () { switchTab(b.getAttribute('data-go')); }; });
     $('vHome').querySelector('.idcard').onclick = function () { sheetProfile(S.me.pid); };
     var cb = $('claimBtn');

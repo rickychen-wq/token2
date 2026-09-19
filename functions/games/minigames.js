@@ -5,6 +5,7 @@
 const crypto = require('crypto');
 const { AppError } = require('../core/util');
 const E = require('../core/econ');
+const TK = require('../core/tasks');
 
 /* ---------- 設定 ---------- */
 const DEFAULTS = {
@@ -152,7 +153,7 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
     async gateDeal(req) {
       const s = await requireSession(req);
       let out;
-      await mutate(s.pid, (acc, cfg, t, raw) => {
+      await mutate(s.pid, (acc, cfg, t, raw, pl, setPl) => {
         if (!gamesCfg(raw).gate.enabled) throw new AppError('射龍門目前關閉中', 'disabled');
         const deck = newDeck();
         const a = deck.pop(), b = deck.pop();
@@ -168,7 +169,7 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
       const s = await requireSession(req);
       const d = req.data || {};
       let out;
-      const r = await mutate(s.pid, (acc, cfg, t, raw) => {
+      const r = await mutate(s.pid, (acc, cfg, t, raw, pl, setPl) => {
         const G = gamesCfg(raw).gate;
         if (!G.enabled) throw new AppError('射龍門目前關閉中', 'disabled');
         const bet = cleanBet(d.bet, G.minBet, G.maxBet);
@@ -196,7 +197,7 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
         else { result = 'lose'; delta = -bet; }
         acc.wallet += delta;
         delete acc.gate;
-        E.recordPlay(acc, t, 'gate', playCap(raw));
+        if (E.recordPlay(acc, t, 'gate', playCap(raw))) { if (TK.bump(pl, t, 'play', 1, raw)) setPl({ tasks: pl.tasks }); }
         out = { card: c, result, delta, mult: odds.mult, posts: [a, b], guess };
         return [{ type: 'game', amount: delta, wallet: acc.wallet, bank: acc.bank.balance, loans: acc.loans, note: '射龍門' + { win: '射中', lose: '沒中', post: '撞柱' }[result] }];
       });
@@ -208,7 +209,7 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
       const s = await requireSession(req);
       const d = req.data || {};
       let out;
-      const r = await mutate(s.pid, (acc, cfg, t, raw) => {
+      const r = await mutate(s.pid, (acc, cfg, t, raw, pl, setPl) => {
         const SL = gamesCfg(raw).slot;
         if (!SL.enabled) throw new AppError('拉霸機目前關閉中', 'disabled');
         const bet = Number(d.bet);
@@ -219,7 +220,7 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
         const win = Math.floor(bet * p.mult);
         const delta = win - bet;
         acc.wallet += delta;
-        E.recordPlay(acc, t, 'slot', playCap(raw));
+        if (E.recordPlay(acc, t, 'slot', playCap(raw))) { if (TK.bump(pl, t, 'play', 1, raw)) setPl({ tasks: pl.tasks }); }
         out = { reels, mult: p.mult, kind: p.kind, win, delta };
         return [{ type: 'game', amount: delta, wallet: acc.wallet, bank: acc.bank.balance, loans: acc.loans, note: '拉霸 ' + reels.join('/') }];
       });
@@ -233,7 +234,7 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
       const keys = Object.keys(bets).filter((k) => Number(bets[k]) > 0);
       if (!keys.length) throw new AppError('至少要下一注', 'no-bet', 'invalid-argument');
       let out;
-      const r = await mutate(s.pid, (acc, cfg, t, raw) => {
+      const r = await mutate(s.pid, (acc, cfg, t, raw, pl, setPl) => {
         const D = gamesCfg(raw).dice;
         if (!D.enabled) throw new AppError('骰寶目前關閉中', 'disabled');
         let total = 0;
@@ -255,7 +256,7 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
         });
         const delta = back - total;
         acc.wallet += delta;
-        E.recordPlay(acc, t, 'dice', playCap(raw));
+        if (E.recordPlay(acc, t, 'dice', playCap(raw))) { if (TK.bump(pl, t, 'play', 1, raw)) setPl({ tasks: pl.tasks }); }
         out = { dice, detail, total, back, delta };
         return [{ type: 'game', amount: delta, wallet: acc.wallet, bank: acc.bank.balance, loans: acc.loans, note: '骰寶 ' + dice.join('-') }];
       });

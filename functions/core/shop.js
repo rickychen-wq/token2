@@ -3,6 +3,7 @@
 
 const { AppError, cleanPid, cleanName } = require('./util');
 const { SLOT_KEY, STACKABLE, EDITABLE, RARITY, DEX_FULL_STARS, loadCatalog } = require('./catalog');
+const T = require('./tasks');
 
 function inv(p) {
   const u = Object.assign({}, p.unlocked || {});
@@ -40,7 +41,7 @@ const rnd = () => Math.random();
 function randInt(min, max) { return min + Math.floor(rnd() * (max - min + 1)); }
 
 /* 破損的陶碗滿 2 個自動合成 1 個保硬的鐵碗公，回傳合成了幾個 */
-function fuseBowls(p) {
+function fuseBowls(p, t) {
   const items = Object.assign({}, p.items || {});
   const shards = items.broken_bowl || 0;
   const made = Math.floor(shards / 2);
@@ -48,6 +49,7 @@ function fuseBowls(p) {
   items.broken_bowl = shards - made * 2;
   items.iron_bowl = (items.iron_bowl || 0) + made;
   p.items = items;
+  if (t) T.bump(p, t, 'firstFuse');
   return made;
 }
 
@@ -67,7 +69,7 @@ function pickNewDex(cat, p) {
 }
 
 function playerPatch(p) {
-  return { stars: p.stars || 0, items: p.items || {}, unlocked: inv(p), bought: p.bought || {}, temp: p.temp || {} };
+  return { stars: p.stars || 0, items: p.items || {}, unlocked: inv(p), bought: p.bought || {}, temp: p.temp || {}, tasks: p.tasks || {} };
 }
 
 /* ---------- v11b 頂級的乾洗髮：暫時解鎖頭像 ---------- */
@@ -141,7 +143,8 @@ function createShop({ db, now, requireSession, requireAdmin }) {
         if (stars < cost) throw new AppError('星幣不夠，還差 ' + (cost - stars), 'poor');
         p.stars = stars - cost;
         grant(p, item, qty);
-        fuseBowls(p);
+        fuseBowls(p, now());
+        if (item.type === 'card') T.bump(p, now(), 'firstItem');
         bought[item.id] = (bought[item.id] || 0) + qty;
         p.bought = bought;
         tx.update(playerRef(s.pid), playerPatch(p));
@@ -174,7 +177,11 @@ function createShop({ db, now, requireSession, requireAdmin }) {
         }
         const eq = Object.assign({ avatar: null, frame: null, bg: null, back: null }, p.equipped || {}, { [slot]: id });
         p.equipped = eq;
-        tx.update(playerRef(s.pid), expired ? { equipped: eq, temp: p.temp || {} } : { equipped: eq });
+        // v12 任務：換外觀、第一次戴頭像／背景
+        T.bump(p, t, 'skin');
+        if (id && slot === 'avatar') T.bump(p, t, 'firstAvatar');
+        if (id && slot === 'bg') T.bump(p, t, 'firstBg');
+        tx.update(playerRef(s.pid), Object.assign({ equipped: eq, tasks: p.tasks }, expired ? { temp: p.temp || {} } : {}));
         return { equipped: eq, temp: p.temp || {} };
       });
     },
@@ -292,7 +299,8 @@ function createShop({ db, now, requireSession, requireAdmin }) {
           else { dexFull = L.dexFullStars || DEX_FULL_STARS; p.stars = (p.stars || 0) + dexFull; }
         }
 
-        const fused = fuseBowls(p);
+        const fused = fuseBowls(p, now());
+        if (got.some((x) => x.tag === 'item')) T.bump(p, now(), 'firstItem');
         const result = { chest: cr, key: kr, stars, items: got, fused, dexFull };
         tx.update(playerRef(s.pid), playerPatch(p));
         tx.set(playerRef(s.pid).collection('logs').doc(), Object.assign({ kind: 'open', at: now() }, result));
@@ -319,7 +327,8 @@ function createShop({ db, now, requireSession, requireAdmin }) {
         if (item) {
           if (!STACKABLE[item.type] && inv(p)[SLOT_KEY[item.type]].indexOf(item.id) >= 0) throw new AppError('他已經有這個物品了', 'owned');
           grant(p, item, qty);
-          fuseBowls(p);
+          fuseBowls(p, now());
+          if (item.type === 'card') T.bump(p, now(), 'firstItem');
         }
         if (stars) {
           const next = (p.stars || 0) + stars;
