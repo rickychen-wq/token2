@@ -33,7 +33,7 @@ function gamesCfg(raw) {
 /* ---------- 射龍門 ----------
    v11：改成真正的「單副 52 張牌」。每一輪（發門柱）洗一副新牌，門柱從牌堆 pop 兩張，
    射出去的第三張從同一副牌剩下的 50 張再 pop 一張。同一輪三張牌不可能是同一張 card id，
-   兩柱可以同點數但一定不同花色；牌堆存在帳戶的 acc.gate.deck，伺服器是唯一判定來源。
+   兩柱可以同點數但一定不同花色；帳戶只保存門柱，不保存尚未出現的牌，伺服器是唯一判定來源。
    card id 0~51：rank = (c/4|0)+2（2~14，A=14），suit = c%4。
    兩柱不同：第三張在中間贏，落在外面輸 1 倍，撞柱（等於任一柱點數）輸 2 倍。
    兩柱相同：猜比柱子大或小，猜對贏，猜錯輸 1 倍，等於柱子輸 2 倍。
@@ -157,7 +157,8 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
         if (!gamesCfg(raw).gate.enabled) throw new AppError('射龍門目前關閉中', 'disabled');
         const deck = newDeck();
         const a = deck.pop(), b = deck.pop();
-        acc.gate = { posts: [a, b], deck, at: now() };
+        // 不把剩餘牌堆放進玩家可讀的帳戶文件；第三張結算時由後端從扣除門柱後的集合抽出。
+        acc.gate = { version: 2, posts: [a, b], at: now() };
         const lo = Math.min(rankOf(a), rankOf(b)), hi = Math.max(rankOf(a), rankOf(b));
         out = { posts: [a, b], pair: lo === hi, adjacent: hi - lo === 1 };
         return [];
@@ -174,21 +175,31 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
         if (!G.enabled) throw new AppError('射龍門目前關閉中', 'disabled');
         const bet = cleanBet(d.bet, G.minBet, G.maxBet);
         if (!acc.gate || !acc.gate.posts) throw new AppError('先發門柱', 'no-posts');
-        if (!Array.isArray(acc.gate.deck) || !acc.gate.deck.length) {
-          // 舊版（無限副牌）留下來的殘局沒有牌堆資料，不能拿來結算。
-          // 這裡丟錯誤讓 transaction 整個回滾（所以不需要也不能在這裡改帳戶），
-          // 玩家按「換牌」呼叫 gateDeal 就會拿到新的一副牌。
-          throw new AppError('牌組已更新，請按換牌重新發門柱', 'stale-deck');
-        }
         const [a, b] = acc.gate.posts;
+        if (!Number.isInteger(a) || !Number.isInteger(b) || a < 0 || a >= 52 || b < 0 || b >= 52 || a === b) {
+          throw new AppError('門柱資料已過期，請按換牌重新發門柱', 'stale-deck');
+        }
         const lo = Math.min(rankOf(a), rankOf(b)), hi = Math.max(rankOf(a), rankOf(b));
         const guess = lo === hi ? (d.guess === 'high' || d.guess === 'low' ? d.guess : null) : null;
         if (lo === hi && !guess) throw new AppError('兩柱相同要猜大或小', 'need-guess', 'invalid-argument');
         const odds = gateOdds(lo, hi, guess, G.edge);
         if (!odds || odds.pWin <= 0) throw new AppError('這副門柱射不進，請換牌', 'no-gap');
         if (acc.wallet < bet * 2) throw new AppError('撞柱要賠 2 倍，錢包至少要有 ' + (bet * 2), 'poor');
-        const deck = acc.gate.deck.slice();
-        const c = deck.pop(), v = rankOf(c);
+        let c;
+        if (acc.gate.version === 2) {
+          // 一副 52 張扣掉兩張門柱後，直接從剩下的 50 張抽；不是重複才重抽。
+          const remaining = [];
+          for (let id = 0; id < 52; id++) if (id !== a && id !== b) remaining.push(id);
+          c = remaining[crypto.randomInt(remaining.length)];
+        } else if (Array.isArray(acc.gate.deck) && acc.gate.deck.length) {
+          // 相容部署前已經發出的 v11 回合，結算完就會刪除舊的公開牌堆。
+          const oldDeck = acc.gate.deck.filter((id) => Number.isInteger(id) && id >= 0 && id < 52 && id !== a && id !== b);
+          if (!oldDeck.length) throw new AppError('牌組資料已過期，請按換牌重新發門柱', 'stale-deck');
+          c = oldDeck[oldDeck.length - 1];
+        } else {
+          throw new AppError('牌組已更新，請按換牌重新發門柱', 'stale-deck');
+        }
+        const v = rankOf(c);
         let result, delta;
         const post = lo === hi ? v === lo : (v === lo || v === hi);
         const inside = lo === hi ? (guess === 'high' ? v > lo : v < lo) : (v > lo && v < hi);

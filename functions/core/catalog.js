@@ -10,6 +10,12 @@ const FEMALE = ['翠影書記', '夜藍蝶結', '碧潮少女', '緋月魔女', 
 const MALE = ['白髮緋瞳', '赤髮狂狼', '藍夜寡言', '翡翠騎士', '紫魅學長', '金獅貴公子', '銀月劍士', '雙色惡魔', '黑夜低語', '碧影刺客'];
 const MEME = ['就很爽', '嫌棄臉', '你很棒', '墨鏡大佬', '側眼瞄', '仰望天空', '已躺平', '金鍊奶茶哥', '奶茶大', '人生就是爽'];
 const UR = ['深淵藍焰守護者', '銀翼機甲王牌', '太陽女帝', '月下紫晶女王', '赤焰鬼角'];
+/* 測試服前三名限定頭像：不上架、不進寶箱，只能由管理員手動發放。 */
+const TEST_RANK_AVATARS = [
+  { id: 'av_test_1', name: '測試服第一名限定頭像', file: 'test01.webp' },
+  { id: 'av_test_2', name: '測試服第二名限定頭像', file: 'test02.webp' },
+  { id: 'av_test_3', name: '測試服第三名限定頭像', file: 'test03.webp' }
+];
 const DEX = ['缺角的聖杯', '看不懂的真跡', '成精的高麗菜', '奏樂令旗', '綠豆勇者', '藏寶圖殘卷', '見紅彎刀',
   '藍焰爪刀', '不會謝的玫瑰', '班草的求愛花束', '班花的情書', '紅線纏柄刀', '阿嬤的剁刀'];
 const BACKS = ['白羽神性', '赤月終焉', '深海幻夢', '神之救贖', '狂亂終局', '虛無無限'];
@@ -75,6 +81,11 @@ MALE.forEach((n, i) => DEFAULTS.push({ id: 'av_m' + pad(i + 1), type: 'avatar', 
 MEME.forEach((n, i) => DEFAULTS.push({ id: 'av_e' + pad(i + 1), type: 'avatar', sub: 'meme', tier: 1, name: n, price: 10, onSale: true, img: 'assets/av/e' + pad(i + 1) + '.webp' }));
 UR.forEach((n, i) => DEFAULTS.push({ id: 'av_u' + pad(i + 1), type: 'avatar', sub: 'ur', tier: 2, name: n, price: 500, onSale: false, img: 'assets/av/u' + pad(i + 1) + '.webp' }));
 DEFAULTS.push({ id: 'av_x01', type: 'avatar', sub: 'god', tier: 4, name: '終焉神域', price: null, onSale: false, img: 'assets/av/x01.webp' });
+TEST_RANK_AVATARS.forEach((x) => DEFAULTS.push({
+  id: x.id, type: 'avatar', sub: 'test_rank', tier: 1, name: x.name,
+  price: null, onSale: false, img: 'assets/av/' + x.file,
+  desc: '測試服排行限定，只能由管理員手動發放。'
+}));
 BGS.forEach((n, i) => DEFAULTS.push({ id: 'bg_' + pad(i + 1), type: 'bg', tier: 1, name: n, price: 450, onSale: true, img: 'assets/bg/g' + pad(i + 1) + '.webp' }));
 BACKS.forEach((n, i) => DEFAULTS.push({ id: 'bk_' + pad(i + 1), type: 'back', tier: 3, name: n, price: null, onSale: false, img: 'assets/back/b' + pad(i + 1) + '.webp' }));
 DEFAULTS.push(
@@ -117,4 +128,4 @@ async function loadCatalog(db, tx) {
   return { items: merge(snap.exists ? snap.data().items : null), sold: snap.exists ? (snap.data().sold || {}) : {}, raw: snap.exists ? snap.data() : null };
 }
 
-module.exports = { DEFAULTS, RARITY, BASIC_EMOTES, SLOT_KEY, STACKABLE, EDITABLE, ITEMS, CHEST_LOOT, DEX_FULL_STARS, merge, loadCatalog };
+module.exports = { DEFAULTS, RARITY, BASIC_EMOTES, SLOT_KEY, STACKABLE, EDITABLE, ITEMS, TEST_RANK_AVATARS, CHEST_LOOT, DEX_FULL_STARS, merge, loadCatalog };
