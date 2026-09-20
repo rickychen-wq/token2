@@ -183,7 +183,7 @@ function finish(st, result) {
 
 /* 幹錢券比大小：先比點數，同點數比花色（黑桃 > 紅心 > 方塊 > 梅花）。
    card id 0~51：rank = (c/4|0)+2，suit = c%4。花色強弱用 SUIT_RANK 定義。 */
-const SUIT_RANK = { 3: 4, 2: 3, 1: 2, 0: 1 };   // 3=黑桃 2=紅心 1=方塊 0=梅花
+const SUIT_RANK = { 0: 4, 1: 3, 2: 2, 3: 1 };   // 0=黑桃 1=紅心 2=方塊 3=梅花
 function beats(a, b) {
   const ra = (a / 4 | 0), rb = (b / 4 | 0);
   if (ra !== rb) return ra > rb;
