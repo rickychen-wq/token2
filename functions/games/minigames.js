@@ -6,6 +6,7 @@ const crypto = require('crypto');
 const { AppError } = require('../core/util');
 const E = require('../core/econ');
 const TK = require('../core/tasks');
+const { publishHighlights } = require('../core/highlights');
 
 /* ---------- 設定 ---------- */
 const DEFAULTS = {
@@ -219,7 +220,7 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
     async slotSpin(req) {
       const s = await requireSession(req);
       const d = req.data || {};
-      let out;
+      let out, highlight;
       const r = await mutate(s.pid, (acc, cfg, t, raw, pl, setPl) => {
         const SL = gamesCfg(raw).slot;
         if (!SL.enabled) throw new AppError('拉霸機目前關閉中', 'disabled');
@@ -233,8 +234,16 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
         acc.wallet += delta;
         if (E.recordPlay(acc, t, 'slot', playCap(raw))) { if (TK.bump(pl, t, 'play', 1, raw)) setPl({ tasks: pl.tasks }); }
         out = { reels, mult: p.mult, kind: p.kind, win, delta };
+        if (p.mult >= 35) {
+          highlight = {
+            id: 'slot-' + s.pid + '-' + t,
+            type: 'slot', pid: s.pid, name: pl.name || s.pid, at: t,
+            mult: p.mult, bet, amount: win
+          };
+        }
         return [{ type: 'game', amount: delta, wallet: acc.wallet, bank: acc.bank.balance, loans: acc.loans, note: '拉霸 ' + reels.join('/') }];
       });
+      if (highlight) await publishHighlights(db, [highlight]);
       out.wallet = r.account.wallet;
       return out;
     },

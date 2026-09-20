@@ -8,6 +8,7 @@ const { AppError, seasonId } = require('../core/util');
 const E = require('../core/econ');
 const CT = require('./contest');
 const TK = require('../core/tasks');
+const { publishHighlights } = require('../core/highlights');
 
 const DEFAULTS = { enabled: true, minBet: 200, maxBet: 5000, betSec: 30, turnSec: 20, resultSec: 6, seatCount: 5 };
 const TABLE_ID = 'main';
@@ -60,7 +61,7 @@ function createBlackjack({ db, now, requireSession, requireAdmin }) {
   const playerRef = (pid) => db.collection('players').doc(pid);
 
   async function run(fn) {
-    return db.runTransaction(async (tx) => {
+    const result = await db.runTransaction(async (tx) => {
       const t = now(), sid = seasonId(t);
       const tSnap = await tx.get(tableRef()), sSnap = await tx.get(secretRef()), cSnap = await tx.get(cfgRef());
       const seasonSnap = await tx.get(db.collection('seasons').doc(sid));
@@ -69,7 +70,7 @@ function createBlackjack({ db, now, requireSession, requireAdmin }) {
       st.settings = Object.assign({}, DEFAULTS, st.settings, (raw.games && raw.games.bj) || {});
       const sec = sSnap.exists ? sSnap.data() : { shoe: [], hole: null };
       const cfg = E.cfgOf(raw);
-      const accs = {}, ledger = [], players = {}, plPatch = {};
+      const accs = {}, ledger = [], players = {}, plPatch = {}, highlights = [];
       const ctx = {
         rawCfg: raw,
         async player(pid) {
@@ -77,6 +78,7 @@ function createBlackjack({ db, now, requireSession, requireAdmin }) {
           return players[pid];
         },
         patchPlayer(pid, patch) { plPatch[pid] = Object.assign(plPatch[pid] || {}, patch); },
+        highlight(event) { highlights.push(event); },
         t, sid, st, sec, cfg, seasonStatus: seasonSnap.exists ? (seasonSnap.data().status || 'active') : 'active',
         async acc(pid, asSid) {
           const k = (asSid || sid) + '|' + pid;
@@ -101,8 +103,12 @@ function createBlackjack({ db, now, requireSession, requireAdmin }) {
       Object.keys(accs).forEach((k) => { const [s2, pid] = k.split('|'); E.refresh(accs[k], cfg, t); tx.set(accRef(s2, pid), accs[k]); });
       ledger.forEach(([k, e]) => { const [s2, pid] = k.split('|'); tx.set(accRef(s2, pid).collection('ledger').doc(), Object.assign(e, { at: t, by: pid, note: e.note || null })); });
       Object.keys(plPatch).forEach((pid) => { if (players[pid]) tx.update(playerRef(pid), plPatch[pid]); });
-      return Object.assign({ now: t }, out || {});
+      return Object.assign({ now: t, _highlights: highlights }, out || {});
     });
+    const highlights = result._highlights || [];
+    delete result._highlights;
+    await publishHighlights(db, highlights);
+    return result;
   }
 
   const seatOf = (st, pid) => st.seats.findIndex((x) => x && x.pid === pid);
@@ -202,6 +208,13 @@ function createBlackjack({ db, now, requireSession, requireAdmin }) {
       const b = R.bets[i];
       const r = payout(b, b.cards, R.dealer);
       b.result = r.result; b.payout = r.pay; b.done = true;
+      if (b.doubled && b.amount >= 10000 && r.result === 'win') {
+        ctx.highlight({
+          id: 'blackjack-' + ctx.sid + '-' + R.no + '-' + b.pid,
+          type: 'blackjack', pid: b.pid, name: b.name, at: ctx.t,
+          stake: b.amount, payout: r.pay, amount: r.pay - b.amount
+        });
+      }
       const acc = await ctx.acc(b.pid, b.sid);
       acc.wallet += r.pay;
       E.recordHands(acc, ctx.t, 1);

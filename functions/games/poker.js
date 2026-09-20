@@ -8,6 +8,7 @@ const TK = require('../core/tasks');
 const E = require('../core/econ');
 const H = require('./holdem');
 const C = require('./cards');
+const { publishHighlights } = require('../core/highlights');
 const { BASIC_EMOTES, merge } = require('../core/catalog');
 const byId = merge(null);
 
@@ -48,7 +49,7 @@ function createPoker({ db, now, requireSession, requireAdmin }) {
   const playerRef = (pid) => db.collection('players').doc(pid);
 
   async function run(fn) {
-    return db.runTransaction(async (tx) => {
+    const result = await db.runTransaction(async (tx) => {
       const t = now(), sid = seasonId(t);
       const tSnap = await tx.get(tableRef());
       const sSnap = await tx.get(secretRef());
@@ -59,7 +60,7 @@ function createPoker({ db, now, requireSession, requireAdmin }) {
       const sec = sSnap.exists ? sSnap.data() : { deck: [], holes: {}, handNo: 0 };
       const rawCfg = cfgSnap.exists ? cfgSnap.data() : {};
       const cfg = E.cfgOf(rawCfg);
-      const accs = {}, ledger = [], holes = [], players = {}, playerPatch = {};
+      const accs = {}, ledger = [], holes = [], players = {}, playerPatch = {}, highlights = [];
       const seasonStatus = seasonSnap.exists ? (seasonSnap.data().status || 'active') : 'active';
 
       const ctx = {
@@ -72,6 +73,7 @@ function createPoker({ db, now, requireSession, requireAdmin }) {
           return players[pid];
         },
         patchPlayer(pid, patch) { playerPatch[pid] = Object.assign(playerPatch[pid] || {}, patch); },
+        highlight(event) { highlights.push(event); },
         /* 讀帳戶。asSid 用在座位屬於上一季的時候（季末帶回） */
         async acc(pid, asSid) {
           const k = (asSid || sid) + '|' + pid;
@@ -113,8 +115,12 @@ function createPoker({ db, now, requireSession, requireAdmin }) {
       });
       holes.forEach(([pid, d]) => tx.set(holeRef(pid), d));
       Object.keys(playerPatch).forEach((pid) => { if (players[pid]) tx.update(playerRef(pid), playerPatch[pid]); });
-      return Object.assign({ now: t }, out || {});
+      return Object.assign({ now: t, _highlights: highlights }, out || {});
     });
+    const highlights = result._highlights || [];
+    delete result._highlights;
+    await publishHighlights(db, highlights);
+    return result;
   }
 
   const seatOf = (st, pid) => st.seats.findIndex((s) => s && s.pid === pid);
@@ -288,6 +294,13 @@ function createPoker({ db, now, requireSession, requireAdmin }) {
       }
       acc.inPlay.poker = { tableId: TABLE_ID, amount: s.stack };
       const x = statOf[i];
+      if (!res.aborted && x && x.net >= 15000) {
+        ctx.highlight({
+          id: 'poker-' + ctx.sid + '-' + st.hand.no + '-' + s.pid,
+          type: 'poker', pid: s.pid, name: s.name, at: ctx.t,
+          amount: x.net, handNo: st.hand.no
+        });
+      }
       if (record && x) {
         const sp = Object.assign({ hands: 0, wins: 0, net: 0, biggestPot: 0 }, acc.poker);
         sp.hands += 1; if (x.won > 0) sp.wins += 1; sp.net += x.net;
@@ -515,7 +528,7 @@ function createPoker({ db, now, requireSession, requireAdmin }) {
       if (allowed.indexOf(text) < 0) throw new AppError('你沒有這個表情', 'no-emote');
       const ref = tableRef().collection('live').doc('emotes');
       return db.runTransaction(async (tx) => {
-        const [tSnap, eSnap, cSnap] = [await tx.get(tableRef()), await tx.get(ref), await tx.get(cfgRef())];
+        const [tSnap, eSnap, cSnap, me] = [await tx.get(tableRef()), await tx.get(ref), await tx.get(cfgRef()), await tx.get(playerRef(s.pid))];
         const rawCfg = cSnap.exists ? cSnap.data() : {};
         const st = tSnap.exists ? tSnap.data() : null;
         if (!st || !st.seats.some((x) => x && x.pid === s.pid)) throw new AppError('坐下來才能丟表情', 'not-seated');
@@ -525,7 +538,6 @@ function createPoker({ db, now, requireSession, requireAdmin }) {
         const last = Object.assign({}, live.last, { [s.pid]: t });
         const items = (live.items || []).filter((x) => t - x.at < 10000).concat([{ pid: s.pid, text, at: t }]).slice(-12);
         tx.set(ref, { items, last });
-        const me = await tx.get(playerRef(s.pid));           // v12 任務：表情計數
         if (me.exists) {
           const pd = me.data();
           if (TK.bump(pd, t, 'emote', 1, rawCfg)) tx.update(playerRef(s.pid), { tasks: pd.tasks });

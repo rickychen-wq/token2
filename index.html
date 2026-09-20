@@ -685,6 +685,8 @@ button.game:active{transform:scale(.99)}
 .top-r{display:flex;align-items:center;gap:10px}
 .bell{position:relative;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%;color:var(--cy-hi);border:1px solid var(--edge-soft);background:rgba(63,199,255,.06)}
 .bell svg{width:20px;height:20px}
+.event-bell{font-family:Impact,"Arial Black",var(--ui);font-size:22px;color:#FFD36D;border-color:rgba(255,170,50,.55);background:radial-gradient(circle at 50% 35%,rgba(255,210,90,.2),rgba(255,80,35,.08));box-shadow:0 0 16px rgba(255,140,30,.18)}
+.event-bell:active{transform:scale(.94)}
 .badge{position:absolute;top:-4px;right:-4px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;font-family:var(--ui);font-weight:700;font-size:11px;line-height:17px;color:#fff;background:var(--red);box-shadow:0 0 10px rgba(255,92,121,.7)}
 .announce{position:sticky;top:61px;z-index:4;padding:0 12px;margin-top:8px}
 .announce-in{max-width:496px;margin:0 auto;display:flex;align-items:flex-start;gap:8px;padding:9px 10px 9px 12px;border-radius:8px;font-size:13.5px;line-height:1.6;
@@ -701,6 +703,22 @@ button.game:active{transform:scale(.99)}
 .mail-rw{margin-top:8px;padding:6px 10px;border-radius:5px;font-size:13px;font-weight:700;color:var(--gold);background:rgba(255,211,122,.08);border:1px solid rgba(255,211,122,.25)}
 .mail-f{display:flex;align-items:center;gap:8px;margin-top:10px}
 .mail-f small{flex:1;font-size:11.5px;color:var(--faint)}
+.event-hero{display:flex;align-items:center;gap:12px;margin-bottom:14px;padding:12px 14px;border-radius:10px;background:linear-gradient(135deg,rgba(255,197,74,.14),rgba(255,75,57,.08));border:1px solid rgba(255,190,75,.38)}
+.event-hero .bang{display:grid;place-items:center;flex:none;width:42px;height:42px;border-radius:50%;font-family:Impact,"Arial Black",var(--ui);font-size:29px;color:#1A0B02;background:linear-gradient(145deg,#FFE784,#FF9A38);box-shadow:0 0 20px rgba(255,154,56,.35)}
+.event-hero h3{font-family:var(--ui);font-size:19px;font-weight:900;letter-spacing:1px}.event-hero p{font-size:12px;color:var(--dim);margin-top:2px}
+.event-list{display:flex;flex-direction:column;gap:9px}
+.event-card{position:relative;overflow:hidden;padding:12px 13px 11px 16px;border-radius:9px;background:linear-gradient(150deg,rgba(24,30,45,.96),rgba(8,12,22,.96));border:1px solid rgba(255,199,86,.24)}
+.event-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(#FFE06B,#FF7048)}
+.event-card.slot::before{background:linear-gradient(#B68CFF,#FF63C8)}.event-card.blackjack::before{background:linear-gradient(#FFDA66,#FF784C)}.event-card.poker::before{background:linear-gradient(#58E9FF,#338CFF)}
+.event-tag{display:inline-block;margin-bottom:5px;padding:2px 7px;border-radius:9px;font-family:var(--ui);font-size:10px;font-weight:900;letter-spacing:.8px;color:#0A0D13;background:#FFD36D}
+.event-card.slot .event-tag{background:#D7A8FF}.event-card.poker .event-tag{background:#72DFFF}
+.event-copy{font-family:var(--ui);font-size:14px;font-weight:800;line-height:1.55;letter-spacing:.35px;color:#FFF4D3}.event-time{display:block;margin-top:4px;font-size:10.5px;color:var(--faint)}
+.daily-progress{margin:13px 0;padding:14px 15px;border-radius:11px;background:linear-gradient(145deg,rgba(25,75,103,.28),rgba(8,18,32,.88));border:1px solid rgba(76,205,255,.34);box-shadow:inset 0 0 24px rgba(45,181,235,.04)}
+.daily-progress.done{border-color:rgba(78,226,155,.48);background:linear-gradient(145deg,rgba(25,103,73,.28),rgba(8,24,28,.88))}
+.daily-progress .dp-top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}.daily-progress .dp-top span{font-size:12px;color:var(--dim)}.daily-progress .dp-top b{font-family:var(--ui);font-size:21px;color:var(--cy-hi)}.daily-progress.done .dp-top b{color:var(--grn)}
+.daily-progress .dp-bar{height:6px;margin:9px 0 8px;border-radius:4px;overflow:hidden;background:rgba(255,255,255,.08)}.daily-progress .dp-bar i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,#25AEE7,#6EE9FF);transition:width .35s}.daily-progress.done .dp-bar i{background:linear-gradient(90deg,#31C983,#86F2B9)}
+.daily-progress p{font-size:12px;line-height:1.6;color:var(--dim)}.daily-progress p b{color:var(--fg)}
+.rank-top{display:flex;align-items:center;gap:9px}.rank-top .seg{flex:1}.rank-top .rules-btn{width:34px;height:34px}
 .ta{width:100%;padding:10px 12px;border-radius:4px;font-size:15px;color:var(--fg);background:rgba(3,8,18,.72);border:1px solid var(--edge);resize:vertical;font-family:inherit}
 .ta.mono{font-family:ui-monospace,Menlo,monospace;font-size:12px}
 .fld-grid.three{grid-template-columns:repeat(3,1fr)}
@@ -932,6 +950,7 @@ button.game:active{transform:scale(.99)}
   <header class="top"><div class="top-in">
     <div class="mark"><span class="t">TOKEN</span><span class="v">2.0</span></div>
     <div class="top-r">
+      <button class="bell event-bell" id="eventBtn" aria-label="全服大事件">!</button>
       <button class="bell" id="mailBtn" aria-label="信箱">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="m4 7 8 6 8-6"/></svg>
         <span class="badge" id="mailBadge" hidden></span>
@@ -2208,6 +2227,26 @@ function paintBubbles() {
    公告與信箱
    ===================================================================== */
 var MAIL = { list: [], broadcast: [], personal: [], claimed: {} };
+var HIGHLIGHTS = [];
+
+function highlightCopy(e) {
+  if (e.type === 'slot') return esc(e.name) + ' 在拉霸機拉中 <b>' + fmt(e.mult) + ' 倍</b>，贏得 ' + fmt(e.amount) + '！';
+  if (e.type === 'blackjack') return esc(e.name) + ' 在 21 點加倍到 <b>' + fmt(e.stake) + '</b>，淨贏 ' + fmt(e.amount) + '！';
+  if (e.type === 'poker') return esc(e.name) + ' 在德州單手淨贏 <b>' + fmt(e.amount) + '</b>！';
+  return esc(e.name) + ' 完成了一件大事！';
+}
+function highlightLabel(type) { return { slot: 'JACKPOT', blackjack: 'DOUBLE WIN', poker: 'HUGE POT' }[type] || 'BREAKING'; }
+function sheetHighlights() {
+  var list = (HIGHLIGHTS || []).slice(0, 30);
+  var h = '<div class="event-hero"><span class="bang">!</span><div><h3>全服大事件</h3><p>最新 30 筆高光時刻，新的會把最舊的刷掉</p></div></div>';
+  if (!list.length) h += '<div class="empty rk-empty">目前還沒有大事件</div>';
+  else h += '<div class="event-list">' + list.map(function (e) {
+    return '<div class="event-card ' + esc(e.type) + '"><span class="event-tag">' + highlightLabel(e.type) + '</span>' +
+      '<div class="event-copy">' + highlightCopy(e) + '</div><span class="event-time">' + twClock(e.at) + '</span></div>';
+  }).join('') + '</div>';
+  h += '<div class="acts" style="margin-top:14px"><button class="btn ghost" type="button" data-close>關閉</button></div>';
+  openSheet(h, function (sh) { sh.querySelector('[data-close]').onclick = closeSheet; });
+}
 
 function mergeMailLists() {
   var seen = {}, list = [];
@@ -2286,6 +2325,7 @@ function sheetMail() {
   });
 }
 $('mailBtn').addEventListener('click', sheetMail);
+$('eventBtn').addEventListener('click', sheetHighlights);
 
 function itemOptions(filter) {
   return CATALOG.filter(filter || function () { return true; }).map(function (x) {
@@ -2441,6 +2481,13 @@ var REWARD_DEFAULT = {
 };
 var REWARD_ROWS = [['r1', '第 1 名'], ['r2', '第 2 名'], ['r3', '第 3 名'], ['other', '其他人']];
 
+function rewardClientCfg() {
+  var c = Object.assign({}, REWARD_DEFAULT, (S.cfg && S.cfg.rewards) || {});
+  c.daily = Object.assign({}, REWARD_DEFAULT.daily, c.daily || {});
+  c.weekly = Object.assign({}, REWARD_DEFAULT.weekly, c.weekly || {});
+  return c;
+}
+
 /* 把 [[稀有度, 權重]] 顯示成「稀有 30 / 史詩 70」這種一行文字，好改 */
 function rwToText(t) {
   return (t || []).map(function (x) {
@@ -2463,9 +2510,7 @@ function rwFromText(v) {
 }
 
 function sheetRewards() {
-  var c = Object.assign({}, REWARD_DEFAULT, (S.cfg && S.cfg.rewards) || {});
-  c.daily = Object.assign({}, REWARD_DEFAULT.daily, c.daily || {});
-  c.weekly = Object.assign({}, REWARD_DEFAULT.weekly, c.weekly || {});
+  var c = rewardClientCfg();
   var body =
     '<div class="fld"><label class="chk"><input id="rwOn" type="checkbox"' + (c.enabled ? ' checked' : '') + '> 啟用排行獎勵</label>' +
     '<div class="help">關掉的話每日和每週的排程都不會發信。</div></div>' +
@@ -3201,17 +3246,19 @@ function rankList(rows, start) {
   }).join('') + '</div>';
 }
 
-/* v13：告訴玩家今天還差幾場就有每日獎勵 */
-function dailyRewardNote(practice) {
-  var rw = (S.cfg && S.cfg.rewards) || {};
-  if (rw.enabled === false || practice) return '';
-  var need = rw.dailyMinPlays === undefined ? 20 : rw.dailyMinPlays;
+/* 每日寶箱使用 daily.plays，和排行榜只看德州／21 點的 handsPlayed 分開顯示。 */
+function dailyRewardCard(practice) {
+  var rw = rewardClientCfg();
+  if (!S.acc || rw.enabled === false || practice) return '';
+  var need = rw.dailyMinPlays;
   var today = todayTw();
   var d = (S.acc && S.acc.daily && S.acc.daily.day === today) ? (S.acc.daily.plays || 0) : 0;
-  var txt = d >= need
-    ? '今天已經玩了 ' + d + ' 場，明天 00:05 的每日獎勵有你的份。'
-    : '今天玩了 ' + d + ' 場，再 ' + (need - d) + ' 場就有每日獎勵（前三名不用玩也有）。';
-  return '<p class="rk-note">' + txt + '　獎勵是寶箱，會寄到信箱，7 天內要領。</p>';
+  var done = d >= need, left = Math.max(0, need - d), pct = need > 0 ? Math.min(100, d / need * 100) : 100;
+  var rule = rw.dailyTopNeedsPlays ? '所有名次都必須達標' : '前三名免場數門檻，其他名次必須達標';
+  return '<div class="daily-progress' + (done ? ' done' : '') + '"><div class="dp-top"><span>今日寶箱進度</span><b>' + d + ' / ' + need + ' 場</b></div>' +
+    '<div class="dp-bar"><i style="width:' + pct.toFixed(1) + '%"></i></div><p>' +
+    (done ? '<b>今天已達標</b>，明天 00:05 會依今天結束時的資產名次寄出寶箱。' : '再玩 <b>' + left + ' 場</b>即可達標。') +
+    '<br>德州、21 點、射龍門、拉霸、骰寶都計入；' + rule + '。</p></div>';
 }
 
 /* 台灣時間的今天，格式跟後端的 twDay 一致 */
@@ -3220,11 +3267,41 @@ function todayTw() {
   return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d.getUTCDate()).padStart(2, '0');
 }
 
+function rewardOddsText(table) {
+  var rows = (table || []).map(function (x) { return { r: Array.isArray(x) ? x[0] : x.r, w: Number(Array.isArray(x) ? x[1] : x.w) || 0 }; }).filter(function (x) { return x.w > 0; });
+  var total = rows.reduce(function (n, x) { return n + x.w; }, 0) || 1;
+  return rows.map(function (x) {
+    var pct = Math.round(x.w / total * 1000) / 10;
+    return (RARITY[x.r] || ('稀有度 ' + x.r)) + ' ' + pct + '%';
+  }).join('、');
+}
+function rewardOddsBlock(group) {
+  return '<div class="grp">' + REWARD_ROWS.map(function (row) {
+    return '<div class="row"><span class="k">' + row[1] + '<small>' + rewardOddsText(group[row[0]]) + '</small></span></div>';
+  }).join('') + '</div>';
+}
+function sheetRankRewards() {
+  var c = rewardClientCfg();
+  var cap = c.dailyCapPerGame > 0 ? '每種小遊戲每天最多計入 ' + c.dailyCapPerGame + ' 場' : '小遊戲目前沒有每日計入上限';
+  var who = c.dailyTopNeedsPlays ? '所有名次都要玩滿 ' + c.dailyMinPlays + ' 場' : '第 1～3 名免門檻，其他人要玩滿 ' + c.dailyMinPlays + ' 場';
+  var h = '<h3>排行寶箱說明</h3><p class="desc">機率與門檻直接讀取目前後台設定。</p>' +
+    ruleRows([
+      ['每日怎麼拿', '每天 00:05 結算前一天的資產名次；' + who],
+      ['哪些遊戲算場數', '德州、21 點、射龍門、拉霸、骰寶都會計入。' + cap],
+      ['一次拿幾個', '每一份獎勵會抽 ' + c.draws + ' 個寶箱，寄到信箱後 ' + c.expireDays + ' 天到期'],
+      ['每週怎麼拿', '週一季結算後，上一季資產榜與總積分榜各自發一份；必須在上一季有正式上榜']
+    ]) +
+    '<div class="stat-h">每日寶箱機率</div>' + rewardOddsBlock(c.daily) +
+    '<div class="stat-h">每週寶箱機率</div>' + rewardOddsBlock(c.weekly) +
+    '<div class="acts" style="margin-top:14px"><button class="btn ghost" type="button" data-close>知道了</button></div>';
+  openSheet(h, function (sh) { sh.querySelector('[data-close]').onclick = closeSheet; });
+}
+
 function renderRank(force) {
-  var h = '<div class="seg" role="tablist">' +
+  var h = '<div class="rank-top"><div class="seg" role="tablist">' +
     [['now', '本季'], ['last', '上季'], ['all', '歷史']].map(function (x) {
       return '<button role="tab" data-rk="' + x[0] + '" class="' + (RK.tab === x[0] ? 'on' : '') + '">' + x[1] + '</button>';
-    }).join('') + '</div>';
+    }).join('') + '</div><button class="rules-btn" type="button" data-rank-help aria-label="排行寶箱說明">?</button></div>';
   var c = econ(), minH = c.rankMinHands;
 
   if (RK.tab === 'now') {
@@ -3239,7 +3316,7 @@ function renderRank(force) {
     var starPer = c.starPer === undefined ? 100 : c.starPer;
     h += '<p class="rk-note">' + (practice ? '<span class="tag warn">練習季</span> 這週不發積分與排行獎勵；打滿 ' + starMin + ' 手仍按每 ' + fmt(starPer) + ' 資產換 1 星幣。' :
       '本季打滿 ' + minH + ' 手才計入名次。') + ' 週一 00:01 結算。</p>';
-    h += dailyRewardNote(practice);
+    h += dailyRewardCard(practice);
     var ranked = items.filter(function (x) { return x.rank; });
     h += ranked.length ? podium(ranked.slice(0, 3)) : '<div class="empty rk-empty">還沒有人打滿 ' + minH + ' 手</div>';
     h += rankList(items.slice(Math.min(3, ranked.length)));
@@ -3278,6 +3355,8 @@ function renderRank(force) {
     $('vRank').querySelectorAll('[data-rk]').forEach(function (b) {
       b.onclick = function () { RK.tab = b.getAttribute('data-rk'); if (RK.tab === 'last') loadLastSeason(true); renderRank(true); };
     });
+    var rh = $('vRank').querySelector('[data-rank-help]');
+    if (rh) rh.onclick = sheetRankRewards;
   }
 }
 
@@ -3754,22 +3833,32 @@ function renderDice(force) {
 
 /* ---------- 圖鑑 ---------- */
 var DEX_GROUPS = [
-  { type: 'avatar', name: '人物誌', desc: '遇見過的每一張臉' },
+  { type: 'avatar', sub: 'male', name: '男生一階頭像', desc: '男生的一階人物誌' },
+  { type: 'avatar', sub: 'female', name: '女生一階頭像', desc: '女生的一階人物誌' },
+  { type: 'avatar', sub: 'meme', name: '奶龍一階頭像', desc: '奶龍與迷因的一階人物誌' },
+  { type: 'avatar', tier: 2, name: '二階頭像', desc: '所有二階頭像集中收藏' },
+  { type: 'avatar', sub: 'god', name: '管理員頭像', desc: '管理員專屬人物誌' },
+  { type: 'avatar', sub: 'test_rank', name: '練習賽限定頭像', desc: '練習賽第一名到第三名限定頭像' },
   { type: 'bg', name: '世界地圖', desc: '去過的地方都會亮起來' },
   { type: 'back', name: '牌背典藏', desc: '翻過來也要好看' },
   { type: 'dex', name: '塗鴉秘寶館', desc: '傳說中的手繪真跡，一張都別放過' }
 ];
+function dexItems(g) {
+  return CATALOG.filter(function (x) {
+    return x.type === g.type && (g.sub === undefined || x.sub === g.sub) && (g.tier === undefined || x.tier === g.tier);
+  });
+}
 function renderDex() {
   var p = S.player || {}, h = '';
   var all = 0, got = 0;
   DEX_GROUPS.forEach(function (g) {
-    var items = CATALOG.filter(function (x) { return x.type === g.type; });
+    var items = dexItems(g);
     items.forEach(function (x) { all++; if (owns(p, x)) got++; });
   });
   h += '<div class="dex-hero"><div><span class="lbl">收集進度</span><div class="dex-num"><b>' + got + '</b> / ' + all + '</div></div>' +
     '<div class="dex-bar"><i style="width:' + (all ? (got / all * 100).toFixed(1) : 0) + '%"></i></div></div>';
   DEX_GROUPS.forEach(function (g) {
-    var items = CATALOG.filter(function (x) { return x.type === g.type; });
+    var items = dexItems(g);
     var n = items.filter(function (x) { return owns(p, x); }).length;
     h += '<div class="sec-h"><h2>' + g.name + '</h2><span>' + n + ' / ' + items.length + '</span></div><p class="dex-desc">' + g.desc + '</p>' +
       '<div class="dex-grid ' + g.type + '">' + items.map(function (x) {
@@ -3848,6 +3937,9 @@ function enterApp(profile) {
   S.unsubs.push(db.collection('config').doc('catalog').onSnapshot(function (d) {
     rebuildItems(d.exists ? d.data() : null);
     render(true);
+  }, function () {}));
+  S.unsubs.push(db.collection('config').doc('highlights').onSnapshot(function (d) {
+    HIGHLIGHTS = d.exists && Array.isArray(d.data().events) ? d.data().events.slice(0, 30) : [];
   }, function () {}));
   /* 全服信與自己的個人信分開查，避免其他玩家的排行獎勵把自己的信擠出最新 20 封。 */
   S.unsubs.push(db.collection('mail').where('all', '==', true).orderBy('at', 'desc').limit(20).onSnapshot(function (q) {
@@ -3945,7 +4037,7 @@ function endSession() {
   S.acc = null; S.accounts = []; S.sid = null; S.tab = 'home'; S.meTab = 'acct';
   PK.st = null; PK.hole = null; PK.synced = false; PK.fx = { pendingDeal: 0, pendingBets: null, pendingPayout: null, paidHand: 0 };
   BJ.st = null; S.playersAt = 0; S.accountsAt = 0; closeRaise();
-  MAIL.list = []; MAIL.broadcast = []; MAIL.personal = []; MAIL.claimed = {}; $('announce').hidden = true;
+  MAIL.list = []; MAIL.broadcast = []; MAIL.personal = []; MAIL.claimed = {}; HIGHLIGHTS = []; $('announce').hidden = true;
   _last = {};
   closeSheet();
   showGate();
@@ -4047,6 +4139,9 @@ function renderHome(force) {
       '<div id="seasonBox"></div>' +
     '</div>';
   }
+
+  var practice = S.sid && S.sid < ((S.cfg && S.cfg.rankFrom) || RANK_FROM);
+  h += dailyRewardCard(practice);
 
   h += taskEntry();
 
