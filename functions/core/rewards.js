@@ -117,10 +117,16 @@ function createRewards({ db, now, requireAdmin }) {
     if (sid < (rawCfg.rankFrom || DEFAULT_RANK_FROM)) return { runId, skipped: 'practice', sid };
 
     const ecfg = E.cfgOf(rawCfg);
-    const accSnap = await seasonRef(sid).collection('accounts').get();
+    const [accSnap, plSnap] = await Promise.all([
+      seasonRef(sid).collection('accounts').get(),
+      db.collection('players').get()
+    ]);
+    const players = {};
+    plSnap.forEach((d) => { players[d.id] = d.data(); });
     const accounts = [];
     accSnap.forEach((d) => {
       const a = d.data();
+      if (!players[a.pid]) return;
       E.rollDaily(a, t, ecfg);
       E.refresh(a, ecfg, t);
       a.dailyNet = E.netOnDay(a, endedDay, ecfg);
@@ -178,7 +184,7 @@ function createRewards({ db, now, requireAdmin }) {
     plSnap.forEach((d) => { players[d.id] = d.data(); });
 
     // (a) 剛結算完那一季的資產排行榜：沿用結算時寫好的名次，沒上榜的不給
-    const assetRows = final.filter((r) => r.rank).map((r) => ({
+    const assetRows = final.filter((r) => r.rank && players[r.pid]).map((r) => ({
       pid: r.pid, kind: 'weeklyAsset', rank: r.rank,
       items: drawChests(tableFor(C.weekly, r.rank), C.draws)
     }));

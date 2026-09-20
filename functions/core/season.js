@@ -11,7 +11,7 @@ const DEFAULT_RANK_FROM = '2026-W39';   // 這一季之前是練習季，不發�
 
 /* 排名：打滿手數的人依淨資產排序，同分同名次；沒打滿的排在後面、沒有名次 */
 function rankSeason(accounts, players, minHands) {
-  const rows = accounts.map((a) => ({
+  const rows = accounts.filter((a) => players[a.pid]).map((a) => ({
     pid: a.pid,
     name: (players[a.pid] && players[a.pid].name) || a.pid,
     net: a.net, peakNet: a.peakNet || a.net,

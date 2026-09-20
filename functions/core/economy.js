@@ -207,10 +207,11 @@ function createEconomy({ db, now, requireSession, requireAdmin }) {
       accSnap.forEach((d) => accounts.push(d.data()));
       const players = {};
       plSnap.forEach((d) => { players[d.id] = d.data(); });
-      const rates = E.rankRates(accounts, cfg);
+      const activeAccounts = accounts.filter((acc) => players[acc.pid]);
+      const rates = E.rankRates(activeAccounts, cfg);
 
       let total = 0, count = 0;
-      accounts.forEach((acc) => {
+      activeAccounts.forEach((acc) => {
         const r = rates[acc.pid];
         // 00:00 計息屬於新一天的第一筆系統操作；先保存昨天結束瞬間的淨資產，
         // 才不會讓這筆利息倒回去改寫昨天的每日排行。

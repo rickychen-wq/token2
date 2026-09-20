@@ -1134,7 +1134,8 @@ var S = {
   season: null,        // 本季狀態 seasons/{sid}
   sid: null,           // 本季 ID，例如 2026-W38
   acc: null,           // 我的本季帳戶
-  accounts: [],        // 本季所有帳戶（排名、利率）
+  accounts: [],        // 本季仍有玩家資料的帳戶（排名、利率）
+  accountRoster: [],   // Firestore 本季帳戶原始快照（用來排除已刪除玩家）
   seasonUnsub: null,
   tab: 'home',
   unsubs: [],
@@ -2594,10 +2595,16 @@ function openBjLive() {
 }
 
 function mergeAccounts(list) {
+  var next = list.slice();
   var mine = null;
-  list.forEach(function (a) { if (a.pid === S.me.pid) mine = a; });
-  if (!mine && S.acc) list.push(S.acc);
-  S.accounts = list;
+  next.forEach(function (a) { if (a.pid === S.me.pid) mine = a; });
+  if (!mine && S.acc) next.push(S.acc);
+  S.accountRoster = next;
+  applyVisibleAccounts();
+}
+function applyVisibleAccounts() {
+  var hasRoster = S.players && Object.keys(S.players).length > 0;
+  S.accounts = !hasRoster ? S.accountRoster.slice() : S.accountRoster.filter(function (a) { return !!S.players[a.pid]; });
   S.accountsAt = Date.now();
 }
 function openAccountsLive(sid) {
@@ -2631,6 +2638,7 @@ function setPlayers(list) {
   list.sort(function (a, b) { return a.pid < b.pid ? -1 : 1; });
   S.roster = list;
   S.players = map;
+  applyVisibleAccounts();
   S.playersAt = Date.now();
 }
 function openPlayersLive() {
@@ -3237,7 +3245,7 @@ function renderRank(force) {
     else {
       var wk = parseInt(String(L.id).split('-W')[1], 10);
       h += '<p class="rk-note">第 ' + wk + ' 週最終排名' + (L.practice ? '　<span class="tag warn">練習季</span>' : '　冠軍 +5、亞軍 +3、季軍 +1') + '</p>';
-      var fin = L.final.map(function (x) {
+      var fin = L.final.filter(function (x) { return !!S.players[x.pid]; }).map(function (x) {
         return { pid: x.pid, name: nameOf(x.pid) || x.name, rank: x.rank, value: fmt(x.net),
           sub: x.rank ? (x.stars ? '+' + x.stars + ' 星幣' : '') : '未滿 ' + (L.minHands || minH) + ' 手' };
       });
@@ -3905,8 +3913,9 @@ function openSeason() {
     if (S.sid !== sid || !d.exists) return;
     S.acc = d.data();
     var found = false;
-    S.accounts = S.accounts.map(function (a) { if (a.pid === S.acc.pid) { found = true; return S.acc; } return a; });
-    if (!found) S.accounts.push(S.acc);
+    var roster = S.accountRoster.filter(function (a) { return a.pid !== S.acc.pid; });
+    roster.push(S.acc);
+    mergeAccounts(roster);
     render();
   }, function () {});
   syncLive();
@@ -3917,7 +3926,7 @@ function endSession() {
   S.unsubs.splice(0).forEach(function (u) { try { u(); } catch (e) {} });
   if (S.seasonUnsub) { try { S.seasonUnsub(); } catch (e) {} S.seasonUnsub = null; }
   if (S.seasonDocUnsub) { try { S.seasonDocUnsub(); } catch (e) {} S.seasonDocUnsub = null; }
-  S.players = {}; S.season = null; RK.last = null; RK.lastSid = null; RK.tab = 'now';
+  S.players = {}; S.season = null; S.accountRoster = []; RK.last = null; RK.lastSid = null; RK.tab = 'now';
   clearInterval(S.tick);
   S.me = null; S.player = null; S.cfg = null; S.roster = [];
   S.acc = null; S.accounts = []; S.sid = null; S.tab = 'home'; S.meTab = 'acct';

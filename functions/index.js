@@ -4,6 +4,7 @@
 
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
+const { onDocumentDeleted } = require('firebase-functions/v2/firestore');
 const { setGlobalOptions, logger } = require('firebase-functions/v2');
 const admin = require('firebase-admin');
 
@@ -56,6 +57,17 @@ exports.authSetPassword = wrap(A.setPassword);
 exports.authSession = wrap(A.session);
 exports.authLogout = wrap(A.logout);
 exports.authChangePassword = wrap(A.changePassword);
+
+/* 刪除玩家主檔時，連帶清掉各季排行榜帳戶與玩家子集合，避免孤兒資料留在排行榜。 */
+exports.playerDeletedCleanup = onDocumentDeleted('players/{pid}', async (event) => {
+  const pid = event.params.pid;
+  const playerRef = db.collection('players').doc(pid);
+  const seasons = await db.collection('seasons').get();
+  await Promise.all(seasons.docs.map((season) =>
+    admin.firestore().recursiveDelete(season.ref.collection('accounts').doc(pid))
+  ));
+  await admin.firestore().recursiveDelete(playerRef);
+});
 
 exports.adminSetRegistration = wrap(A.adminSetRegistration);
 exports.adminCreatePlayer = wrap(A.adminCreatePlayer);
