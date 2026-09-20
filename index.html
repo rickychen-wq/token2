@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800&family=Rajdhani:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="assets/fx/token-fx.css?v=15" rel="stylesheet">
 <style>
 :root{
   --void:#04070F; --deep:#070D1A;
@@ -1003,6 +1004,7 @@ button.game:active{transform:scale(.99)}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-functions-compat.js"></script>
+<script src="assets/fx/token-fx.js?v=15"></script>
 <script>
 (function () {
 'use strict';
@@ -2513,7 +2515,10 @@ function sheetRunRewards() {
 /* =====================================================================
    德州
    ===================================================================== */
-var PK = { st: null, hole: null, unsubs: [], lastTick: 0, synced: false, raiseOpen: false, sending: false };
+var PK = {
+  st: null, hole: null, unsubs: [], lastTick: 0, synced: false, raiseOpen: false, sending: false,
+  fx: { pendingDeal: 0, pendingBets: null, pendingPayout: null, paidHand: 0 }
+};
 var SUITS = ['♠', '♥', '♦', '♣'], RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
 
 function serverNow() { return Date.now() + (S.skew || 0); }
@@ -2558,10 +2563,14 @@ function syncLive() {
 
 function openPokerLive() {
   var t = db.collection('games').doc('poker').collection('tables').doc('main');
+  var firstTable = true;
   var u = [
     t.onSnapshot(function (d) {
-      PK.st = d.exists ? d.data() : null;
+      var next = d.exists ? d.data() : null;
+      planPokerFx(PK.st, next, firstTable);
+      PK.st = next;
       if (S.tab === 'poker') renderPoker();
+      firstTable = false;
       contestWatch(PK.st, 'poker');      // 該我防禦或選牌就自動跳視窗
     }, function () {}),
     t.collection('live').doc('emotes').onSnapshot(function (d) {
@@ -2664,6 +2673,101 @@ function potTotal(st) {
   return st.seats.reduce(function (a, s) { return a + (s ? s.bet + s.committed : 0); }, 0);
 }
 
+/* v15：只用既有牌桌快照與畫面做動畫，不新增 Firestore 讀取。 */
+function pokerFxSeat(pid) {
+  var seats = $('pkSeats').querySelectorAll('.seat[data-pid]');
+  for (var i = 0; i < seats.length; i++) if (seats[i].getAttribute('data-pid') === pid) return seats[i];
+  return null;
+}
+
+function planPokerFx(prev, next, first) {
+  var fx = PK.fx;
+  if (!next || !next.hand) return;
+  if (first) {
+    fx.pendingDeal = 0; fx.pendingBets = null; fx.pendingPayout = null;
+    fx.paidHand = next.lastResult ? next.lastResult.handNo : 0;
+    return;
+  }
+
+  var sameHand = !!(prev && prev.hand && prev.hand.no === next.hand.no);
+  if (!sameHand && next.hand.phase !== 'idle') fx.pendingDeal = next.hand.no;
+
+  if (next.hand.phase !== 'idle') {
+    var oldByPid = {};
+    if (sameHand) (prev.seats || []).forEach(function (s) { if (s) oldByPid[s.pid] = (s.bet || 0) + (s.committed || 0); });
+    var bettors = [];
+    (next.seats || []).forEach(function (s) {
+      if (!s) return;
+      var before = oldByPid[s.pid] || 0, after = (s.bet || 0) + (s.committed || 0);
+      if (after > before) bettors.push(s.pid);
+    });
+    if (bettors.length) {
+      if (fx.pendingBets && fx.pendingBets.handNo === next.hand.no) {
+        bettors.forEach(function (pid) { if (fx.pendingBets.pids.indexOf(pid) < 0) fx.pendingBets.pids.push(pid); });
+        fx.pendingBets.afterDeal = fx.pendingBets.afterDeal || !sameHand;
+      } else fx.pendingBets = { handNo: next.hand.no, pids: bettors, afterDeal: !sameHand };
+    }
+  }
+
+  var nr = next.lastResult, pr = prev && prev.lastResult;
+  if (nr && nr.handNo !== fx.paidHand && (!pr || pr.handNo !== nr.handNo)) {
+    fx.pendingPayout = nr;
+    fx.paidHand = nr.handNo;
+  }
+}
+
+function pokerDealTargets(st) {
+  var H = st.hand, n = st.seats.length, first = [], second = [], active = 0;
+  for (var k = 1; k <= n; k++) {
+    var s = st.seats[(H.dealer + k + n) % n];
+    if (!s || !s.inHand) continue;
+    active++;
+    var cards;
+    if (S.me && s.pid === S.me.pid) cards = $('handDock') ? $('handDock').querySelectorAll('.cb') : [];
+    else {
+      var seat = pokerFxSeat(s.pid);
+      cards = seat ? seat.querySelectorAll('.backs .cb') : [];
+    }
+    if (cards.length < 2) return null;
+    first.push(cards[0]); second.push(cards[1]);
+  }
+  return active ? first.concat(second) : null;
+}
+
+function playPokerFx() {
+  if (!window.TokenFX || !PK.st || S.tab !== 'poker') return;
+  var fx = PK.fx, felt = $('pkFelt'), H = PK.st.hand, targets = null;
+  if (fx.pendingDeal === H.no && H.phase !== 'idle') {
+    targets = pokerDealTargets(PK.st);
+    if (!targets) return;
+    fx.pendingDeal = 0;
+    TokenFX.deal(felt, targets);
+  }
+
+  if (fx.pendingBets && fx.pendingBets.handNo === H.no) {
+    var betJob = fx.pendingBets;
+    fx.pendingBets = null;
+    var sendBets = function () {
+      if (!PK.st || PK.st.hand.no !== betJob.handNo || S.tab !== 'poker') return;
+      var froms = betJob.pids.map(pokerFxSeat).filter(function (x) { return !!x; });
+      var pot = $('pkCenter').querySelector('.pot');
+      if (froms.length && pot) TokenFX.tokensToPot(felt, froms, pot);
+    };
+    if (betJob.afterDeal) setTimeout(sendBets, 520 + (targets ? targets.length * 92 : 0));
+    else sendBets();
+  }
+
+  if (fx.pendingPayout && fx.pendingPayout.handNo === H.no) {
+    var result = fx.pendingPayout;
+    fx.pendingPayout = null;
+    var potEl = $('pkCenter').querySelector('.pot');
+    if (potEl) result.winners.forEach(function (w) {
+      var winner = pokerFxSeat(w.pid);
+      if (winner) TokenFX.potToWinner(felt, potEl, winner, w.amount);
+    });
+  }
+}
+
 /* 自動推進：思考時間或下一手倒數到了，就請伺服器檢查 */
 /* 同一個截止時間，每台裝置最多問一次（6 秒後仍沒變才再問），並隨機延遲 0～1.5 秒，
    讓第一台的結果先傳到其他人，其他人看到新的截止時間就不用再問。 */
@@ -2718,6 +2822,7 @@ function renderPoker(force) {
   put('pkHand', hand, force);
   renderPokerBar(force);
   paintPokerClock();
+  playPokerFx();
 }
 
 function renderSeats(force) {
@@ -3608,7 +3713,7 @@ function renderDice(force) {
     root.querySelectorAll('[data-dk]').forEach(function (b) {
       b.onclick = function () {
         if (DC.rolling) return;
-        if (DC.last) { DC.last = null; }
+        if (DC.last) { if (window.TokenFX) TokenFX.cancelDice(); DC.last = null; }
         var k = b.getAttribute('data-dk');
         if (diceTotalBet() + DC.chip > c.maxTotal) { toast('一次最多下 ' + fmt(c.maxTotal), 'bad'); return; }
         DC.bets[k] = (DC.bets[k] || 0) + DC.chip;
@@ -3617,8 +3722,9 @@ function renderDice(force) {
     });
     root.querySelectorAll('[data-dact]').forEach(function (b) {
       b.onclick = function () {
-        if (b.getAttribute('data-dact') === 'clear') { DC.bets = {}; DC.last = null; renderDice(true); return; }
+        if (b.getAttribute('data-dact') === 'clear') { if (window.TokenFX) TokenFX.cancelDice(); DC.bets = {}; DC.last = null; renderDice(true); return; }
         if (S.acc && S.acc.wallet < diceTotalBet()) { toast('錢包不夠', 'bad'); return; }
+        if (window.TokenFX) TokenFX.cancelDice();
         DC.rolling = true; DC.last = null; renderDice(true);
         var t0 = Date.now();
         call('diceRoll', { bets: DC.bets }).then(function (r) {
@@ -3626,6 +3732,7 @@ function renderDice(force) {
             DC.rolling = false; DC.last = r;
             toast(r.delta > 0 ? '贏了 ' + fmt(r.delta) : r.delta === 0 ? '打平' : '輸了 ' + fmt(-r.delta), r.delta > 0 ? 'good' : '');
             renderDice(true);
+            if (window.TokenFX && S.tab === 'dice') TokenFX.rollDice($('vDice').querySelector('.dice-tray'), r.dice);
           }, Math.max(0, 1100 - (Date.now() - t0)));
         }).catch(function (e) { DC.rolling = false; toast(e.message, 'bad'); renderDice(true); });
       };
@@ -3816,7 +3923,9 @@ function endSession() {
   clearInterval(S.tick);
   S.me = null; S.player = null; S.cfg = null; S.roster = [];
   S.acc = null; S.accounts = []; S.sid = null; S.tab = 'home'; S.meTab = 'acct';
-  PK.st = null; PK.hole = null; PK.synced = false; BJ.st = null; S.playersAt = 0; S.accountsAt = 0; closeRaise();
+  PK.st = null; PK.hole = null; PK.synced = false; PK.fx = { pendingDeal: 0, pendingBets: null, pendingPayout: null, paidHand: 0 };
+  if (window.TokenFX) TokenFX.cancelDice();
+  BJ.st = null; S.playersAt = 0; S.accountsAt = 0; closeRaise();
   MAIL.list = []; MAIL.broadcast = []; MAIL.personal = []; MAIL.claimed = {}; $('announce').hidden = true;
   _last = {};
   closeSheet();
@@ -3833,6 +3942,7 @@ document.querySelectorAll('.tab').forEach(function (b) {
 });
 
 function switchTab(t) {
+  if (t !== 'dice' && window.TokenFX) TokenFX.cancelDice();
   S.tab = t;
   var tabKey = ['bj', 'gate', 'slot', 'dice'].indexOf(t) >= 0 ? 'home' : t;
   document.querySelectorAll('.tab').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === tabKey); });

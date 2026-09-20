@@ -1,0 +1,20 @@
+/* Token FX Final — isolated visual layer */
+.tfx-dice-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:5}
+.dice-tray.tfx-dice-active>.die{visibility:hidden}
+.tfx-layer{position:absolute;inset:0;pointer-events:none;overflow:visible;z-index:24}
+.tfx-fly-card{position:absolute;pointer-events:none;z-index:28;transform-origin:50% 70%;will-change:transform,opacity;backface-visibility:hidden}
+.tfx-fly-card.cb{margin:0!important}
+.tfx-arriving{opacity:.12!important}
+.tfx-card-land{animation:tfxCardLand .24s cubic-bezier(.18,1.35,.38,1) both}
+@keyframes tfxCardLand{0%{transform:translateY(-5px) scale(.9);filter:brightness(1.5);opacity:.2}100%{transform:none;filter:none;opacity:1}}
+.tfx-chip{position:absolute;width:25px;height:25px;border-radius:50%;z-index:30;will-change:transform,opacity;background:radial-gradient(circle at 34% 28%,rgba(255,255,255,.95) 0 7%,transparent 8%),repeating-conic-gradient(from 0deg,#FFEAB6 0 12deg,#B67E2A 12deg 24deg);border:2px solid rgba(255,255,255,.9);box-shadow:0 8px 18px rgba(0,0,0,.5),0 0 11px rgba(255,211,122,.2),inset 0 0 0 4px rgba(87,53,8,.22)}
+.tfx-chip::after{content:'';position:absolute;inset:6px;border-radius:50%;border:1px solid rgba(255,255,255,.76);box-shadow:inset 0 0 0 2px rgba(111,69,12,.18)}
+.tfx-float-gain{position:absolute;z-index:36;transform:translate(-50%,-50%);font:800 18px Arial;color:#FFD37A;text-shadow:0 2px 9px rgba(0,0,0,.75),0 0 18px rgba(255,211,122,.5);white-space:nowrap;animation:tfxGain .72s ease-out both}
+.tfx-stack-overlay{position:absolute;z-index:35;display:flex;align-items:center;justify-content:center;border-radius:3px;background:#07101D;font-family:var(--ui,Arial);font-weight:700;font-size:14px;line-height:1.2;color:var(--gold,#FFD37A);text-shadow:0 0 10px rgba(255,211,122,.6);white-space:nowrap}
+.seat.tfx-winner-glow .sc{border-color:rgba(255,211,122,.95);box-shadow:0 0 32px rgba(255,211,122,.58)}
+@keyframes tfxGain{0%{opacity:0;transform:translate(-50%,4px) scale(.82)}25%{opacity:1;transform:translate(-50%,-5px) scale(1.06)}100%{opacity:0;transform:translate(-50%,-28px) scale(1)}}
+.tfx-stack-pop{animation:tfxStackPop .48s cubic-bezier(.2,1.55,.35,1) both}
+@keyframes tfxStackPop{0%{transform:scale(1)}40%{transform:scale(1.24);filter:brightness(1.55)}100%{transform:scale(1);filter:none}}
+.tfx-pot-pulse{animation:tfxPotPulse .35s ease-out both}
+@keyframes tfxPotPulse{0%{transform:scale(1)}48%{transform:scale(1.12);text-shadow:0 0 15px rgba(255,211,122,.95),0 0 36px rgba(255,211,122,.52)}100%{transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){.tfx-dice-canvas,.tfx-layer{display:none!important}}
