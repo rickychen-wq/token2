@@ -5,18 +5,6 @@
 
 const { AppError, seasonId, seasonRange } = require('./util');
 const E = require('./econ');
-const { grant } = require('./shop');
-const { loadCatalog } = require('./catalog');
-
-const CHEST_COUNT = { 1: 3, 2: 2, 3: 1 };            // 第 1 名 3 個、第 2 名 2 個、第 3 名 1 個
-const DEFAULT_ODDS = [35, 30, 15, 10, 7, 3];        // 稀有、極稀有、史詩、傳奇、神話、神秘
-
-function rollRarity(odds) {
-  const total = odds.reduce((a, b) => a + b, 0);
-  let r = Math.random() * total;
-  for (let i = 0; i < odds.length; i++) { if ((r -= odds[i]) < 0) return i + 1; }
-  return 1;
-}
 
 const POINTS = { 1: 5, 2: 3, 3: 1 };
 const DEFAULT_RANK_FROM = '2026-W39';   // 這一季之前是練習季，不發積分
@@ -84,8 +72,6 @@ function createSeason({ db, now, requireAdmin, runInterest, closeTables }) {
       accSnap.forEach((d) => { const a = d.data(); E.refresh(a, cfg, t); accounts.push(a); });
       plSnap.forEach((d) => { players[d.id] = d.data(); });
       const rows = rankSeason(accounts, players, cfg.rankMinHands);
-      const cat = await loadCatalog(db, tx);
-      const odds = Array.isArray(rawCfg.chestOdds) && rawCfg.chestOdds.length === 6 ? rawCfg.chestOdds : DEFAULT_ODDS;
 
       rows.forEach((r) => {
         const p = players[r.pid];
@@ -115,24 +101,15 @@ function createSeason({ db, now, requireAdmin, runInterest, closeTables }) {
         }
         const patch = { stats: st, lastSettledSeason: sid };
         if (r.stars) { p.stars = (p.stars || 0) + r.stars; patch.stars = p.stars; }
-        r.chests = [];
-        if (!practice && r.rank && CHEST_COUNT[r.rank]) {
-          for (let k = 0; k < CHEST_COUNT[r.rank]; k++) {
-            const rar = rollRarity(odds);
-            r.chests.push(rar);
-            grant(p, cat.items['chest_' + rar], 1);
-          }
-          patch.items = p.items;
-        }
         const hist = Array.isArray(p.history) ? p.history.slice() : [];
         if (r.hands > 0) {
-          hist.unshift({ sid, rank: r.rank, net: r.net, hands: r.hands, stars: r.stars, chests: r.chests, practice });
+          hist.unshift({ sid, rank: r.rank, net: r.net, hands: r.hands, stars: r.stars, practice });
           patch.history = hist.slice(0, 12);
         }
         tx.update(db.collection('players').doc(r.pid), patch);
       });
 
-      const final = rows.map((r) => ({ pid: r.pid, name: r.name, net: r.net, rank: r.rank, hands: r.hands, eligible: r.eligible, stars: r.stars, chests: r.chests || [] }));
+      const final = rows.map((r) => ({ pid: r.pid, name: r.name, net: r.net, rank: r.rank, hands: r.hands, eligible: r.eligible, stars: r.stars }));
       const doc = { id: sid, status: 'closed', settledAt: t, final, practice, minHands: cfg.rankMinHands };
       if (sSnap.exists) tx.update(seasonRef(sid), doc); else tx.set(seasonRef(sid), doc);
       if (cfgSnap.exists) tx.update(cfgRef(), { lastSeason: sid }); else tx.set(cfgRef(), { lastSeason: sid, registrationOpen: false });
@@ -179,11 +156,6 @@ function createSeason({ db, now, requireAdmin, runInterest, closeTables }) {
         const n = d.statsFrom === null ? 0 : Number(d.statsFrom);
         if (!Number.isFinite(n) || n < 0) throw new AppError('時間格式不對', 'bad-config', 'invalid-argument');
         patch.statsFrom = n;
-      }
-      if (d.chestOdds !== undefined) {
-        const o = Array.isArray(d.chestOdds) ? d.chestOdds.map(Number) : [];
-        if (o.length !== 6 || o.some((x) => !(x >= 0)) || o.reduce((a, b) => a + b, 0) <= 0) throw new AppError('寶箱機率要 6 個 0 以上的數字', 'bad-config', 'invalid-argument');
-        patch.chestOdds = o;
       }
       const snap = await cfgRef().get();
       if (snap.exists) await cfgRef().update(patch); else await cfgRef().set(Object.assign({ registrationOpen: false }, patch));

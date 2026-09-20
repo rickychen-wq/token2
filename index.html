@@ -1531,7 +1531,7 @@ function showProfile(pid) {
   if (hist.length) {
     h += '<div class="stat-h">最近幾季</div><div class="grp rk-list">' + hist.slice(0, 6).map(function (x) {
       return '<div class="row"><span class="k">第 ' + parseInt(x.sid.split('-W')[1], 10) + ' 週' +
-        '<small>' + (x.practice ? '練習季' : [x.stars ? '+' + x.stars + ' 星幣' : '', x.chests && x.chests.length ? x.chests.length + ' 個寶箱' : ''].filter(Boolean).join('　')) + '</small></span>' +
+        '<small>' + (x.practice ? '練習季' : (x.stars ? '+' + x.stars + ' 星幣' : '')) + '</small></span>' +
         '<span class="rk-val"><b>' + (x.rank ? '第 ' + x.rank + ' 名' : '未上榜') + '</b><small>' + fmt(x.net) + '</small></span></div>';
     }).join('') + '</div>';
   }
@@ -2403,19 +2403,15 @@ function sheetEditItem(it) {
 
 function sheetSeasonConfig() {
   var cfg = S.cfg || {};
-  var rf = cfg.rankFrom || RANK_FROM, sf = cfg.statsFrom || 0, odds = cfg.chestOdds || [35, 30, 15, 10, 7, 3];
-  formSheet('季與數據設定', '本週是 ' + S.sid + '。正式季之前的週次只結算，不發積分、星幣和寶箱。',
+  var rf = cfg.rankFrom || RANK_FROM, sf = cfg.statsFrom || 0;
+  formSheet('季與數據設定', '本週是 ' + S.sid + '。正式季之前的週次只結算，不發積分和星幣。',
     fld('sRankFrom', '正式季從哪一週開始', 'text', ' autocomplete="off" value="' + esc(rf) + '" placeholder="例如 2026-W39"') +
     '<div class="fld"><label for="sStatsFrom">牌局數據從什麼時候開始記錄（台灣時間）</label><input id="sStatsFrom" type="datetime-local" value="' + dtLocal(sf) + '">' +
-    '<div class="help">留空代表一直都在記錄</div></div>' +
-    '<div class="stat-h">結算寶箱機率（%）</div><div class="fld-grid three">' +
-    odds.map(function (o, i) { return fld('odd' + i, RARITY[i + 1], 'text', ' inputmode="decimal" value="' + o + '"'); }).join('') + '</div>',
+    '<div class="help">留空代表一直都在記錄</div></div>',
     '儲存', '', function () {
       var w = $('sRankFrom').value.trim().toUpperCase();
       if (!/^\d{4}-W\d{2}$/.test(w)) { toast('週次格式要像 2026-W39', 'bad'); return null; }
-      var o = [0, 1, 2, 3, 4, 5].map(function (i) { return Number($('odd' + i).value); });
-      if (o.some(function (x) { return !(x >= 0); })) { toast('機率要是 0 以上的數字', 'bad'); return null; }
-      return call('adminSeasonConfig', { rankFrom: w, statsFrom: fromLocal($('sStatsFrom').value) || 0, chestOdds: o }).then(function () { return '已儲存'; });
+      return call('adminSeasonConfig', { rankFrom: w, statsFrom: fromLocal($('sStatsFrom').value) || 0 }).then(function () { return '已儲存'; });
     });
 }
 
