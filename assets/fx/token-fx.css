@@ -1,6 +1,4 @@
 /* Token FX Final — isolated visual layer */
-.tfx-dice-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:5}
-.dice-tray.tfx-dice-active>.die{visibility:hidden}
 .tfx-layer{position:absolute;inset:0;pointer-events:none;overflow:visible;z-index:24}
 .tfx-fly-card{position:absolute;pointer-events:none;z-index:28;transform-origin:50% 70%;will-change:transform,opacity;backface-visibility:hidden}
 .tfx-fly-card.cb{margin:0!important}
@@ -17,4 +15,4 @@
 @keyframes tfxStackPop{0%{transform:scale(1)}40%{transform:scale(1.24);filter:brightness(1.55)}100%{transform:scale(1);filter:none}}
 .tfx-pot-pulse{animation:tfxPotPulse .35s ease-out both}
 @keyframes tfxPotPulse{0%{transform:scale(1)}48%{transform:scale(1.12);text-shadow:0 0 15px rgba(255,211,122,.95),0 0 36px rgba(255,211,122,.52)}100%{transform:scale(1)}}
-@media(prefers-reduced-motion:reduce){.tfx-dice-canvas,.tfx-layer{display:none!important}}
+@media(prefers-reduced-motion:reduce){.tfx-layer{display:none!important}}

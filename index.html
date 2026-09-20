@@ -3713,7 +3713,7 @@ function renderDice(force) {
     root.querySelectorAll('[data-dk]').forEach(function (b) {
       b.onclick = function () {
         if (DC.rolling) return;
-        if (DC.last) { if (window.TokenFX) TokenFX.cancelDice(); DC.last = null; }
+        if (DC.last) { DC.last = null; }
         var k = b.getAttribute('data-dk');
         if (diceTotalBet() + DC.chip > c.maxTotal) { toast('一次最多下 ' + fmt(c.maxTotal), 'bad'); return; }
         DC.bets[k] = (DC.bets[k] || 0) + DC.chip;
@@ -3722,9 +3722,8 @@ function renderDice(force) {
     });
     root.querySelectorAll('[data-dact]').forEach(function (b) {
       b.onclick = function () {
-        if (b.getAttribute('data-dact') === 'clear') { if (window.TokenFX) TokenFX.cancelDice(); DC.bets = {}; DC.last = null; renderDice(true); return; }
+        if (b.getAttribute('data-dact') === 'clear') { DC.bets = {}; DC.last = null; renderDice(true); return; }
         if (S.acc && S.acc.wallet < diceTotalBet()) { toast('錢包不夠', 'bad'); return; }
-        if (window.TokenFX) TokenFX.cancelDice();
         DC.rolling = true; DC.last = null; renderDice(true);
         var t0 = Date.now();
         call('diceRoll', { bets: DC.bets }).then(function (r) {
@@ -3732,7 +3731,6 @@ function renderDice(force) {
             DC.rolling = false; DC.last = r;
             toast(r.delta > 0 ? '贏了 ' + fmt(r.delta) : r.delta === 0 ? '打平' : '輸了 ' + fmt(-r.delta), r.delta > 0 ? 'good' : '');
             renderDice(true);
-            if (window.TokenFX && S.tab === 'dice') TokenFX.rollDice($('vDice').querySelector('.dice-tray'), r.dice);
           }, Math.max(0, 1100 - (Date.now() - t0)));
         }).catch(function (e) { DC.rolling = false; toast(e.message, 'bad'); renderDice(true); });
       };
@@ -3924,7 +3922,6 @@ function endSession() {
   S.me = null; S.player = null; S.cfg = null; S.roster = [];
   S.acc = null; S.accounts = []; S.sid = null; S.tab = 'home'; S.meTab = 'acct';
   PK.st = null; PK.hole = null; PK.synced = false; PK.fx = { pendingDeal: 0, pendingBets: null, pendingPayout: null, paidHand: 0 };
-  if (window.TokenFX) TokenFX.cancelDice();
   BJ.st = null; S.playersAt = 0; S.accountsAt = 0; closeRaise();
   MAIL.list = []; MAIL.broadcast = []; MAIL.personal = []; MAIL.claimed = {}; $('announce').hidden = true;
   _last = {};
@@ -3942,7 +3939,6 @@ document.querySelectorAll('.tab').forEach(function (b) {
 });
 
 function switchTab(t) {
-  if (t !== 'dice' && window.TokenFX) TokenFX.cancelDice();
   S.tab = t;
   var tabKey = ['bj', 'gate', 'slot', 'dice'].indexOf(t) >= 0 ? 'home' : t;
   document.querySelectorAll('.tab').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === tabKey); });
