@@ -1534,7 +1534,7 @@ function showProfile(pid) {
   if (hist.length) {
     h += '<div class="stat-h">最近幾季</div><div class="grp rk-list">' + hist.slice(0, 6).map(function (x) {
       return '<div class="row"><span class="k">第 ' + parseInt(x.sid.split('-W')[1], 10) + ' 週' +
-        '<small>' + (x.practice ? '練習季' : (x.stars ? '+' + x.stars + ' 星幣' : '')) + '</small></span>' +
+        '<small>' + (x.practice ? '練習季' + (x.stars ? '・+' + x.stars + ' 星幣' : '') : (x.stars ? '+' + x.stars + ' 星幣' : '')) + '</small></span>' +
         '<span class="rk-val"><b>' + (x.rank ? '第 ' + x.rank + ' 名' : '未上榜') + '</b><small>' + fmt(x.net) + '</small></span></div>';
     }).join('') + '</div>';
   }
@@ -1550,7 +1550,7 @@ function showProfile(pid) {
 }
 
 /* ---------- v12 任務 ---------- */
-var TASKS = { data: null, cat: 'daily', loading: false, error: null };
+var TASKS = { data: null, cat: 'daily', loading: false, error: null, sid: null };
 var TASK_CAT = [['daily', '每日'], ['weekly', '每週'], ['career', '生涯']];
 
 function taskEntry() {
@@ -1571,15 +1571,19 @@ function taskEntry() {
 
 function loadTasks(then) {
   if (TASKS.loading) return;
+  var requestSid = S.sid;
   TASKS.loading = true;
   TASKS.error = null;
   call('taskList', {}).then(function (r) {
+    if (requestSid !== S.sid) return;
     TASKS.data = r.tasks;
+    TASKS.sid = requestSid;
     TASKS.loading = false;
     TASKS.error = null;
     if (then) then();
     if (S.tab === 'home') renderHome(true);
   }).catch(function (e) {
+    if (requestSid !== S.sid) return;
     TASKS.loading = false;
     TASKS.error = (e && e.message) || '任務載入失敗';
     if (then) then(e);
@@ -2559,7 +2563,7 @@ function syncLive() {
   live('players', t === 'rank' || (t === 'me' && admin), openPlayersLive);
   if (!needAccounts && t === 'home') refreshAccounts(false);
   if (t !== 'rank' && !(t === 'me' && admin)) refreshPlayers(false);
-  if (t === 'home' && !TASKS.data) loadTasks();      // v12：大廳顯示可領數量
+  if (t === 'home' && (!TASKS.data || TASKS.sid !== sid)) loadTasks(); // v12：跨季自動重載任務
 }
 
 function openPokerLive() {
@@ -3231,8 +3235,10 @@ function renderRank(force) {
       return { pid: x.pid, name: x.name, rank: x._rank, value: fmt(x.net),
         sub: x._rank ? '' : '還差 ' + (minH - x.hands) + ' 手' };
     });
-    h += '<p class="rk-note">' + (practice ? '<span class="tag warn">練習季</span> 這週不發積分，' : '') +
-      '本季打滿 ' + minH + ' 手才計入名次，週一 00:00 結算。</p>';
+    var starMin = c.starMinHands === undefined ? 20 : c.starMinHands;
+    var starPer = c.starPer === undefined ? 100 : c.starPer;
+    h += '<p class="rk-note">' + (practice ? '<span class="tag warn">練習季</span> 這週不發積分與排行獎勵；打滿 ' + starMin + ' 手仍按每 ' + fmt(starPer) + ' 資產換 1 星幣。' :
+      '本季打滿 ' + minH + ' 手才計入名次。') + ' 週一 00:01 結算。</p>';
     h += dailyRewardNote(practice);
     var ranked = items.filter(function (x) { return x.rank; });
     h += ranked.length ? podium(ranked.slice(0, 3)) : '<div class="empty rk-empty">還沒有人打滿 ' + minH + ' 手</div>';
@@ -3893,6 +3899,12 @@ function openSeason() {
   if (S.seasonUnsub) { try { S.seasonUnsub(); } catch (e) {} }
   if (S.seasonDocUnsub) { try { S.seasonDocUnsub(); } catch (e) {} }
   S.sid = sidOf(Date.now());
+  if (TASKS.sid !== S.sid) {
+    TASKS.data = null;
+    TASKS.loading = false;
+    TASKS.error = null;
+    TASKS.sid = null;
+  }
   S.accounts = [];
   S.acc = null;
   var sid = S.sid;
@@ -3927,6 +3939,7 @@ function endSession() {
   if (S.seasonUnsub) { try { S.seasonUnsub(); } catch (e) {} S.seasonUnsub = null; }
   if (S.seasonDocUnsub) { try { S.seasonDocUnsub(); } catch (e) {} S.seasonDocUnsub = null; }
   S.players = {}; S.season = null; S.accountRoster = []; RK.last = null; RK.lastSid = null; RK.tab = 'now';
+  TASKS.data = null; TASKS.loading = false; TASKS.error = null; TASKS.sid = null;
   clearInterval(S.tick);
   S.me = null; S.player = null; S.cfg = null; S.roster = [];
   S.acc = null; S.accounts = []; S.sid = null; S.tab = 'home'; S.meTab = 'acct';

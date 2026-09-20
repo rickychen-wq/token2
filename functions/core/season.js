@@ -75,7 +75,8 @@ function createSeason({ db, now, requireAdmin, runInterest, closeTables }) {
 
       rows.forEach((r) => {
         const p = players[r.pid];
-        r.stars = !practice && r.hands >= cfg.starMinHands ? E.starsFor(r.net, cfg) : 0;
+        // 練習季只停用積分與排行獎勵；達到門檻仍按資產換星幣。
+        r.stars = r.hands >= cfg.starMinHands ? E.starsFor(r.net, cfg) : 0;
         if (!p || p.lastSettledSeason === sid) return;
         const st = Object.assign({
           points: 0, champions: 0, top3: 0, seasonsPlayed: 0, bestRank: null, peakNet: 0, peakNetSeason: null,
