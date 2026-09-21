@@ -12,7 +12,8 @@ const { publishHighlights } = require('../core/highlights');
 const DEFAULTS = {
   gate: { enabled: true, minBet: 200, maxBet: 5000, edge: 0.05 },
   slot: { enabled: true, bets: [100, 200, 500, 1000] },
-  dice: { enabled: true, minBet: 100, maxTotal: 10000 }
+  dice: { enabled: true, minBet: 100, maxTotal: 10000 },
+  big2: { enabled: true, buyIn: 1000, reserve: 2000, readySec: 20, turnSec: 30, resultSec: 20 }
 };
 /* 後台的「單一遊戲每日最多計入幾場」，0 = 不限（預設）。
    拉霸一分鐘可以轉幾十次，哪天發現有人在刷每日排行獎勵，把這個數字調大於 0 就好。 */
@@ -27,7 +28,8 @@ function gamesCfg(raw) {
     gate: Object.assign({}, DEFAULTS.gate, g.gate),
     slot: Object.assign({}, DEFAULTS.slot, g.slot),
     dice: Object.assign({}, DEFAULTS.dice, g.dice),
-    bj: Object.assign({}, g.bj)
+    bj: Object.assign({}, g.bj),
+    big2: Object.assign({}, DEFAULTS.big2, g.big2, { buyIn: 1000, reserve: 2000 })
   };
 }
 
@@ -292,7 +294,7 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
       const d = req.data || {};
       const snap = await cfgRef().get();
       const cur = gamesCfg(snap.exists ? snap.data() : null);
-      const next = { gate: cur.gate, slot: cur.slot, bj: cur.bj, dice: cur.dice };
+      const next = { gate: cur.gate, slot: cur.slot, bj: cur.bj, dice: cur.dice, big2: cur.big2 };
       const int = (v, lo, hi, name) => { const n = Number(v); if (!Number.isInteger(n) || n < lo || n > hi) throw new AppError(name + '數值不合理', 'bad-config', 'invalid-argument'); return n; };
       if (d.gate) {
         if (d.gate.enabled !== undefined) next.gate.enabled = !!d.gate.enabled;
@@ -323,6 +325,17 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
           if (d.bj[k] !== undefined) bj[k] = int(d.bj[k], 1, 1e7, '21點設定');
         });
         next.bj = bj;
+      }
+      if (d.big2) {
+        const big2 = Object.assign({}, next.big2 || DEFAULTS.big2);
+        if (d.big2.enabled !== undefined) big2.enabled = !!d.big2.enabled;
+        ['readySec', 'turnSec', 'resultSec'].forEach((k) => {
+          if (d.big2[k] !== undefined) big2[k] = int(d.big2[k], 3, 300, '大老二設定');
+        });
+        // 入場費與預留金是牌局規則的一部分，固定為 1,000 / 2,000，避免前後端顯示不一致。
+        big2.buyIn = 1000;
+        big2.reserve = 2000;
+        next.big2 = big2;
       }
       if (snap.exists) await cfgRef().update({ games: next }); else await cfgRef().set({ games: next, registrationOpen: false });
       return { games: next };
