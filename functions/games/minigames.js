@@ -232,15 +232,18 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
         const win = Math.floor(bet * p.mult);
         const delta = win - bet;
         acc.wallet += delta;
-        if (E.recordPlay(acc, t, 'slot', playCap(raw))) { if (TK.bump(pl, t, 'play', 1, raw)) setPl({ tasks: pl.tasks }); }
+        let taskChanged = false;
+        if (E.recordPlay(acc, t, 'slot', playCap(raw))) taskChanged = TK.bump(pl, t, 'play', 1, raw);
         out = { reels, mult: p.mult, kind: p.kind, win, delta };
         if (p.mult >= 35) {
+          taskChanged = TK.bump(pl, t, 'highlight', 1, raw) || taskChanged;
           highlight = {
             id: 'slot-' + s.pid + '-' + t,
             type: 'slot', pid: s.pid, name: pl.name || s.pid, at: t,
             mult: p.mult, bet, amount: win
           };
         }
+        if (taskChanged) setPl({ tasks: pl.tasks });
         return [{ type: 'game', amount: delta, wallet: acc.wallet, bank: acc.bank.balance, loans: acc.loans, note: '拉霸 ' + reels.join('/') }];
       });
       if (highlight) await publishHighlights(db, [highlight]);

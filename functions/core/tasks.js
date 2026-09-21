@@ -1,7 +1,7 @@
 'use strict';
 /* core/tasks.js — v12 任務系統
 
-   39 個任務：每日 5、每週 10、生涯 24。
+   40 個任務：每日 5、每週 10、生涯 25。
    全部的進度都存在玩家永久文件的 p.tasks，分三桶：
      daily  — 換日歸零（台灣時間 00:00）
      weekly — 換季歸零（賽季就是一週，週一 00:00）
@@ -80,6 +80,7 @@ const CAREER = [
 
   { id: 'c_item', name: '第一道具', desc: '第一次取得任意道具', key: 'firstItem', need: 1, money: 1000, stars: 3 },
   { id: 'c_fuse', name: '動手合成', desc: '第一次成功合成道具', key: 'firstFuse', need: 1, money: 1000, stars: 3 },
+  { id: 'c_highlight', name: '全服焦點', desc: '達成 1 次全服大事件成就', key: 'highlights', need: 1, money: 0, stars: 35 },
   { id: 'c_emote10', name: '氣氛製造機', desc: '在不同 10 天使用過表情', key: 'emoteDays', need: 10, money: 1000, stars: 5 },
   { id: 'c_perfect30', name: '每日模範生', desc: '累積 30 天完成全部每日任務', key: 'perfectDays', need: 30, money: 7500, stars: 15 }
 ];
@@ -99,7 +100,7 @@ function blankCareer() {
   return {
     loginDays: 0, lastLogin: '', dailyDone: 0, weeklyDone: 0, plays: 0,
     emoteDays: 0, lastEmote: '', perfectDays: 0, lastPerfect: '',
-    firstAvatar: 0, firstBg: 0, firstItem: 0, firstFuse: 0, claimed: {}
+    firstAvatar: 0, firstBg: 0, firstItem: 0, firstFuse: 0, highlights: 0, claimed: {}
   };
 }
 
@@ -116,7 +117,7 @@ function roll(p, t) {
 }
 
 /* ---------- 記錄事件 ----------
-   what: login | emote | skin | firstAvatar | firstBg | firstItem | firstFuse | play
+   what: login | emote | skin | firstAvatar | firstBg | firstItem | firstFuse | highlight | play
    回傳有沒有真的改到東西，沒改到就不用寫回資料庫。 */
 function bump(p, t, what, n, rawCfg) {
   if (rawCfg !== undefined && !active(rawCfg, t)) return false;   // 測試週不計進度
@@ -135,6 +136,9 @@ function bump(p, t, what, n, rawCfg) {
     if (!tk.week.skin) { tk.week.skin = true; changed = true; }
   } else if (what === 'play') {
     c.plays += (n || 1);
+    changed = true;
+  } else if (what === 'highlight') {
+    c.highlights += (n || 1);
     changed = true;
   } else if (['firstAvatar', 'firstBg', 'firstItem', 'firstFuse'].indexOf(what) >= 0) {
     if (!c[what]) { c[what] = t; changed = true; }
@@ -188,6 +192,7 @@ function rawHave(task, p, acc, tk) {
     case 'career.firstBg': return tk.career.firstBg ? 1 : 0;
     case 'career.firstItem': return tk.career.firstItem ? 1 : 0;
     case 'career.firstFuse': return tk.career.firstFuse ? 1 : 0;
+    case 'career.highlights': return tk.career.highlights || 0;
     default: return 0;
   }
 }

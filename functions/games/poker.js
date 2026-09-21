@@ -278,10 +278,16 @@ function createPoker({ db, now, requireSession, requireAdmin }) {
       if (!s) continue;
       const asSid = s.sid || ctx.sid;
       const acc = await ctx.acc(s.pid, asSid);
+      const x = statOf[i];
+      const hitHighlight = !res.aborted && x && x.net >= 15000;
       if (!res.aborted) {
         E.recordHands(acc, ctx.t, 1);
         const pd = await ctx.player(s.pid);                 // v12 任務：生涯場數
-        if (pd && TK.bump(pd, ctx.t, 'play', 1, ctx.rawCfg)) ctx.patchPlayer(s.pid, { tasks: pd.tasks });
+        if (pd) {
+          let taskChanged = TK.bump(pd, ctx.t, 'play', 1, ctx.rawCfg);
+          if (hitHighlight) taskChanged = TK.bump(pd, ctx.t, 'highlight', 1, ctx.rawCfg) || taskChanged;
+          if (taskChanged) ctx.patchPlayer(s.pid, { tasks: pd.tasks });
+        }
       }
       // 還款：錢包加桌上籌碼達到門檻，先扣錢包，不夠再扣桌上
       while (acc.loans > 0 && acc.wallet + s.stack >= cfg.loanRepayAt) {
@@ -293,8 +299,7 @@ function createPoker({ db, now, requireSession, requireAdmin }) {
         ctx.led(s.pid, { type: 'repay', amount: -cfg.loanUnit }, asSid);
       }
       acc.inPlay.poker = { tableId: TABLE_ID, amount: s.stack };
-      const x = statOf[i];
-      if (!res.aborted && x && x.net >= 15000) {
+      if (hitHighlight) {
         ctx.highlight({
           id: 'poker-' + ctx.sid + '-' + st.hand.no + '-' + s.pid,
           type: 'poker', pid: s.pid, name: s.name, at: ctx.t,

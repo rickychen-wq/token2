@@ -208,7 +208,8 @@ function createBlackjack({ db, now, requireSession, requireAdmin }) {
       const b = R.bets[i];
       const r = payout(b, b.cards, R.dealer);
       b.result = r.result; b.payout = r.pay; b.done = true;
-      if (b.doubled && b.amount >= 10000 && r.result === 'win') {
+      const hitHighlight = b.doubled && b.amount >= 10000 && r.result === 'win';
+      if (hitHighlight) {
         ctx.highlight({
           id: 'blackjack-' + ctx.sid + '-' + R.no + '-' + b.pid,
           type: 'blackjack', pid: b.pid, name: b.name, at: ctx.t,
@@ -219,7 +220,11 @@ function createBlackjack({ db, now, requireSession, requireAdmin }) {
       acc.wallet += r.pay;
       E.recordHands(acc, ctx.t, 1);
       const pd = await ctx.player(b.pid);                   // v12 任務：生涯場數
-      if (pd && TK.bump(pd, ctx.t, 'play', 1, ctx.rawCfg)) ctx.patchPlayer(b.pid, { tasks: pd.tasks });
+      if (pd) {
+        let taskChanged = TK.bump(pd, ctx.t, 'play', 1, ctx.rawCfg);
+        if (hitHighlight) taskChanged = TK.bump(pd, ctx.t, 'highlight', 1, ctx.rawCfg) || taskChanged;
+        if (taskChanged) ctx.patchPlayer(b.pid, { tasks: pd.tasks });
+      }
       if (r.pay) ctx.led(b.pid, b.sid, { type: 'game', amount: r.pay, note: '21點派彩（' + { win: '贏', blackjack: '黑傑克', push: '平手', lose: '輸', bust: '爆牌' }[r.result] + '）' });
       E.autoRepay(acc, ctx.cfg, ctx.t).forEach((e) => ctx.led(b.pid, b.sid, { type: 'repay', amount: e.amount }));
     }

@@ -1349,6 +1349,7 @@ $('gateForm').addEventListener('submit', function (ev) {
    ===================================================================== */
 var ECON_DEF = {
   startingMoney: 5000, loanUnit: 2000, loanRepayAt: 3000, borrowBelow: 1000, bankKeep: 2000,
+  loanPerDay: 10,
   interestMin: 0.001, interestMax: 0.006, rankMinHands: 20,
   starPer: 100, starCap: 0, starMinHands: 20
 };
@@ -4214,7 +4215,8 @@ function renderBank(force) {
       '<div class="count">' + (a.loans ? fmt(c.loanUnit) + ' × ' + a.loans + ' 筆' : '沒有借款') + '</div></div>' +
     '<p>' + (a.loans
       ? '錢包達到 ' + fmt(c.loanRepayAt) + ' 時，會自動還一筆 ' + fmt(c.loanUnit) + '。'
-      : '錢包、銀行、牌桌加起來低於 ' + fmt(c.borrowBelow) + ' 時，可以借 ' + fmt(c.loanUnit) + ' 繼續玩。') + '</p>' +
+      : '錢包、銀行、牌桌加起來低於 ' + fmt(c.borrowBelow) + ' 時，可以借 ' + fmt(c.loanUnit) + ' 繼續玩。') +
+    '<p class="note-s">每天最多借 ' + fmt(c.loanPerDay) + ' 次，台灣時間 00:00 重置。</p>' +
     '<button class="btn' + (can ? ' danger' : ' ghost') + '" data-b="borrow"' + (can ? '' : ' disabled') + '>' +
       (can ? '借 ' + fmt(c.loanUnit) : '低於 ' + fmt(c.borrowBelow) + ' 才能借') + '</button>' +
   '</div>';

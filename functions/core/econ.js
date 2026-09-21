@@ -9,7 +9,7 @@ const DEFAULTS = {
   loanUnit: 2000,        // 每筆借款
   loanRepayAt: 3000,     // 手上達到這個數字就自動還一筆
   borrowBelow: 1000,     // 總資產低於這個數字才能借
-  loanPerDay: 5,         // 每天最多借幾次（台灣時間 00:00 重置）
+  loanPerDay: 10,        // 每天最多借幾次（台灣時間 00:00 重置）
   reviveBelow: 1000,     // 破產防護卷：總資產低於這個數字才能用
   reviveTo: 5000,        // 破產防護卷：錢包補到這個數字
   bankKeep: 2000,        // 存款後手上至少要留的錢
