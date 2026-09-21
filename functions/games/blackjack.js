@@ -248,6 +248,28 @@ function createBlackjack({ db, now, requireSession, requireAdmin }) {
     if (ctx.seasonStatus !== 'active') throw new AppError('本季結算中，暫停遊戲', 'season-locked');
   }
 
+  async function removeSeat(ctx, i, adminKick) {
+    const st = ctx.st, R = st.round, seat = st.seats[i], b = R.bets[i];
+    if (!seat) throw new AppError('他不在桌上', 'not-seated');
+    const contest = CT.current(st);
+    if (contest && (contest.from === seat.pid || contest.to === seat.pid)) await cancelContest(ctx, 'player-left');
+    const phase = R.phase;
+    if (b && phase === 'betting') {
+      const acc = await ctx.acc(b.pid, b.sid);
+      acc.wallet += b.amount;
+      ctx.led(b.pid, b.sid, { type: 'game', amount: b.amount, note: adminKick ? '21點管理員請離，退回下注' : '21點取消下注' });
+      E.autoRepay(acc, ctx.cfg, ctx.t).forEach((e) => ctx.led(b.pid, b.sid, { type: 'repay', amount: e.amount }));
+      delete R.bets[i];
+      if (!Object.keys(R.bets).length) { R.phase = 'idle'; R.deadline = 0; }
+    } else if (b && phase === 'playing') {
+      b.done = true;   // 已發牌的下注照常結算，踢除只是不再等待玩家操作
+      if (R.turn === i) await afterAction(ctx, i);
+    }
+    st.seats[i] = null;
+    log(st, seat.name + (adminKick ? ' 被管理員請離 21 點牌桌' : ' 離開 21 點牌桌'));
+    return { inRound: !!(b && phase === 'playing') };
+  }
+
   return {
     handValue, isBJ, payout, DEFAULTS,
 
@@ -269,20 +291,17 @@ function createBlackjack({ db, now, requireSession, requireAdmin }) {
       return run(async (ctx) => {
         const st = ctx.st, i = seatOf(st, s.pid);
         if (i < 0) throw new AppError('你不在桌上', 'not-seated');
-        const b = st.round.bets[i];
-        if (b && st.round.phase === 'betting') {
-          const acc = await ctx.acc(b.pid, b.sid);
-          acc.wallet += b.amount;
-          ctx.led(b.pid, b.sid, { type: 'game', amount: b.amount, note: '21點取消下注' });
-          E.autoRepay(acc, ctx.cfg, ctx.t).forEach((e) => ctx.led(b.pid, b.sid, { type: 'repay', amount: e.amount }));
-          delete st.round.bets[i];
-          if (!Object.keys(st.round.bets).length) { st.round.phase = 'idle'; st.round.deadline = 0; }
-        } else if (b && st.round.phase === 'playing') {
-          b.done = true;   // 直接停牌，注照算
-          if (st.round.turn === i) await afterAction(ctx, i);
-        }
-        st.seats[i] = null;
-        return {};
+        return removeSeat(ctx, i, false);
+      });
+    },
+
+    async adminKick(req) {
+      await requireAdmin(req);
+      const pid = String(req.data && req.data.pid || '');
+      return run(async (ctx) => {
+        const i = seatOf(ctx.st, pid);
+        if (i < 0) throw new AppError('他不在 21 點牌桌上', 'not-seated');
+        return removeSeat(ctx, i, true);
       });
     },
 

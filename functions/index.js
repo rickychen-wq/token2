@@ -19,6 +19,7 @@ const { createShop } = require('./core/shop');
 const { createMail } = require('./core/mail');
 const { createMini } = require('./games/minigames');
 const { createBlackjack } = require('./games/blackjack');
+const { createBig2 } = require('./games/big2');
 const { createRewards } = require('./core/rewards');
 
 const db = admin.firestore();
@@ -31,8 +32,9 @@ const SH = createShop({ db, now, requireSession: A.requireSession, requireAdmin:
 const ML = createMail({ db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin });
 const MG = createMini({ db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin, mutate: EC.mutate });
 const BJ = createBlackjack({ db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin });
+const B2 = createBig2({ db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin });
 const SE = createSeason({ db, now, requireAdmin: A.requireAdmin, runInterest: EC.runInterest,
-  closeTables: async (sid) => { const r = await PK.closeSeason(sid); await BJ.closeSeason(sid); return r; } });
+  closeTables: async (sid) => { const r = await PK.closeSeason(sid); await BJ.closeSeason(sid); await B2.closeSeason(sid); return r; } });
 const RW = createRewards({ db, now, requireAdmin: A.requireAdmin });
 
 /* 把自訂錯誤轉成前端讀得到的 HttpsError，其他錯誤不外洩細節 */
@@ -114,9 +116,16 @@ exports.bjLeave = wrap(BJ.leave);
 exports.bjBet = wrap(BJ.bet);
 exports.bjAct = wrap(BJ.act);
 exports.bjTick = wrap(BJ.tick);
+exports.adminBjKick = wrap(BJ.adminKick);
 exports.bjUseCard = wrap(BJ.useCard);
 exports.bjContestRespond = wrap(BJ.contestRespond);
 exports.bjContestPick = wrap(BJ.contestPick);
+exports.big2Sit = wrap(B2.sit);
+exports.big2Leave = wrap(B2.leave);
+exports.big2Play = wrap(B2.play);
+exports.big2Pass = wrap(B2.pass);
+exports.big2Tick = wrap(B2.tick);
+exports.adminBig2Start = wrap(B2.adminStart);
 exports.adminGames = wrap(MG.adminGames);
 
 /* ---------- 公告、信箱 ---------- */

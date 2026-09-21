@@ -59,6 +59,17 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // 大老二：牌桌公開；每個人只讀得到自己的手牌；secret 完全不開放
+    match /games/big2/tables/{tid} {
+      allow read: if signedIn();
+      allow write: if false;
+
+      match /hands/{pid} {
+        allow read: if signedIn() && request.auth.token.pid == pid;
+        allow write: if false;
+      }
+    }
+
     match /seasons/{sid} {
       allow read: if signedIn();
       allow write: if false;
