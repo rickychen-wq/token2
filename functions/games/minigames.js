@@ -332,7 +332,7 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
         ['readySec', 'turnSec', 'resultSec'].forEach((k) => {
           if (d.big2[k] !== undefined) big2[k] = int(d.big2[k], 3, 300, '大老二設定');
         });
-        // 入場費與預留金是牌局規則的一部分，固定為 1,000 / 2,000，避免前後端顯示不一致。
+        // 金額由各桌固定：標準桌 1,000 / 2,000，輕鬆桌 500 / 1,000；這裡只保存共用設定。
         big2.buyIn = 1000;
         big2.reserve = 2000;
         next.big2 = big2;

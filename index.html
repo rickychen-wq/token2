@@ -759,6 +759,9 @@ button.game:active{transform:scale(.99)}
 .game-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
 .game.mini-g{flex-direction:column;align-items:flex-start;gap:8px;min-height:0;padding:12px}
 .game.mini-g .game-suit{width:42px;height:42px;font-size:22px;font-family:var(--ui);font-weight:700}
+.game.mini-g .game-art{display:grid;place-items:center;padding:3px;border-radius:6px;background:linear-gradient(145deg,rgba(63,199,255,.16),rgba(7,20,35,.9));border-color:rgba(168,238,255,.24);box-shadow:0 6px 15px rgba(0,0,0,.28)}
+.game.mini-g .game-art img{display:block;width:100%;height:100%;object-fit:contain;border-radius:7px}
+.game.mini-g.b2-low .game-art{background:linear-gradient(145deg,rgba(75,227,143,.18),rgba(7,28,27,.92));border-color:rgba(119,238,190,.34)}
 .game.mini-g h3{font-size:15px}
 .game.mini-g p{font-size:11.5px}
 .g-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
@@ -2840,7 +2843,9 @@ function syncLive() {
   var t = S.tab, admin = S.me.role === 'admin', sid = S.sid;
   live('poker', t === 'poker', openPokerLive);
   live('bj', t === 'bj', openBjLive);
-  live('big2', t === 'big2', openBig2Live);
+  var big2Key = 'big2:' + B2.tableId;
+  Object.keys(LIVE).forEach(function (k) { if (k.indexOf('big2:') === 0 && k !== big2Key) live(k, false); });
+  live(big2Key, t === 'big2', openBig2Live);
   var needAccounts = t === 'rank' || t === 'bank' || (t === 'me' && admin);
   Object.keys(LIVE).forEach(function (k) { if (k.indexOf('accounts:') === 0 && k !== 'accounts:' + sid) live(k, false); });
   live('accounts:' + sid, needAccounts, function () { return openAccountsLive(sid); });
@@ -2892,10 +2897,12 @@ function mergeAccounts(list) {
 }
 
 function openBig2Live() {
-  var t = db.collection('games').doc('big2').collection('tables').doc('main');
+  var tableId = B2.tableId;
+  var t = db.collection('games').doc('big2').collection('tables').doc(tableId);
   var firstTable = true;
   var u = [
     t.onSnapshot(function (d) {
+      if (B2.tableId !== tableId) return;
       var next = d.exists ? d.data() : null;
       planBig2Fx(B2.st, next, firstTable);
       B2.st = next;
@@ -2903,6 +2910,7 @@ function openBig2Live() {
       firstTable = false;
     }, function () {}),
     t.collection('hands').doc(S.me.pid).onSnapshot(function (d) {
+      if (B2.tableId !== tableId) return;
       B2.hand = d.exists ? d.data() : null;
       if (S.tab === 'big2') renderBig2();
     }, function () {})
@@ -3086,7 +3094,7 @@ function playPokerFx() {
 /* 自動推進：思考時間或下一手倒數到了，就請伺服器檢查 */
 /* 同一個截止時間，每台裝置最多問一次（6 秒後仍沒變才再問），並隨機延遲 0～1.5 秒，
    讓第一台的結果先傳到其他人，其他人看到新的截止時間就不用再問。 */
-function dueTick(G, key, dueAt, fn) {
+function dueTick(G, key, dueAt, fn, data) {
   if (!dueAt) return;
   if (G.tickKey !== key) { G.tickKey = key; G.tickTries = 0; G.jitter = 600 + Math.floor(Math.random() * 1500); }
   if (serverNow() < dueAt + G.jitter) return;
@@ -3094,7 +3102,7 @@ function dueTick(G, key, dueAt, fn) {
   if (G.tickTries >= 3) return;
   G.tickTries++;
   G.lastTick = Date.now();
-  pcall(fn).catch(function () {});
+  pcall(fn, data).catch(function () {});
 }
 function pokerHeartbeat() {
   var st = PK.st;
@@ -3765,7 +3773,21 @@ function bjHeartbeat() {
 }
 
 /* ---------- 大老二 ---------- */
-var B2 = { st: null, hand: null, selected: {}, sending: false, lastTick: 0, fx: { deal: null, action: null, result: null, lastActionKey: '' } };
+var B2_TABLES = {
+  main: { id: 'main', label: '標準桌', buyIn: 1000, reserve: 2000, art: 'assets/back/b01.webp' },
+  low: { id: 'low', label: '輕鬆桌', buyIn: 500, reserve: 1000, art: 'assets/back/b02.webp' }
+};
+var B2 = { tableId: 'main', st: null, hand: null, selected: {}, sending: false, lastTick: 0, fx: { deal: null, action: null, result: null, lastActionKey: '' } };
+function b2TableInfo() { return B2_TABLES[B2.tableId] || B2_TABLES.main; }
+function b2Cfg() { return Object.assign({}, gcfg('big2'), b2TableInfo(), (B2.st && B2.st.settings) || {}); }
+function openBig2Table(tableId) {
+  if (!B2_TABLES[tableId]) return;
+  liveOff('big2:');
+  B2.tableId = tableId;
+  B2.st = null; B2.hand = null; B2.selected = {}; B2.sending = false; B2.lastTick = 0; B2.tickKey = null; B2.tickTries = 0;
+  B2.fx = { deal: null, action: null, result: null, lastActionKey: '' };
+  switchTab('big2');
+}
 function b2ActionKey(a, no) { return a ? [no || 0, a.type, a.at || 0, a.seat, (a.cards || []).join('-')].join(':') : ''; }
 function planBig2Fx(prev, next, first) {
   if (!next) return;
@@ -3875,7 +3897,7 @@ function b2Combo(cards) {
 function b2Selected(cards) { return cards.filter(function (c) { return !!B2.selected[c]; }); }
 
 function renderBig2(force) {
-  var st = B2.st, c = gcfg('big2'), me = b2Seat(), isAdmin = S.me.role === 'admin';
+  var st = B2.st, c = b2Cfg(), me = b2Seat(), isAdmin = S.me.role === 'admin';
   if (!st) st = { seats: [null, null, null, null], round: { no: 0, phase: 'idle', deadline: 0, turn: -1, leader: -1, lastPlay: null, lastAction: null } };
   var R = st.round || {}, seated = st.seats.filter(Boolean).length, hand = B2.hand && B2.hand.roundNo === R.no ? b2Sort(B2.hand.cards || []) : [];
   var have = {};
@@ -3883,12 +3905,12 @@ function renderBig2(force) {
   Object.keys(B2.selected).forEach(function (x) { if (!have[x]) delete B2.selected[x]; });
   var selected = b2Selected(hand), combo = b2Combo(selected);
   var canLeave = me >= 0 && R.phase !== 'playing';
-  var h = gameHead('大老二', (canLeave ? '<button class="mini red" data-b2="leave">離座</button>' : '') + rulesBtn('big2'));
+  var h = gameHead('大老二・' + c.label, (canLeave ? '<button class="mini red" data-b2="leave">離座</button>' : '') + rulesBtn('big2'));
   var positions = me >= 0 ? [
     { i: (me + 2) % 4, pos: 'top' }, { i: (me + 3) % 4, pos: 'left' },
     { i: (me + 1) % 4, pos: 'right' }, { i: me, pos: 'bottom' }
   ] : [{ i: 0, pos: 'top' }, { i: 1, pos: 'left' }, { i: 2, pos: 'right' }, { i: 3, pos: 'bottom' }];
-  var potText = R.phase === 'result' && R.result ? '獎池 ' + fmt(R.result.prize) : '底注 1,000';
+  var potText = R.phase === 'result' && R.result ? '獎池 ' + fmt(R.result.prize) : '底注 ' + fmt(c.buyIn);
   h += '<div class="b2-board" id="b2Board"><div class="b2-topline"><span class="b2-round">第 ' + fmt(R.no || 0) + ' 局' + (R.forced ? ' · ' + seated + ' 人' : '') + '</span><div class="b2-status" id="b2Status"></div><span class="b2-pot">' + potText + '</span></div><div class="b2-clock"><i id="b2Clock"></i></div><div class="b2-arena">';
   positions.forEach(function (spot) {
     var i = spot.i, seat = st.seats[i];
@@ -3934,10 +3956,10 @@ function renderBig2(force) {
       '<button class="btn ghost b2-pass" data-b2="pass"' + (canPass ? '' : ' disabled') + '>PASS</button>' +
       '<button class="btn b2-play" data-b2="play"' + (combo ? '' : ' disabled') + '>出牌</button></div></div>';
   } else if (R.phase === 'countdown') bar = '<div class="pk-wait">四人到齊，準備發牌</div>';
-  else if (R.phase === 'result') bar = '<div class="pk-wait">結算完成，20 秒後全部離桌</div>';
+  else if (R.phase === 'result') bar = '<div class="pk-wait">結算完成，' + c.resultSec + ' 秒後全部離桌</div>';
   else bar = '<div class="pk-wait">等待四人坐滿</div>';
   if (isAdmin && (R.phase === 'idle' || R.phase === 'countdown')) bar += '<div class="adm-row"><button class="mini" data-b2="admin-start"' + (seated >= 2 ? '' : ' disabled') + '>管理員：以 ' + seated + ' 人強制開始</button></div>';
-  h += '<div class="g-bar">' + bar + '</div><p class="g-rule">每人預留 2,000。正常輸家賠 1,000；結束時手上有任何一張 2 就賠 2,000。贏家取得全部獎池。</p>';
+  h += '<div class="g-bar">' + bar + '</div><p class="g-rule">' + esc(c.label) + '每人預留 ' + fmt(c.reserve) + '。正常輸家賠 ' + fmt(c.buyIn) + '；結束時手上有任何一張 2 就賠 ' + fmt(c.reserve) + '。贏家取得全部獎池。</p>';
 
   if (put('vBig2', h, force)) {
     var root = $('vBig2'); bindBack(root);
@@ -3956,11 +3978,12 @@ function renderBig2(force) {
         var kind = b.getAttribute('data-b2'), fn = { sit: 'big2Sit', leave: 'big2Leave', play: 'big2Play', pass: 'big2Pass', 'admin-start': 'adminBig2Start' }[kind];
         if (kind === 'admin-start') {
           formSheet('以 ' + seated + ' 人強制開始？', '仍會切成四份手牌，未使用的 ' + ((4 - seated) * 13) + ' 張牌會整份作廢。', '', '強制開始', 'danger', function () {
-            return pcall(fn).then(function (r) { return '已用 ' + r.players + ' 人開局，作廢 ' + r.discarded + ' 張牌'; });
+            return pcall(fn, { tableId: B2.tableId }).then(function (r) { return '已用 ' + r.players + ' 人開局，作廢 ' + r.discarded + ' 張牌'; });
           });
           return;
         }
-        var data = kind === 'play' ? { cards: b2Selected(hand) } : {};
+        var data = { tableId: B2.tableId };
+        if (kind === 'play') data.cards = b2Selected(hand);
         B2.sending = true; busy(b, true);
         pcall(fn, data).then(function () { if (kind === 'play') B2.selected = {}; }, function (e) { toast(e.message, 'bad'); }).then(function () { B2.sending = false; busy(b, false); });
       };
@@ -3989,7 +4012,7 @@ function big2Heartbeat() {
   var st = B2.st;
   if (!st || !S.me || S.tab !== 'big2') return;
   var R = st.round || {};
-  dueTick(B2, R.no + ':' + R.phase + ':' + R.deadline, R.deadline, 'big2Tick');
+  dueTick(B2, B2.tableId + ':' + R.no + ':' + R.phase + ':' + R.deadline, R.deadline, 'big2Tick', { tableId: B2.tableId });
 }
 
 /* ---------- 射龍門 ---------- */
@@ -4158,7 +4181,7 @@ function sheetGames() {
       f('gtMin', '最低下注', gt.minBet) + f('gtMax', '最高下注', gt.maxBet) + '</div>' +
     '<div class="stat-h">拉霸機</div><div class="fld-grid"><div class="fld"><label for="slOn">狀態</label>' + sel('slOn', sl.enabled) + '</div>' + f('slBets', '下注選項（逗號分開）', sl.bets.join(',')) + '</div>' +
     '<div class="stat-h">骰寶</div><div class="fld-grid"><div class="fld"><label for="dcOn">狀態</label>' + sel('dcOn', gcfg('dice').enabled) + '</div><div></div>' + f('dcMin', '每格最低下注', gcfg('dice').minBet) + f('dcMax', '一次總上限', gcfg('dice').maxTotal) + '</div>' +
-    '<div class="stat-h">大老二</div><p class="note-s">入場費固定 1,000，入座預留固定 2,000。</p><div class="fld-grid"><div class="fld"><label for="b2On">狀態</label>' + sel('b2On', b2.enabled) + '</div><div></div>' + f('b2Ready', '滿桌開局倒數秒數', b2.readySec) + f('b2Turn', '每回合思考秒數', b2.turnSec) + f('b2Result', '結算畫面秒數', b2.resultSec) + '</div>',
+    '<div class="stat-h">大老二</div><p class="note-s">標準桌：底注 1,000／有 2 賠 2,000；輕鬆桌：底注 500／有 2 賠 1,000。以下開關與時間同時套用兩桌。</p><div class="fld-grid"><div class="fld"><label for="b2On">狀態</label>' + sel('b2On', b2.enabled) + '</div><div></div>' + f('b2Ready', '滿桌開局倒數秒數', b2.readySec) + f('b2Turn', '每回合思考秒數', b2.turnSec) + f('b2Result', '結算畫面秒數', b2.resultSec) + '</div>',
     '儲存', '', function () {
       var n = function (id) { return Number($(id).value); };
       var bets = $('slBets').value.split(/[,，\s]+/).filter(Boolean).map(Number);
@@ -4230,16 +4253,17 @@ function sheetRules(game) {
       ['賠率', '黑傑克（前兩張就 21）賠 1.5 倍、贏賠 1 倍、平手退注、爆牌或比荷官小輸']
     ]);
   } else if (game === 'big2') {
-    h = '<h3>大老二說明</h3><p class="desc">固定四人，第一個出完 13 張牌的人獲勝。</p>' + ruleRows([
-      ['開局', '四人坐滿後倒數 20 秒發牌；持有梅花 3 的玩家先出，第一手必須包含梅花 3'],
+    var b2c = b2Cfg();
+    h = '<h3>大老二・' + esc(b2c.label) + '說明</h3><p class="desc">固定四人，第一個出完 13 張牌的人獲勝。</p>' + ruleRows([
+      ['開局', '四人坐滿後倒數 ' + b2c.readySec + ' 秒發牌；持有梅花 3 的玩家先出，第一手必須包含梅花 3'],
       ['牌型', '可以出單張、對子、順子、葫蘆、鐵支、同花順；沒有單獨三條，也沒有普通同花'],
       ['壓牌', '單張、對子、順子、葫蘆只能壓同牌型，不可以跨牌型'],
       ['炸彈', '鐵支與同花順可以無視目前牌型直接壓；同花順大於鐵支'],
       ['牌權', '其他三人都 Pass 後，牌權回到最後出牌者，可以重新自由出牌'],
       ['順子', '23456 最大、A2345 第二大；其他依最高張比較。同點數再比花色：黑桃＞愛心＞方塊＞梅花'],
-      ['時間', '每人 30 秒。可以 Pass 時超時自動 Pass；拿到牌權時超時自動出最小合法單張'],
-      ['金額', '入座鎖定 2,000。正常輸家賠 1,000；手上只要有任何一張 2 就賠 2,000；贏家全拿'],
-      ['離桌', '牌局中不能離座；斷線後可以重連。結算顯示 20 秒後，四人全部自動離桌']
+      ['時間', '每人 ' + b2c.turnSec + ' 秒。可以 Pass 時超時自動 Pass；拿到牌權時超時自動出最小合法單張'],
+      ['金額', '入座鎖定 ' + fmt(b2c.reserve) + '。正常輸家賠 ' + fmt(b2c.buyIn) + '；手上只要有任何一張 2 就賠 ' + fmt(b2c.reserve) + '；贏家全拿'],
+      ['離桌', '牌局中不能離座；斷線後可以重連。結算顯示 ' + b2c.resultSec + ' 秒後，四人全部自動離桌']
     ]);
   } else if (game === 'gate') {
     var g = gcfg('gate');
@@ -4552,7 +4576,7 @@ function endSession() {
   S.me = null; S.player = null; S.cfg = null; S.roster = [];
   S.acc = null; S.accounts = []; S.sid = null; S.tab = 'home'; S.meTab = 'acct';
   PK.st = null; PK.hole = null; PK.synced = false; PK.fx = { pendingDeal: 0, pendingBets: null, pendingPayout: null, paidHand: 0 };
-  BJ.st = null; B2.st = null; B2.hand = null; B2.selected = {}; S.playersAt = 0; S.accountsAt = 0; closeRaise();
+  BJ.st = null; B2.tableId = 'main'; B2.st = null; B2.hand = null; B2.selected = {}; S.playersAt = 0; S.accountsAt = 0; closeRaise();
   MAIL.list = []; MAIL.broadcast = []; MAIL.personal = []; MAIL.claimed = {}; HIGHLIGHTS = []; $('announce').hidden = true;
   _last = {};
   closeSheet();
@@ -4672,7 +4696,8 @@ function renderHome(force) {
     '<p>' + (seated ? seated + ' 人在桌上' : '還沒有人入座') + '</p></div><span class="chev">›</span></button>';
   var bjSeated = BJ.st ? BJ.st.seats.filter(Boolean).length : 0, bjLive = BJ.st && BJ.st.round.phase !== 'idle';
   h += '<div class="game-grid">' +
-    '<button class="game mini-g" data-go="big2"><div class="game-suit">2</div><div class="game-txt"><h3>大老二</h3><p>四人制・贏家全拿</p></div></button>' +
+    '<button class="game mini-g b2-entry" data-b2table="main"><div class="game-suit game-art"><img src="assets/back/b01.webp" alt=""></div><div class="game-txt"><h3>大老二・標準桌</h3><p>底注 1,000・有 2 賠 2,000</p></div></button>' +
+    '<button class="game mini-g b2-entry b2-low" data-b2table="low"><div class="game-suit game-art"><img src="assets/back/b02.webp" alt=""></div><div class="game-txt"><h3>大老二・輕鬆桌</h3><p>底注 500・有 2 賠 1,000</p></div></button>' +
     '<button class="game mini-g" data-go="bj"><div class="game-suit">21</div><div class="game-txt"><h3>21 點</h3><p>' + (bjLive ? '進行中' : bjSeated ? bjSeated + ' 人在桌上' : 'AI 荷官發牌') + '</p></div></button>' +
     '<button class="game mini-g" data-go="gate"><div class="game-suit">🐉</div><div class="game-txt"><h3>射龍門</h3><p>射進兩柱中間</p></div></button>' +
     '<button class="game mini-g" data-go="slot"><div class="game-suit">🎰</div><div class="game-txt"><h3>拉霸機</h3><p>拉一把試手氣</p></div></button>' +
@@ -4684,6 +4709,7 @@ function renderHome(force) {
     var gt = $('goTasks');
     if (gt) gt.onclick = sheetTasks;
     $('vHome').querySelectorAll('[data-go]').forEach(function (b) { b.onclick = function () { switchTab(b.getAttribute('data-go')); }; });
+    $('vHome').querySelectorAll('[data-b2table]').forEach(function (b) { b.onclick = function () { openBig2Table(b.getAttribute('data-b2table')); }; });
     $('vHome').querySelector('.idcard').onclick = function () { sheetProfile(S.me.pid); };
   }
   paintSeason();

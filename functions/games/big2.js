@@ -1,6 +1,7 @@
 'use strict';
 /* games/big2.js — 四人台灣大老二
-   四人坐滿後倒數 20 秒；每人鎖定 2000，正常輸家賠 1000、手上有 2 賠 2000，贏家全拿。
+   標準桌每人鎖定 2000，正常輸家賠 1000、手上有 2 賠 2000；
+   輕鬆桌每人鎖定 1000，正常輸家賠 500、手上有 2 賠 1000，贏家全拿。
    公開桌面只存剩餘張數；完整手牌存在 secret，玩家只能讀自己的 hands/{pid}。 */
 
 const { AppError, seasonId } = require('../core/util');
@@ -9,7 +10,11 @@ const TK = require('../core/tasks');
 const C = require('./cards');
 const R = require('./big2rules');
 
-const TABLE_ID = 'main';
+const TABLES = Object.freeze({
+  main: Object.freeze({ label: '標準桌', buyIn: 1000, reserve: 2000 }),
+  low: Object.freeze({ label: '輕鬆桌', buyIn: 500, reserve: 1000 })
+});
+const TABLE_IDS = Object.keys(TABLES);
 const DEFAULTS = {
   enabled: true,
   seatCount: 4,
@@ -28,10 +33,18 @@ function blankRound(no) {
   };
 }
 
-function newTable() {
+function tableIdOf(req) {
+  const id = String((req.data && req.data.tableId) || 'main');
+  if (!TABLES[id]) throw new AppError('找不到這張大老二牌桌', 'bad-table', 'invalid-argument');
+  return id;
+}
+
+function newTable(tableId) {
+  const id = TABLES[tableId] ? tableId : 'main';
   return {
-    id: TABLE_ID,
-    settings: Object.assign({}, DEFAULTS),
+    id,
+    label: TABLES[id].label,
+    settings: Object.assign({}, DEFAULTS, TABLES[id]),
     seats: Array.from({ length: 4 }, () => null),
     round: blankRound(0),
     log: [], version: 0
@@ -49,24 +62,43 @@ function nextSeat(st, from) {
 function full(st) { return st.seats.length === 4 && st.seats.every(Boolean); }
 function addLog(st, t, text) { st.log = (st.log || []).concat([{ t, text }]).slice(-30); }
 
+function heldForTable(acc, tableId) {
+  const held = acc.inPlay && acc.inPlay.big2;
+  if (!held) return 0;
+  const heldTable = held.tableId || 'main';
+  return heldTable === tableId ? Number(held.amount) || 0 : 0;
+}
+
+function clearHeldForTable(acc, tableId) {
+  const held = acc.inPlay && acc.inPlay.big2;
+  if (held && (held.tableId || 'main') === tableId) delete acc.inPlay.big2;
+}
+
 function createBig2({ db, now, requireSession, requireAdmin }) {
-  const tableRef = () => db.collection('games').doc('big2').collection('tables').doc(TABLE_ID);
-  const secretRef = () => tableRef().collection('secret').doc('state');
-  const handRef = (pid) => tableRef().collection('hands').doc(pid);
+  const tableRef = (tableId) => db.collection('games').doc('big2').collection('tables').doc(tableId);
+  const secretRef = (tableId) => tableRef(tableId).collection('secret').doc('state');
+  const handRef = (tableId, pid) => tableRef(tableId).collection('hands').doc(pid);
   const cfgRef = () => db.collection('config').doc('app');
   const seasonRef = (sid) => db.collection('seasons').doc(sid);
   const accRef = (sid, pid) => seasonRef(sid).collection('accounts').doc(pid);
   const playerRef = (pid) => db.collection('players').doc(pid);
 
-  async function run(fn) {
+  async function run(tableId, fn, readAllTables) {
     return db.runTransaction(async (tx) => {
       const t = now(), sid = seasonId(t);
-      const [tSnap, secSnap, cfgSnap, seasonSnap] = [
-        await tx.get(tableRef()), await tx.get(secretRef()), await tx.get(cfgRef()), await tx.get(seasonRef(sid))
-      ];
+      const readIds = readAllTables ? TABLE_IDS : [tableId];
+      const [tableSnaps, secSnap, cfgSnap, seasonSnap] = await Promise.all([
+        Promise.all(readIds.map((id) => tx.get(tableRef(id)))),
+        tx.get(secretRef(tableId)), tx.get(cfgRef()), tx.get(seasonRef(sid))
+      ]);
+      const tables = {};
+      readIds.forEach((id, i) => { tables[id] = tableSnaps[i].exists ? tableSnaps[i].data() : null; });
+      const tSnap = tableSnaps[readIds.indexOf(tableId)];
       const rawCfg = cfgSnap.exists ? cfgSnap.data() : {};
-      const st = tSnap.exists ? tSnap.data() : newTable();
-      st.settings = Object.assign({}, DEFAULTS, st.settings, ((rawCfg.games || {}).big2 || {}), { seatCount: 4, buyIn: 1000, reserve: 2000 });
+      const st = tSnap.exists ? tSnap.data() : newTable(tableId);
+      st.id = tableId;
+      st.label = TABLES[tableId].label;
+      st.settings = Object.assign({}, DEFAULTS, st.settings, ((rawCfg.games || {}).big2 || {}), TABLES[tableId], { seatCount: 4 });
       if (!Array.isArray(st.seats) || st.seats.length !== 4) st.seats = Array.from({ length: 4 }, (_, i) => (st.seats || [])[i] || null);
       if (!st.round) st.round = blankRound(0);
       const sec = secSnap.exists ? secSnap.data() : { hands: {}, discarded: [], roundNo: 0 };
@@ -75,7 +107,7 @@ function createBig2({ db, now, requireSession, requireAdmin }) {
       const cfg = E.cfgOf(rawCfg);
       const accs = {}, players = {}, playerPatch = {}, ledger = [], handOps = {};
       const ctx = {
-        t, sid, st, sec, cfg, rawCfg,
+        t, sid, st, sec, cfg, rawCfg, tableId, tables,
         seasonStatus: seasonSnap.exists ? (seasonSnap.data().status || 'active') : 'active',
         async acc(pid, asSid) {
           const s2 = asSid || sid, key = s2 + '|' + pid;
@@ -106,8 +138,8 @@ function createBig2({ db, now, requireSession, requireAdmin }) {
       if (ctx.noop) return Object.assign({ now: t }, out || {});
       st.version = (st.version || 0) + 1;
       st.updatedAt = t;
-      tx.set(tableRef(), st);
-      tx.set(secretRef(), sec);
+      tx.set(tableRef(tableId), st);
+      tx.set(secretRef(tableId), sec);
       Object.keys(accs).forEach((key) => {
         const cut = key.indexOf('|'), s2 = key.slice(0, cut), pid = key.slice(cut + 1);
         E.refresh(accs[key], cfg, t);
@@ -118,8 +150,8 @@ function createBig2({ db, now, requireSession, requireAdmin }) {
         tx.set(accRef(s2, pid).collection('ledger').doc(), Object.assign(event, { at: t, by: pid, note: event.note || null }));
       });
       Object.keys(handOps).forEach((pid) => {
-        if (handOps[pid] === null) tx.delete(handRef(pid));
-        else tx.set(handRef(pid), handOps[pid]);
+        if (handOps[pid] === null) tx.delete(handRef(tableId, pid));
+        else tx.set(handRef(tableId, pid), handOps[pid]);
       });
       Object.keys(playerPatch).forEach((pid) => { if (players[pid]) tx.update(playerRef(pid), playerPatch[pid]); });
       return Object.assign({ now: t }, out || {});
@@ -219,7 +251,7 @@ function createBig2({ db, now, requireSession, requireAdmin }) {
     for (const row of rows) {
       const seat = st.seats[row.seat];
       const acc = await ctx.acc(row.pid, seat.sid || ctx.sid);
-      const locked = acc.inPlay && acc.inPlay.big2 ? Number(acc.inPlay.big2.amount) || S.reserve : S.reserve;
+      const locked = heldForTable(acc, ctx.tableId) || S.reserve;
       if (row.seat === winnerIndex) {
         acc.wallet += locked + loserTotal;
         ctx.led(row.pid, seat.sid, { type: 'game', amount: locked + loserTotal, note: '大老二獲勝，獎池 ' + prize });
@@ -228,7 +260,7 @@ function createBig2({ db, now, requireSession, requireAdmin }) {
         acc.wallet += refund;
         ctx.led(row.pid, seat.sid, { type: 'game', amount: refund, note: '大老二結算，賠 ' + row.loss + (row.hasTwo ? '（手牌有 2）' : '') });
       }
-      if (acc.inPlay) delete acc.inPlay.big2;
+      clearHeldForTable(acc, ctx.tableId);
       if (E.recordPlay(acc, ctx.t, 'big2', 0)) {
         const pd = await ctx.player(row.pid);
         if (pd && TK.bump(pd, ctx.t, 'play', 1, ctx.rawCfg)) ctx.patchPlayer(row.pid, { tasks: pd.tasks });
@@ -282,10 +314,10 @@ function createBig2({ db, now, requireSession, requireAdmin }) {
     const seat = ctx.st.seats[i];
     if (!seat) return;
     const acc = await ctx.acc(seat.pid, seat.sid || ctx.sid);
-    const held = acc.inPlay && acc.inPlay.big2 ? Number(acc.inPlay.big2.amount) || 0 : 0;
+    const held = heldForTable(acc, ctx.tableId);
     if (held > 0) {
       acc.wallet += held;
-      delete acc.inPlay.big2;
+      clearHeldForTable(acc, ctx.tableId);
       ctx.led(seat.pid, seat.sid, { type: 'game', amount: held, note: note || '大老二離桌退回預留金' });
       E.autoRepay(acc, ctx.cfg, ctx.t).forEach((event) => ctx.led(seat.pid, seat.sid, { type: 'repay', amount: event.amount }));
     }
@@ -306,7 +338,8 @@ function createBig2({ db, now, requireSession, requireAdmin }) {
 
     async adminStart(req) {
       await requireAdmin(req);
-      return run(async (ctx) => {
+      const tableId = tableIdOf(req);
+      return run(tableId, async (ctx) => {
         const Rn = ctx.st.round || {};
         if (Rn.phase !== 'idle' && Rn.phase !== 'countdown') throw new AppError('這局已經開始了', 'in-round');
         const count = ctx.st.seats.filter(Boolean).length;
@@ -319,34 +352,46 @@ function createBig2({ db, now, requireSession, requireAdmin }) {
 
     async sit(req) {
       const session = await requireSession(req);
-      return run(async (ctx) => {
+      const tableId = tableIdOf(req);
+      return run(tableId, async (ctx) => {
         checkOpen(ctx);
         const st = ctx.st;
         if (st.round.phase === 'playing' || st.round.phase === 'result') throw new AppError('本局進行中，請等下一輪', 'in-round');
         if (seatOf(st, session.pid) >= 0) throw new AppError('你已經入座了', 'seated');
         const free = st.seats.findIndex((x) => !x);
         if (free < 0) throw new AppError('四個位子都坐滿了', 'full');
+        const otherTable = TABLE_IDS.find((id) => {
+          if (id === ctx.tableId) return false;
+          const other = ctx.tables[id];
+          return other && Array.isArray(other.seats) && seatOf(other, session.pid) >= 0;
+        });
+        if (otherTable) throw new AppError('你已經在大老二' + TABLES[otherTable].label + '，請先離桌', 'seated-other-table');
         const acc = await ctx.acc(session.pid);
         if (acc.inPlay && acc.inPlay.big2) {
-          acc.wallet += Number(acc.inPlay.big2.amount) || 0;
+          const stale = Number(acc.inPlay.big2.amount) || 0;
+          if (stale > 0) {
+            acc.wallet += stale;
+            ctx.led(session.pid, ctx.sid, { type: 'game', amount: stale, note: '大老二舊預留金退回' });
+          }
           delete acc.inPlay.big2;
         }
-        if (acc.wallet < st.settings.reserve) throw new AppError('錢包至少要有 2,000 才能入座', 'poor');
+        if (acc.wallet < st.settings.reserve) throw new AppError('錢包至少要有 ' + st.settings.reserve.toLocaleString('en-US') + ' 才能入座', 'poor');
         const pd = await ctx.player(session.pid);
         acc.wallet -= st.settings.reserve;
         if (!acc.inPlay) acc.inPlay = {};
-        acc.inPlay.big2 = { tableId: TABLE_ID, amount: st.settings.reserve };
-        ctx.led(session.pid, ctx.sid, { type: 'game', amount: -st.settings.reserve, note: '大老二預留金' });
+        acc.inPlay.big2 = { tableId: ctx.tableId, amount: st.settings.reserve };
+        ctx.led(session.pid, ctx.sid, { type: 'game', amount: -st.settings.reserve, note: '大老二' + st.label + '預留金' });
         st.seats[free] = { pid: session.pid, name: pd ? pd.name : session.pid, sid: ctx.sid, count: 0, timeouts: 0 };
         addLog(st, ctx.t, st.seats[free].name + ' 入座');
         startCountdown(ctx);
         return { seat: free };
-      });
+      }, true);
     },
 
     async leave(req) {
       const session = await requireSession(req);
-      return run(async (ctx) => {
+      const tableId = tableIdOf(req);
+      return run(tableId, async (ctx) => {
         const st = ctx.st, i = seatOf(st, session.pid);
         if (i < 0) throw new AppError('你不在桌上', 'not-seated');
         if (st.round.phase === 'playing') throw new AppError('牌局開始後不能離座；斷線會由系統自動代操作', 'in-round');
@@ -364,7 +409,8 @@ function createBig2({ db, now, requireSession, requireAdmin }) {
       const session = await requireSession(req);
       const cards = req.data && req.data.cards;
       if (!Array.isArray(cards) || cards.length < 1 || cards.length > 5) throw new AppError('請選 1、2 或 5 張牌', 'bad-cards', 'invalid-argument');
-      return run(async (ctx) => {
+      const tableId = tableIdOf(req);
+      return run(tableId, async (ctx) => {
         const st = ctx.st, i = seatOf(st, session.pid);
         if (i < 0) throw new AppError('你不在桌上', 'not-seated');
         if (st.round.phase !== 'playing') throw new AppError('牌局還沒開始', 'not-playing');
@@ -376,7 +422,8 @@ function createBig2({ db, now, requireSession, requireAdmin }) {
 
     async pass(req) {
       const session = await requireSession(req);
-      return run(async (ctx) => {
+      const tableId = tableIdOf(req);
+      return run(tableId, async (ctx) => {
         const st = ctx.st, i = seatOf(st, session.pid);
         if (i < 0) throw new AppError('你不在桌上', 'not-seated');
         if (st.round.phase !== 'playing') throw new AppError('牌局還沒開始', 'not-playing');
@@ -388,7 +435,8 @@ function createBig2({ db, now, requireSession, requireAdmin }) {
 
     async tick(req) {
       await requireSession(req);
-      return run(async (ctx) => {
+      const tableId = tableIdOf(req);
+      return run(tableId, async (ctx) => {
         const st = ctx.st, Rn = st.round;
         if (!Rn.deadline || ctx.t < Rn.deadline) { ctx.noop = true; return { did: null }; }
         if (Rn.phase === 'countdown') {
@@ -419,16 +467,20 @@ function createBig2({ db, now, requireSession, requireAdmin }) {
 
     /* 季末鎖定時退回所有仍在桌上的預留金，未完成的牌局不結算。 */
     async closeSeason(oldSid) {
-      return run(async (ctx) => {
-        for (let i = 0; i < ctx.st.seats.length; i++) {
-          const seat = ctx.st.seats[i];
-          if (seat && (seat.sid || oldSid) === oldSid) await refundSeat(ctx, i, '大老二季末退回預留金');
-        }
-        clearTable(ctx);
-        return {};
-      });
+      const closed = [];
+      for (const tableId of TABLE_IDS) {
+        closed.push(await run(tableId, async (ctx) => {
+          for (let i = 0; i < ctx.st.seats.length; i++) {
+            const seat = ctx.st.seats[i];
+            if (seat && (seat.sid || oldSid) === oldSid) await refundSeat(ctx, i, '大老二季末退回預留金');
+          }
+          clearTable(ctx);
+          return { tableId };
+        }));
+      }
+      return { tables: closed };
     }
   };
 }
 
-module.exports = { createBig2, newTable, blankRound, DEFAULTS };
+module.exports = { createBig2, newTable, blankRound, DEFAULTS, TABLES, tableIdOf };
