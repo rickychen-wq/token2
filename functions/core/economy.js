@@ -4,8 +4,10 @@
 
 const { AppError, seasonId, seasonRange, cleanPid } = require('./util');
 const E = require('./econ');
-const { expireTemp } = require('./shop');
+const { expireTemp, grant } = require('./shop');
+const { merge } = require('./catalog');
 const T = require('./tasks');
+const catalogById = merge(null);
 
 function createEconomy({ db, now, requireSession, requireAdmin }) {
   const cfgRef = () => db.collection('config').doc('app');
@@ -113,10 +115,15 @@ function createEconomy({ db, now, requireSession, requireAdmin }) {
       let got = null;
       let tasks = null;
       const r = await mutate(s.pid, (acc, cfg, t, raw, pl, setPlayer) => {
-        const out = T.claim(pl, acc, t, id, raw);
+        const out = T.claim(pl, acc, t, id, raw, req.data && req.data.choice);
+        if (out.task.itemId) {
+          const item = catalogById[out.task.itemId];
+          if (!item) throw new AppError('任務獎勵不存在', 'bad-reward');
+          grant(pl, item, out.task.qty || 1);
+        }
         got = out.task;
         tasks = T.progress(pl, acc, t, raw);
-        setPlayer({ tasks: pl.tasks, stars: pl.stars || 0 });
+        setPlayer({ tasks: pl.tasks, stars: pl.stars || 0, items: pl.items || {}, unlocked: pl.unlocked || {} });
         return out.entries;
       });
       return { got, tasks, account: r.account };

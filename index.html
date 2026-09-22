@@ -1628,7 +1628,7 @@ function showProfile(pid) {
 
 /* ---------- v12 任務 ---------- */
 var TASKS = { data: null, cat: 'daily', loading: false, error: null, sid: null };
-var TASK_CAT = [['daily', '每日'], ['weekly', '每週'], ['career', '生涯']];
+var TASK_CAT = [['daily', '每日'], ['weekly', '每週'], ['career', '生涯'], ['special', '專屬']];
 
 function taskEntry() {
   var d = TASKS.data;
@@ -1643,7 +1643,7 @@ function taskEntry() {
   var n = d ? d.summary.total : 0;
   return '<button class="game task-entry" id="goTasks"><div class="game-bg">✦</div><div class="game-suit">✦</div>' +
     '<div class="game-txt"><h3>任務' + (n ? '<span class="tag live">' + n + ' 個可領</span>' : '') + '</h3>' +
-    '<p>' + (d ? (n ? '有獎勵等著你拿' : '每日、每週、生涯任務') : '載入中…') + '</p></div><span class="chev">›</span></button>';
+    '<p>' + (d ? (n ? '有獎勵等著你拿' : '每日、每週、生涯與專屬任務') : '載入中…') + '</p></div><span class="chev">›</span></button>';
 }
 
 function loadTasks(then) {
@@ -1673,13 +1673,50 @@ function taskRow(x) {
   var reward = [];
   if (x.money) reward.push(fmt(x.money));
   if (x.stars) reward.push('★ ' + x.stars);
+  if (x.itemName) reward.push(esc(x.itemName) + (x.qty > 1 ? ' ×' + x.qty : ''));
   return '<div class="task' + (x.claimed ? ' claimed' : x.done ? ' ready' : '') + '">' +
     '<div class="task-k"><b>' + esc(x.name) + '</b><small>' + esc(x.desc) + '</small>' +
     '<div class="task-bar"><i style="width:' + pct + '%"></i></div>' +
     '<span class="task-num">' + x.have + ' / ' + x.need + '</span></div>' +
     '<div class="task-r"><span class="task-rew">' + reward.join('　') + '</span>' +
     '<button class="btn sm' + (x.done && !x.claimed ? '' : ' ghost') + '" data-claim="' + x.id + '"' +
-      (x.done && !x.claimed ? '' : ' disabled') + '>' + (x.claimed ? '已領' : '領取') + '</button></div></div>';
+      (x.choice ? ' data-choice="' + x.choice + '"' : '') +
+      (x.done && !x.claimed ? '' : ' disabled') + '>' + (x.claimed ? '已領' : x.choice ? '選擇' : '領取') + '</button></div></div>';
+}
+
+function claimTaskReward(id, choice, button, after) {
+  if (button) button.disabled = true;
+  call('taskClaim', { id: id, choice: choice || null }).then(function (r) {
+    TASKS.data = r.tasks;
+    var g = r.got, msg = [];
+    if (g.money) msg.push(fmt(g.money) + ' 遊戲幣');
+    if (g.stars) msg.push('★ ' + g.stars);
+    if (g.itemName) msg.push(g.itemName + (g.qty > 1 ? ' ×' + g.qty : ''));
+    toast(g.name + '：' + msg.join(' ＋ '), 'good');
+    if (after) after();
+    if (S.tab === 'home') renderHome(true);
+  }).catch(function (e) {
+    if (button) button.disabled = false;
+    toast(e.message, 'bad');
+  });
+}
+
+function sheetTaskUr(task) {
+  var owned = (((S.player || {}).unlocked || {}).avatars) || [];
+  var choices = CATALOG.filter(function (x) { return x.type === 'avatar' && x.sub === 'ur'; });
+  var rows = choices.map(function (it) {
+    var have = owned.indexOf(it.id) >= 0;
+    return '<button class="closet-item wide' + (have ? ' on' : '') + '" type="button" data-task-ur="' + it.id + '"' + (have ? ' disabled' : '') + '>' +
+      itemThumb(it, 64) + '<span>' + esc(it.name) + '</span><small>' + (have ? '已擁有' : '選這張') + '</small></button>';
+  }).join('');
+  openSheet('<h3 class="center">自選 UR 頭像</h3><p class="desc center">完成「' + esc(task.name) + '」的永久獎勵，選定後無法更換。</p>' +
+    '<div class="closet-row" style="margin-top:14px">' + rows + '</div>' +
+    '<div class="acts" style="margin-top:14px"><button class="btn ghost" type="button" data-back>返回任務</button></div>', function (sh) {
+      sh.querySelector('[data-back]').onclick = sheetTasks;
+      sh.querySelectorAll('[data-task-ur]').forEach(function (b) {
+        b.onclick = function () { claimTaskReward(task.id, b.getAttribute('data-task-ur'), b, sheetTasks); };
+      });
+    });
 }
 
 function sheetTasks() {
@@ -1722,16 +1759,10 @@ function sheetTasks() {
         sh.querySelectorAll('[data-claim]').forEach(function (b) {
           if (b.disabled) return;
           b.onclick = function () {
-            b.disabled = true;
-            call('taskClaim', { id: b.getAttribute('data-claim') }).then(function (r) {
-              TASKS.data = r.tasks;
-              var g = r.got, msg = [];
-              if (g.money) msg.push(fmt(g.money) + ' 遊戲幣');
-              if (g.stars) msg.push('★ ' + g.stars);
-              toast(g.name + '：' + msg.join(' ＋ '), 'good');
-              render();
-              if (S.tab === 'home') renderHome(true);
-            }).catch(function (e) { b.disabled = false; toast(e.message, 'bad'); });
+            var id = b.getAttribute('data-claim');
+            var task = d[TASKS.cat].find(function (x) { return x.id === id; });
+            if (b.getAttribute('data-choice') === 'ur') return sheetTaskUr(task);
+            claimTaskReward(id, null, b, render);
           };
         });
       });

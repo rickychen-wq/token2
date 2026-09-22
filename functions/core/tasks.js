@@ -1,11 +1,12 @@
 'use strict';
 /* core/tasks.js — v12 任務系統
 
-   40 個任務：每日 5、每週 10、生涯 25。
-   全部的進度都存在玩家永久文件的 p.tasks，分三桶：
+   48 個任務：每日 5、每週 10、生涯 25、專屬 8。
+   全部的進度都存在玩家永久文件的 p.tasks，分四桶：
      daily  — 換日歸零（台灣時間 00:00）
      weekly — 換季歸零（賽季就是一週，週一 00:00）
      career — 永遠累積
+     special — 德州專屬；大部分永遠累積，單日百場未完成時換日歸零
 
    場數這種「本日／本週」的數字直接沿用季帳戶已經有的 daily.plays 和 plays，
    不另外再記一份，避免兩邊對不起來。
@@ -85,7 +86,24 @@ const CAREER = [
   { id: 'c_perfect30', name: '每日模範生', desc: '累積 30 天完成全部每日任務', key: 'perfectDays', need: 30, money: 7500, stars: 15 }
 ];
 
-const ALL = { daily: DAILY, weekly: WEEKLY, career: CAREER };
+const UR_AVATARS = ['av_u01', 'av_u02', 'av_u03', 'av_u04', 'av_u05'];
+const UR_NAMES = {
+  av_u01: '深淵藍焰守護者', av_u02: '銀翼機甲王牌', av_u03: '太陽女帝',
+  av_u04: '月下紫晶女王', av_u05: '赤焰鬼角'
+};
+
+const SPECIAL = [
+  { id: 's_poker20', name: '德州初試', desc: '累積完成 20 場德州撲克', key: 'pokerHands', need: 20, money: 1000, stars: 5 },
+  { id: 's_poker50', name: '德州常客', desc: '累積完成 50 場德州撲克', key: 'pokerHands', need: 50, money: 2500, stars: 20 },
+  { id: 's_pocket_aa', name: '口袋王牌', desc: '德州起手兩張牌拿到 AA', key: 'pocketAces', need: 1, money: 1000, stars: 0 },
+  { id: 's_straight', name: '順勢而上', desc: '在德州完成一次順子牌型', key: 'straight', need: 1, money: 500, stars: 0 },
+  { id: 's_full_house', name: '滿堂紅', desc: '在德州完成一次葫蘆牌型', key: 'fullHouse', need: 1, money: 1000, stars: 0 },
+  { id: 's_target_item', name: '第一次交鋒', desc: '首次在德州對其他玩家使用道具', key: 'targetItem', need: 1, money: 1000, stars: 10 },
+  { id: 's_straight_flush', name: '天選牌型', desc: '在德州完成一次同花順', key: 'straightFlush', need: 1, money: 0, stars: 0, itemId: 'chest_6', qty: 1, itemName: '神秘寶箱' },
+  { id: 's_poker_day100', name: '百戰一日', desc: '台灣時間同一天內完成 100 場德州；未完成會在午夜歸零', key: 'pokerDay100', need: 100, money: 0, stars: 0, choice: 'ur', itemName: '自選 UR 頭像' }
+];
+
+const ALL = { daily: DAILY, weekly: WEEKLY, career: CAREER, special: SPECIAL };
 const BY_ID = {};
 Object.keys(ALL).forEach((cat) => ALL[cat].forEach((x) => { BY_ID[x.id] = Object.assign({ cat }, x); }));
 
@@ -103,6 +121,13 @@ function blankCareer() {
     firstAvatar: 0, firstBg: 0, firstItem: 0, firstFuse: 0, highlights: 0, claimed: {}
   };
 }
+function blankSpecial(day) {
+  return {
+    day, pokerHands: 0, dailyPokerHands: 0, pokerDay100: false,
+    pocketAces: 0, straight: 0, fullHouse: 0, targetItem: 0, straightFlush: 0,
+    claimed: {}
+  };
+}
 
 /* 換日／換季就把對應的桶歸零。任何一次讀寫玩家資料時都會先跑這個。 */
 function roll(p, t) {
@@ -112,12 +137,21 @@ function roll(p, t) {
   if (!tk.week || tk.week.week !== week) tk.week = blankWeek(week);
   if (!tk.career) tk.career = blankCareer();
   else tk.career = Object.assign(blankCareer(), tk.career);
+  if (!tk.special) tk.special = blankSpecial(day);
+  else {
+    tk.special = Object.assign(blankSpecial(day), tk.special);
+    if (tk.special.day !== day) {
+      tk.special.day = day;
+      if (!tk.special.pokerDay100) tk.special.dailyPokerHands = 0;
+    }
+  }
   p.tasks = tk;
   return tk;
 }
 
 /* ---------- 記錄事件 ----------
-   what: login | emote | skin | firstAvatar | firstBg | firstItem | firstFuse | highlight | play
+   what: login | emote | skin | firstAvatar | firstBg | firstItem | firstFuse | highlight | play |
+         pokerHand | pokerPocketAces | pokerStraight | pokerFullHouse | pokerTargetItem | pokerStraightFlush
    回傳有沒有真的改到東西，沒改到就不用寫回資料庫。 */
 function bump(p, t, what, n, rawCfg) {
   if (rawCfg !== undefined && !active(rawCfg, t)) return false;   // 測試週不計進度
@@ -140,6 +174,27 @@ function bump(p, t, what, n, rawCfg) {
   } else if (what === 'highlight') {
     c.highlights += (n || 1);
     changed = true;
+  } else if (what === 'pokerHand') {
+    const add = n || 1, s = tk.special;
+    s.pokerHands += add;
+    if (!s.pokerDay100) {
+      s.dailyPokerHands += add;
+      if (s.dailyPokerHands >= 100) {
+        s.dailyPokerHands = 100;
+        s.pokerDay100 = true;
+      }
+    }
+    changed = true;
+  } else if (what === 'pokerPocketAces') {
+    if (!tk.special.pocketAces) { tk.special.pocketAces = t; changed = true; }
+  } else if (what === 'pokerStraight') {
+    if (!tk.special.straight) { tk.special.straight = t; changed = true; }
+  } else if (what === 'pokerFullHouse') {
+    if (!tk.special.fullHouse) { tk.special.fullHouse = t; changed = true; }
+  } else if (what === 'pokerTargetItem') {
+    if (!tk.special.targetItem) { tk.special.targetItem = t; changed = true; }
+  } else if (what === 'pokerStraightFlush') {
+    if (!tk.special.straightFlush) { tk.special.straightFlush = t; changed = true; }
   } else if (['firstAvatar', 'firstBg', 'firstItem', 'firstFuse'].indexOf(what) >= 0) {
     if (!c[what]) { c[what] = t; changed = true; }
   }
@@ -193,6 +248,14 @@ function rawHave(task, p, acc, tk) {
     case 'career.firstItem': return tk.career.firstItem ? 1 : 0;
     case 'career.firstFuse': return tk.career.firstFuse ? 1 : 0;
     case 'career.highlights': return tk.career.highlights || 0;
+
+    case 'special.pokerHands': return tk.special.pokerHands || 0;
+    case 'special.pocketAces': return tk.special.pocketAces ? 1 : 0;
+    case 'special.straight': return tk.special.straight ? 1 : 0;
+    case 'special.fullHouse': return tk.special.fullHouse ? 1 : 0;
+    case 'special.targetItem': return tk.special.targetItem ? 1 : 0;
+    case 'special.straightFlush': return tk.special.straightFlush ? 1 : 0;
+    case 'special.pokerDay100': return tk.special.pokerDay100 ? 100 : (tk.special.dailyPokerHands || 0);
     default: return 0;
   }
 }
@@ -200,6 +263,7 @@ function rawHave(task, p, acc, tk) {
 function claimedMap(tk, cat) {
   if (cat === 'daily') return tk.daily.claimed || {};
   if (cat === 'weekly') return tk.week.claimed || {};
+  if (cat === 'special') return tk.special.claimed || {};
   return tk.career.claimed || {};
 }
 
@@ -215,22 +279,24 @@ function progress(p, acc, t, rawCfg) {
       const claimed = !!cl[x.id];
       return {
         id: x.id, name: x.name, desc: x.desc, need: x.need, have,
-        done: have >= x.need, claimed, money: x.money, stars: x.stars
+        done: have >= x.need, claimed, money: x.money, stars: x.stars,
+        itemId: x.itemId || null, qty: x.qty || 0, itemName: x.itemName || null, choice: x.choice || null
       };
     });
   });
   out.summary = {
     daily: out.daily.filter((x) => x.done && !x.claimed).length,
     weekly: out.weekly.filter((x) => x.done && !x.claimed).length,
-    career: out.career.filter((x) => x.done && !x.claimed).length
+    career: out.career.filter((x) => x.done && !x.claimed).length,
+    special: out.special.filter((x) => x.done && !x.claimed).length
   };
-  out.summary.total = out.summary.daily + out.summary.weekly + out.summary.career;
+  out.summary.total = out.summary.daily + out.summary.weekly + out.summary.career + out.summary.special;
   return out;
 }
 
 /* ---------- 領獎 ----------
    改 p（背包／星幣／任務狀態）和 acc（遊戲幣），回傳流水帳陣列。 */
-function claim(p, acc, t, id, rawCfg) {
+function claim(p, acc, t, id, rawCfg, choice) {
   const task = BY_ID[id];
   if (!task) throw new AppError('沒有這個任務', 'no-task', 'invalid-argument');
   if (!active(rawCfg, t)) throw new AppError('任務系統從 ' + tasksFrom(rawCfg) + ' 那一週才開始', 'not-open');
@@ -239,6 +305,18 @@ function claim(p, acc, t, id, rawCfg) {
   if (cl[id]) throw new AppError('這個任務已經領過了', 'claimed');
   const have = rawHave(task, p, acc, tk);
   if (have < task.need) throw new AppError('還沒完成：' + have + ' / ' + task.need, 'not-done');
+
+  let itemId = task.itemId || null;
+  let itemName = task.itemName || null;
+  let qty = task.qty || 0;
+  if (task.choice === 'ur') {
+    itemId = String(choice || '');
+    if (UR_AVATARS.indexOf(itemId) < 0) throw new AppError('請選擇一個 UR 頭像', 'bad-choice', 'invalid-argument');
+    const owned = (((p || {}).unlocked || {}).avatars) || [];
+    if (owned.indexOf(itemId) >= 0) throw new AppError('你已經擁有這個 UR 頭像，請選另一個', 'owned');
+    itemName = UR_NAMES[itemId];
+    qty = 1;
+  }
 
   cl[id] = t;
   if (task.cat === 'daily') {
@@ -253,6 +331,8 @@ function claim(p, acc, t, id, rawCfg) {
   } else if (task.cat === 'weekly') {
     tk.week.claimed = cl;
     tk.career.weeklyDone += 1;
+  } else if (task.cat === 'special') {
+    tk.special.claimed = cl;
   } else {
     tk.career.claimed = cl;
   }
@@ -263,7 +343,7 @@ function claim(p, acc, t, id, rawCfg) {
     entries.push({ type: 'task', amount: task.money, note: task.name });
   }
   if (task.stars > 0) p.stars = (p.stars || 0) + task.stars;
-  return { entries, task: { id, name: task.name, money: task.money, stars: task.stars } };
+  return { entries, task: { id, name: task.name, money: task.money, stars: task.stars, itemId, itemName, qty } };
 }
 
-module.exports = { DAILY, WEEKLY, CAREER, ALL, BY_ID, roll, bump, progress, claim, rawHave, blankCareer, active, tasksFrom, DEFAULT_FROM };
+module.exports = { DAILY, WEEKLY, CAREER, SPECIAL, ALL, BY_ID, roll, bump, progress, claim, rawHave, blankCareer, blankSpecial, active, tasksFrom, DEFAULT_FROM, UR_AVATARS };

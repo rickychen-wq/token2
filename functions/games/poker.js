@@ -285,6 +285,17 @@ function createPoker({ db, now, requireSession, requireAdmin }) {
         const pd = await ctx.player(s.pid);                 // v12 任務：生涯場數
         if (pd) {
           let taskChanged = TK.bump(pd, ctx.t, 'play', 1, ctx.rawCfg);
+          taskChanged = TK.bump(pd, ctx.t, 'pokerHand', 1, ctx.rawCfg) || taskChanged;
+          const holes = ctx.sec.holes[i] || [];
+          if (holes.length === 2 && C.rankOf(holes[0]) === 12 && C.rankOf(holes[1]) === 12) {
+            taskChanged = TK.bump(pd, ctx.t, 'pokerPocketAces', 1, ctx.rawCfg) || taskChanged;
+          }
+          if (holes.length + st.board.length >= 5) {
+            const hand = C.best(holes.concat(st.board));
+            if (hand.cat === 4) taskChanged = TK.bump(pd, ctx.t, 'pokerStraight', 1, ctx.rawCfg) || taskChanged;
+            if (hand.cat === 6) taskChanged = TK.bump(pd, ctx.t, 'pokerFullHouse', 1, ctx.rawCfg) || taskChanged;
+            if (hand.cat === 8) taskChanged = TK.bump(pd, ctx.t, 'pokerStraightFlush', 1, ctx.rawCfg) || taskChanged;
+          }
           if (hitHighlight) taskChanged = TK.bump(pd, ctx.t, 'highlight', 1, ctx.rawCfg) || taskChanged;
           if (taskChanged) ctx.patchPlayer(s.pid, { tasks: pd.tasks });
         }
@@ -573,7 +584,9 @@ function createPoker({ db, now, requireSession, requireAdmin }) {
           fromPlayer: me, toPlayer: other,
           payload: d.payload || {}
         }, ctx.t);
+        const taskChanged = TK.bump(me, ctx.t, 'pokerTargetItem', 1, ctx.rawCfg);
         ctx.patchPlayer(s.pid, { items: me.items });
+        if (taskChanged) ctx.patchPlayer(s.pid, { tasks: me.tasks });
         st.log = (st.log || []).concat([{ t: ctx.t, text: st.seats[i].name + ' 對 ' + st.seats[j].name + ' 用了' + c.name }]).slice(-30);
         const done = await applyContest(ctx);
         schedule(ctx, 'contest');
