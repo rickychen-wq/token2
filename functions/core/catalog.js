@@ -18,7 +18,8 @@ const TEST_RANK_AVATARS = [
 ];
 const DEX = ['缺角的聖杯', '看不懂的真跡', '成精的高麗菜', '奏樂令旗', '綠豆勇者', '藏寶圖殘卷', '見紅彎刀',
   '藍焰爪刀', '不會謝的玫瑰', '班草的求愛花束', '班花的情書', '紅線纏柄刀', '阿嬤的剁刀'];
-const BACKS = ['白羽神性', '赤月終焉', '深海幻夢', '神之救贖', '狂亂終局', '虛無無限'];
+const BACKS = ['雙鯉墨潮', '赤月折狐', '青花雲鶴', '琉璃月蛾', '黑貓紅線', '黑水夜薔'];
+const LEGACY_BACKS = ['白羽神性', '赤月終焉', '深海幻夢', '神之救贖', '狂亂終局', '虛無無限'];
 const BGS = ['極光冰城', '聖環殘殿', '鎏金天庭', '月下神社', '深淵聖殿', '星環遺跡', '黑洞幻境', '紫晶王國', '血月魔環', '機甲遺城'];
 
 /* 寶箱、鑰匙依稀有度 1~7，對應圖片檔（v11 使用者逐張確認過的對應）
@@ -117,6 +118,8 @@ function merge(overrides) {
   DEFAULTS.forEach((d) => {
     const x = Object.assign({}, d);
     if (o[d.id]) EDITABLE.forEach((k) => { if (o[d.id][k] !== undefined) x[k] = o[d.id][k]; });
+    // 舊版名稱若曾被寫進 config/catalog，隨新版圖片一起遷移；之後手動改的新名稱仍會保留。
+    if (x.type === 'back' && LEGACY_BACKS.indexOf(x.name) >= 0) x.name = d.name;
     out[x.id] = x;
   });
   return out;
