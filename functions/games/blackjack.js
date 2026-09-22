@@ -1,7 +1,7 @@
 'use strict';
 /* games/blackjack.js — 21 點（多人一桌、AI 荷官）
    流程：idle → 有人下注開始 betting 倒數 → playing（依座位輪流）→ 荷官補牌 → result 顯示 → idle
-   六副牌牌靴，剩不到 1/4 重洗。荷官 17 點停（軟 17 也停）。黑傑克 3:2，其餘 1:1，平手退注。 */
+   每局使用一副 52 張牌，牌局中絕不補牌或重洗。荷官 17 點停（軟 17 也停）。黑傑克 3:2，其餘 1:1，平手退注。 */
 
 const crypto = require('crypto');
 const { AppError, seasonId } = require('../core/util');
@@ -16,9 +16,18 @@ const TABLE_ID = 'main';
 /* ---------- 純規則 ---------- */
 function newShoe() {
   const d = [];
-  for (let k = 0; k < 6; k++) for (let i = 0; i < 52; i++) d.push(i);
+  for (let i = 0; i < 52; i++) d.push(i);
   for (let i = d.length - 1; i > 0; i--) { const j = crypto.randomInt(i + 1); const t = d[i]; d[i] = d[j]; d[j] = t; }
   return d;
+}
+function validSingleDeck(shoe) {
+  if (!Array.isArray(shoe) || shoe.length > 52) return false;
+  const seen = new Set();
+  for (const card of shoe) {
+    if (!Number.isInteger(card) || card < 0 || card >= 52 || seen.has(card)) return false;
+    seen.add(card);
+  }
+  return true;
 }
 function cardVal(c) { const r = ((c / 4) | 0) + 2; return r === 14 ? 11 : r >= 10 ? 10 : r; }
 function handValue(cards) {
@@ -96,7 +105,30 @@ function createBlackjack({ db, now, requireSession, requireAdmin }) {
         },
         async name(pid) { const p = await tx.get(playerRef(pid)); return p.exists ? p.data().name : pid; }
       };
-      const out = await fn(ctx);
+      /* 部署前使用六副牌。舊牌靴沒有版本標記，必須立即作廢；若舊牌局仍在進行，
+         先全額退注再清桌，不能讓舊牌繼續發，也不能在牌局中途混入一副新牌。 */
+      let migrated = null;
+      if (sec.shoeVersion !== 2 || !validSingleDeck(sec.shoe || [])) {
+        const R = st.round || {};
+        if (R.phase === 'playing') {
+          for (const i of Object.keys(R.bets || {})) {
+            const b = R.bets[i];
+            const acc = await ctx.acc(b.pid, b.sid);
+            acc.wallet += b.amount;
+            ctx.led(b.pid, b.sid, { type: 'game', amount: b.amount, note: '21點改用單副牌，舊牌局退回下注' });
+            E.autoRepay(acc, cfg, t).forEach((e) => ctx.led(b.pid, b.sid, { type: 'repay', amount: e.amount }));
+          }
+          Object.assign(R, { phase: 'idle', deadline: 0, turn: -1, bets: {}, dealer: [], dealerHidden: false });
+          log(st, '舊六副牌牌靴已作廢，本局下注全額退回');
+          migrated = { did: 'single-deck-migration', refunded: true };
+        } else {
+          log(st, '舊六副牌牌靴已作廢，改用單副 52 張');
+        }
+        sec.shoe = newShoe();
+        sec.hole = null;
+        sec.shoeVersion = 2;
+      }
+      const out = migrated || await fn(ctx);
       if (ctx.noop) return Object.assign({ now: t }, out || {});   // 沒有改任何東西就不寫入，避免觸發所有人的監聽
       st.version = (st.version || 0) + 1; st.updatedAt = t;
       tx.set(tableRef(), st); tx.set(secretRef(), sec);
@@ -150,27 +182,19 @@ function createBlackjack({ db, now, requireSession, requireAdmin }) {
   }
   const log = (st, text) => { st.log = (st.log || []).concat([{ t: Date.now(), text }]).slice(-20); };
 
-  /* v11：只在「局與局之間」洗牌。draw() 絕對不會重建牌靴，
-     所以一局裡所有玩家和荷官的牌一定來自同一個連續的牌靴狀態。
-     門檻依實際下注人數估算本局最多會用掉的張數，確保發到荷官補完都不可能抽乾。 */
+  /* 單副牌規則：每局發牌前洗一副新的 52 張；draw() 絕對不重建牌組，
+     所以同一局裡所有玩家和荷官都只會拿到這 52 張中的不同牌。 */
   function reshuffleIfNeeded(ctx) {
-    const R = ctx.st.round || {};
-    const seats = Object.keys(R.bets || {}).length;
-    const need = 40 + seats * 14;                     // 每個人最多 ~11 張（含加倍），荷官 ~8 張，抓寬一點
-    const left = (ctx.sec.shoe || []).length;
-    if (left < Math.max(78, need)) {
-      ctx.sec.shoe = newShoe();
-      log(ctx.st, '荷官重新洗牌');
-      return true;
-    }
-    return false;
+    ctx.sec.shoe = newShoe();
+    ctx.sec.shoeVersion = 2;
+    log(ctx.st, '荷官洗好一副 52 張牌');
+    return true;
   }
 
   function draw(ctx) {
-    if (!ctx.sec.shoe || !ctx.sec.shoe.length) {
-      // 理論上進不來（reshuffleIfNeeded 已經保證夠用），留著當最後防線，並記錄下來
-      ctx.sec.shoe = newShoe();
-      log(ctx.st, '荷官重新洗牌（牌靴用盡）');
+    if (!validSingleDeck(ctx.sec.shoe) || !ctx.sec.shoe.length) {
+      // 寧可中止 transaction，也不能在牌局中途補一副牌造成重複牌。
+      throw new Error('blackjack single deck exhausted or corrupted');
     }
     return ctx.sec.shoe.pop();
   }
@@ -463,4 +487,4 @@ function createBlackjack({ db, now, requireSession, requireAdmin }) {
   };
 }
 
-module.exports = { createBlackjack, handValue, isBJ, payout };
+module.exports = { createBlackjack, handValue, isBJ, payout, newShoe, validSingleDeck };

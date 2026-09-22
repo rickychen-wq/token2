@@ -343,4 +343,4 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
   };
 }
 
-module.exports = { createMini, gateOdds, slotPayout, slotRTP, gamesCfg, SYMBOLS, PAY3, diceOdds, DICE_KEYS };
+module.exports = { createMini, gateOdds, slotPayout, slotRTP, gamesCfg, SYMBOLS, PAY3, diceOdds, DICE_KEYS, newDeck };
