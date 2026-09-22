@@ -21,6 +21,7 @@ const { createMini } = require('./games/minigames');
 const { createBlackjack } = require('./games/blackjack');
 const { createBig2 } = require('./games/big2');
 const { createRewards } = require('./core/rewards');
+const { createFeedback } = require('./core/feedback');
 
 const db = admin.firestore();
 const now = () => Date.now();
@@ -36,6 +37,7 @@ const B2 = createBig2({ db, now, requireSession: A.requireSession, requireAdmin:
 const SE = createSeason({ db, now, requireAdmin: A.requireAdmin, runInterest: EC.runInterest,
   closeTables: async (sid) => { const r = await PK.closeSeason(sid); await BJ.closeSeason(sid); await B2.closeSeason(sid); return r; } });
 const RW = createRewards({ db, now, requireAdmin: A.requireAdmin });
+const FB = createFeedback({ db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin });
 
 /* 把自訂錯誤轉成前端讀得到的 HttpsError，其他錯誤不外洩細節 */
 function wrap(fn) {
@@ -133,6 +135,12 @@ exports.adminAnnounce = wrap(ML.adminAnnounce);
 exports.adminSendMail = wrap(ML.adminSendMail);
 exports.adminDeleteMail = wrap(ML.adminDeleteMail);
 exports.mailClaim = wrap(ML.claim);
+
+/* ---------- 意見箱 ---------- */
+exports.feedbackSubmit = wrap(FB.submit);
+exports.feedbackMine = wrap(FB.mine);
+exports.adminFeedbackList = wrap(FB.adminList);
+exports.adminFeedbackAction = wrap(FB.adminAction);
 
 /* ---------- 季 ---------- */
 exports.adminSettleSeason = wrap(SE.adminSettle);

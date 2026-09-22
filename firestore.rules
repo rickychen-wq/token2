@@ -32,6 +32,13 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // 意見箱：只開放本人與管理員讀取，所有寫入都走 Cloud Functions
+    match /feedback/{fid} {
+      allow read: if signedIn() &&
+        (request.auth.token.pid == resource.data.pid || request.auth.token.role == 'admin');
+      allow write: if false;
+    }
+
     match /vanity/{num} {
       allow read: if signedIn();
       allow write: if false;
