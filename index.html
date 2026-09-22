@@ -759,9 +759,6 @@ button.game:active{transform:scale(.99)}
 .game-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
 .game.mini-g{flex-direction:column;align-items:flex-start;gap:8px;min-height:0;padding:12px}
 .game.mini-g .game-suit{width:42px;height:42px;font-size:22px;font-family:var(--ui);font-weight:700}
-.game.mini-g .game-art{display:grid;place-items:center;padding:3px;border-radius:6px;background:linear-gradient(145deg,rgba(63,199,255,.16),rgba(7,20,35,.9));border-color:rgba(168,238,255,.24);box-shadow:0 6px 15px rgba(0,0,0,.28)}
-.game.mini-g .game-art img{display:block;width:100%;height:100%;object-fit:contain;border-radius:7px}
-.game.mini-g.b2-low .game-art{background:linear-gradient(145deg,rgba(75,227,143,.18),rgba(7,28,27,.92));border-color:rgba(119,238,190,.34)}
 .game.mini-g h3{font-size:15px}
 .game.mini-g p{font-size:11.5px}
 .g-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
@@ -3774,8 +3771,8 @@ function bjHeartbeat() {
 
 /* ---------- 大老二 ---------- */
 var B2_TABLES = {
-  main: { id: 'main', label: '標準桌', buyIn: 1000, reserve: 2000, art: 'assets/back/b01.webp' },
-  low: { id: 'low', label: '輕鬆桌', buyIn: 500, reserve: 1000, art: 'assets/back/b02.webp' }
+  main: { id: 'main', label: '標準桌', buyIn: 1000, reserve: 2000 },
+  low: { id: 'low', label: '輕鬆桌', buyIn: 500, reserve: 1000 }
 };
 var B2 = { tableId: 'main', st: null, hand: null, selected: {}, sending: false, lastTick: 0, fx: { deal: null, action: null, result: null, lastActionKey: '' } };
 function b2TableInfo() { return B2_TABLES[B2.tableId] || B2_TABLES.main; }
@@ -4696,8 +4693,8 @@ function renderHome(force) {
     '<p>' + (seated ? seated + ' 人在桌上' : '還沒有人入座') + '</p></div><span class="chev">›</span></button>';
   var bjSeated = BJ.st ? BJ.st.seats.filter(Boolean).length : 0, bjLive = BJ.st && BJ.st.round.phase !== 'idle';
   h += '<div class="game-grid">' +
-    '<button class="game mini-g b2-entry" data-b2table="main"><div class="game-suit game-art"><img src="assets/back/b01.webp" alt=""></div><div class="game-txt"><h3>大老二・標準桌</h3><p>底注 1,000・有 2 賠 2,000</p></div></button>' +
-    '<button class="game mini-g b2-entry b2-low" data-b2table="low"><div class="game-suit game-art"><img src="assets/back/b02.webp" alt=""></div><div class="game-txt"><h3>大老二・輕鬆桌</h3><p>底注 500・有 2 賠 1,000</p></div></button>' +
+    '<button class="game mini-g b2-entry" data-b2table="main"><div class="game-suit">2</div><div class="game-txt"><h3>大老二・標準桌</h3><p>底注 1,000・有 2 賠 2,000</p></div></button>' +
+    '<button class="game mini-g b2-entry" data-b2table="low"><div class="game-suit">2</div><div class="game-txt"><h3>大老二・輕鬆桌</h3><p>底注 500・有 2 賠 1,000</p></div></button>' +
     '<button class="game mini-g" data-go="bj"><div class="game-suit">21</div><div class="game-txt"><h3>21 點</h3><p>' + (bjLive ? '進行中' : bjSeated ? bjSeated + ' 人在桌上' : 'AI 荷官發牌') + '</p></div></button>' +
     '<button class="game mini-g" data-go="gate"><div class="game-suit">🐉</div><div class="game-txt"><h3>射龍門</h3><p>射進兩柱中間</p></div></button>' +
     '<button class="game mini-g" data-go="slot"><div class="game-suit">🎰</div><div class="game-txt"><h3>拉霸機</h3><p>拉一把試手氣</p></div></button>' +
