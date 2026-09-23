@@ -18,6 +18,9 @@ const TEST_RANK_AVATARS = [
 ];
 const DEX = ['缺角的聖杯', '看不懂的真跡', '成精的高麗菜', '奏樂令旗', '綠豆勇者', '藏寶圖殘卷', '見紅彎刀',
   '藍焰爪刀', '不會謝的玫瑰', '班草的求愛花束', '班花的情書', '紅線纏柄刀', '阿嬤的剁刀'];
+const DEX_RARE_IDS = ['dex_06', 'dex_11', 'dex_13'];
+const DEX_MAX_EQUIPPED = 3;
+const DEX_COMPLETE_BONUS = 0.075;
 const BACKS = ['雙鯉墨潮', '赤月折狐', '青花雲鶴', '琉璃月蛾', '黑貓紅線', '黑水夜薔'];
 const LEGACY_BACKS = ['白羽神性', '赤月終焉', '深海幻夢', '神之救贖', '狂亂終局', '虛無無限'];
 const BGS = ['極光冰城', '聖環殘殿', '鎏金天庭', '月下神社', '深淵聖殿', '星環遺跡', '黑洞幻境', '紫晶王國', '血月魔環', '機甲遺城'];
@@ -103,7 +106,16 @@ for (let r = 1; r <= 7; r++) {
 }
 ITEMS.forEach((it) => DEFAULTS.push({ id: it.id, type: 'card', sub: it.sub, tier: it.tier, name: it.name, price: null, onSale: false, img: 'assets/item/' + it.file, desc: it.desc }));
 
-DEX.forEach((n, i) => DEFAULTS.push({ id: 'dex_' + pad(i + 1), type: 'dex', sub: 'doodle', name: n, price: null, onSale: false, img: 'assets/dex/d' + pad(i + 1) + '.png', desc: '塗鴉秘寶館收藏' }));
+DEX.forEach((n, i) => {
+  const id = 'dex_' + pad(i + 1);
+  const rare = DEX_RARE_IDS.indexOf(id) >= 0;
+  DEFAULTS.push({
+    id, type: 'dex', sub: 'doodle', name: n, price: null, onSale: false,
+    img: 'assets/dex/d' + pad(i + 1) + '.png', bankBonus: rare ? 0.01 : 0.005,
+    doodleTier: rare ? 'rare' : 'normal',
+    desc: (rare ? '稀有塗鴉・' : '') + '塗鴉秘寶館收藏'
+  });
+});
 
 const BASIC_EMOTES = ['👍', '😂', '😮', '😡', '🤡', '🔥', '🙏', '😭'];
 const SLOT_KEY = { avatar: 'avatars', frame: 'frames', bg: 'bgs', back: 'backs', emote: 'emotes', dex: 'dex' };
@@ -131,4 +143,26 @@ async function loadCatalog(db, tx) {
   return { items: merge(snap.exists ? snap.data().items : null), sold: snap.exists ? (snap.data().sold || {}) : {}, raw: snap.exists ? snap.data() : null };
 }
 
-module.exports = { DEFAULTS, RARITY, BASIC_EMOTES, SLOT_KEY, STACKABLE, EDITABLE, ITEMS, TEST_RANK_AVATARS, CHEST_LOOT, DEX_FULL_STARS, merge, loadCatalog };
+/* 塗鴉利率只信任玩家確實擁有、且仍存在目錄裡的前三個不重複裝備。 */
+function dexInterest(p, items) {
+  p = p || {};
+  items = items || merge(null);
+  const owned = Array.isArray((p.unlocked || {}).dex) ? p.unlocked.dex : [];
+  const ownedSet = new Set(owned);
+  const raw = Array.isArray((p.equipped || {}).dex) ? p.equipped.dex : [];
+  const equipped = [];
+  raw.forEach((id) => {
+    const item = items[id];
+    if (equipped.length < DEX_MAX_EQUIPPED && equipped.indexOf(id) < 0 && ownedSet.has(id) && item && item.type === 'dex') equipped.push(id);
+  });
+  const equipmentBonus = equipped.reduce((sum, id) => sum + Math.max(0, Number(items[id].bankBonus) || 0), 0);
+  const allDex = Object.keys(items).filter((id) => items[id] && items[id].type === 'dex');
+  const complete = allDex.length > 0 && allDex.every((id) => ownedSet.has(id));
+  const collectionBonus = complete ? DEX_COMPLETE_BONUS : 0;
+  return { equipped, equipmentBonus, collectionBonus, complete, total: equipmentBonus + collectionBonus };
+}
+
+module.exports = {
+  DEFAULTS, RARITY, BASIC_EMOTES, SLOT_KEY, STACKABLE, EDITABLE, ITEMS, TEST_RANK_AVATARS, CHEST_LOOT,
+  DEX_FULL_STARS, DEX_RARE_IDS, DEX_MAX_EQUIPPED, DEX_COMPLETE_BONUS, dexInterest, merge, loadCatalog
+};

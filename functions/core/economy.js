@@ -5,7 +5,7 @@
 const { AppError, seasonId, seasonRange, cleanPid } = require('./util');
 const E = require('./econ');
 const { expireTemp, grant } = require('./shop');
-const { merge } = require('./catalog');
+const { merge, dexInterest } = require('./catalog');
 const T = require('./tasks');
 const catalogById = merge(null);
 
@@ -220,10 +220,12 @@ function createEconomy({ db, now, requireSession, requireAdmin }) {
       let total = 0, count = 0;
       activeAccounts.forEach((acc) => {
         const r = rates[acc.pid];
+        const doodle = dexInterest(players[acc.pid], catalogById);
+        const rate = r.rate + doodle.total;
         // 00:00 計息屬於新一天的第一筆系統操作；先保存昨天結束瞬間的淨資產，
         // 才不會讓這筆利息倒回去改寫昨天的每日排行。
         E.rollDaily(acc, t, cfg);
-        const gain = E.applyInterest(acc, P, r.rate);
+        const gain = E.applyInterest(acc, P, rate);
         if (gain <= 0) return;
         total += gain; count++;
         E.refresh(acc, cfg, t);
@@ -231,7 +233,8 @@ function createEconomy({ db, now, requireSession, requireAdmin }) {
         tx.set(ref, acc);
         tx.set(ref.collection('ledger').doc(), {
           type: 'interest', amount: gain, wallet: acc.wallet, bank: acc.bank.balance, loans: acc.loans,
-          rate: r.rate, rank: r.rank, at: t, by: 'system', note: null
+          rate, baseRate: r.rate, doodleBonus: doodle.equipmentBonus,
+          doodleCollectionBonus: doodle.collectionBonus, rank: r.rank, at: t, by: 'system', note: null
         });
         const p = players[acc.pid];
         if (p && acc.peakNet > ((p.stats && p.stats.peakNet) || 0)) {

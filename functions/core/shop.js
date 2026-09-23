@@ -2,7 +2,7 @@
 /* core/shop.js — 星幣商店、包包、寶箱、卡片、外觀、管理員發放與商品管理 */
 
 const { AppError, cleanPid, cleanName } = require('./util');
-const { SLOT_KEY, STACKABLE, EDITABLE, RARITY, DEX_FULL_STARS, loadCatalog } = require('./catalog');
+const { SLOT_KEY, STACKABLE, EDITABLE, RARITY, DEX_FULL_STARS, DEX_MAX_EQUIPPED, dexInterest, loadCatalog } = require('./catalog');
 const T = require('./tasks');
 
 function inv(p) {
@@ -161,7 +161,7 @@ function createShop({ db, now, requireSession, requireAdmin }) {
       const s = await requireSession(req);
       const d = req.data || {};
       const slot = String(d.slot);
-      if (['avatar', 'frame', 'bg', 'back'].indexOf(slot) < 0) throw new AppError('欄位不對', 'bad-slot', 'invalid-argument');
+      if (['avatar', 'frame', 'bg', 'back', 'dex'].indexOf(slot) < 0) throw new AppError('欄位不對', 'bad-slot', 'invalid-argument');
       const id = d.itemId || null;
       return db.runTransaction(async (tx) => {
         const cat = await loadCatalog(db, tx);
@@ -169,6 +169,23 @@ function createShop({ db, now, requireSession, requireAdmin }) {
         const p = snap.data();
         const t = now();
         const expired = expireTemp(p, t);
+        if (slot === 'dex') {
+          let equipped = dexInterest(p, cat.items).equipped;
+          if (!id) equipped = [];
+          else {
+            const item = cat.items[id];
+            if (!item || item.type !== 'dex') throw new AppError('這不是塗鴉', 'bad-item', 'invalid-argument');
+            if (inv(p).dex.indexOf(id) < 0) throw new AppError('你還沒有這個塗鴉', 'not-owned');
+            if (equipped.indexOf(id) >= 0) equipped = equipped.filter((x) => x !== id);
+            else {
+              if (equipped.length >= DEX_MAX_EQUIPPED) throw new AppError('最多只能裝備 ' + DEX_MAX_EQUIPPED + ' 個塗鴉', 'dex-full');
+              equipped = equipped.concat([id]);
+            }
+          }
+          const eq = Object.assign({ avatar: null, frame: null, bg: null, back: null, dex: [] }, p.equipped || {}, { dex: equipped });
+          tx.update(playerRef(s.pid), Object.assign({ equipped: eq }, expired ? { temp: p.temp || {} } : {}));
+          return { equipped: eq, temp: p.temp || {} };
+        }
         if (id) {
           const item = cat.items[id];
           if (!item || item.type !== slot) throw new AppError('這個物品不能放在這裡', 'bad-item', 'invalid-argument');
@@ -365,7 +382,8 @@ function createShop({ db, now, requireSession, requireAdmin }) {
         }
         p.stars = (p.stars || 0) + refund;
         const eq = Object.assign({}, p.equipped || {});
-        if (eq[item.type] === item.id) eq[item.type] = null;
+        if (item.type === 'dex' && Array.isArray(eq.dex)) eq.dex = eq.dex.filter((id) => id !== item.id);
+        else if (eq[item.type] === item.id) eq[item.type] = null;
         tx.update(playerRef(pid), Object.assign(playerPatch(p), { equipped: eq }));
         tx.set(playerRef(pid).collection('logs').doc(), { kind: 'revoke', itemId: item.id, refund, by: a.pid, at: now() });
         return { ok: true };
