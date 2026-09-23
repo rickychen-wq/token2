@@ -100,6 +100,12 @@ DEFAULTS.push(
   { id: 'card_vanity', type: 'card', sub: 'vanity', name: '全新身份卡', price: 100, onSale: true, img: 'assets/item/c05.webp', desc: '設定 1 到 7 位數的靚號，顯示在牌桌、排行榜和個人頁' },
   { id: 'card_wild', type: 'card', sub: 'wild', name: '萬象隨心', price: null, onSale: false, img: 'assets/item/c04.webp', desc: '功能尚未開放' }
 );
+/* 隱藏個人領域：只在管理員發放清單與持有者衣櫃出現，不上架、不進圖鑑或寶箱。 */
+DEFAULTS.push({
+  id: 'fx_astral_dragon', type: 'effect', sub: 'profile', tier: 5, name: '星界龍域',
+  price: null, onSale: false, hidden: true, img: 'assets/fx/astral-guardian-dragon.webp',
+  desc: '點開個人資料時展開星界守護龍領域。'
+});
 for (let r = 1; r <= 7; r++) {
   DEFAULTS.push({ id: 'key_' + r, type: 'key', rarity: r, name: RARITY[r] + '鑰匙・' + KEY_NAME[r], price: KEY_PRICE[r], onSale: KEY_PRICE[r] != null, img: 'assets/item/' + KEY_IMG[r] + '.webp' });
   DEFAULTS.push({ id: 'chest_' + r, type: 'chest', rarity: r, name: RARITY[r] + '寶箱・' + CHEST_NAME[r], price: CHEST_PRICE[r], onSale: CHEST_PRICE[r] != null, img: 'assets/item/' + CHEST_IMG[r] + '.webp', loot: lootOf(r) });
@@ -118,7 +124,7 @@ DEX.forEach((n, i) => {
 });
 
 const BASIC_EMOTES = ['👍', '😂', '😮', '😡', '🤡', '🔥', '🙏', '😭'];
-const SLOT_KEY = { avatar: 'avatars', frame: 'frames', bg: 'bgs', back: 'backs', emote: 'emotes', dex: 'dex' };
+const SLOT_KEY = { avatar: 'avatars', frame: 'frames', bg: 'bgs', back: 'backs', emote: 'emotes', dex: 'dex', effect: 'effects' };
 const STACKABLE = { card: 1, key: 1, chest: 1 };   // 可以累積數量的物品
 
 /* 後台可以改的欄位 */

@@ -161,7 +161,7 @@ function createShop({ db, now, requireSession, requireAdmin }) {
       const s = await requireSession(req);
       const d = req.data || {};
       const slot = String(d.slot);
-      if (['avatar', 'frame', 'bg', 'back', 'dex'].indexOf(slot) < 0) throw new AppError('欄位不對', 'bad-slot', 'invalid-argument');
+      if (['avatar', 'frame', 'bg', 'back', 'dex', 'effect'].indexOf(slot) < 0) throw new AppError('欄位不對', 'bad-slot', 'invalid-argument');
       const id = d.itemId || null;
       return db.runTransaction(async (tx) => {
         const cat = await loadCatalog(db, tx);
@@ -182,7 +182,7 @@ function createShop({ db, now, requireSession, requireAdmin }) {
               equipped = equipped.concat([id]);
             }
           }
-          const eq = Object.assign({ avatar: null, frame: null, bg: null, back: null, dex: [] }, p.equipped || {}, { dex: equipped });
+          const eq = Object.assign({ avatar: null, frame: null, bg: null, back: null, dex: [], effect: null }, p.equipped || {}, { dex: equipped });
           tx.update(playerRef(s.pid), Object.assign({ equipped: eq }, expired ? { temp: p.temp || {} } : {}));
           return { equipped: eq, temp: p.temp || {} };
         }
@@ -346,13 +346,16 @@ function createShop({ db, now, requireSession, requireAdmin }) {
           grant(p, item, qty);
           fuseBowls(p, now());
           if (item.type === 'card') T.bump(p, now(), 'firstItem');
+          if (item.type === 'effect' && !((p.equipped || {}).effect)) {
+            p.equipped = Object.assign({}, p.equipped || {}, { effect: item.id });
+          }
         }
         if (stars) {
           const next = (p.stars || 0) + stars;
           if (next < 0) throw new AppError('他只有 ' + (p.stars || 0) + ' 星幣', 'poor');
           p.stars = next;
         }
-        tx.update(playerRef(pid), playerPatch(p));
+        tx.update(playerRef(pid), Object.assign(playerPatch(p), p.equipped ? { equipped: p.equipped } : {}));
         tx.set(playerRef(pid).collection('logs').doc(), { kind: 'grant', itemId: item ? item.id : null, qty, stars, by: a.pid, at: now() });
         return { ok: true };
       });

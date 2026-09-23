@@ -27,8 +27,8 @@ function verifyPw(pw, salt, hash) {
 function newPlayer(pid, name, role, claimed, t) {
   return {
     pid, name, role, claimed, createdAt: t,
-    equipped: { avatar: null, frame: null, title: null, badge: null, dex: [] },
-    unlocked: { avatars: [], frames: [], titles: [], badges: [] },
+    equipped: { avatar: null, frame: null, title: null, badge: null, dex: [], effect: null },
+    unlocked: { avatars: [], frames: [], titles: [], badges: [], effects: [] },
     achievements: {},
     stats: {
       points: 0, champions: 0, top3: 0, seasonsPlayed: 0, bestRank: null,
