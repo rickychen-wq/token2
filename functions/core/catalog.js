@@ -100,11 +100,11 @@ DEFAULTS.push(
   { id: 'card_vanity', type: 'card', sub: 'vanity', name: '全新身份卡', price: 100, onSale: true, img: 'assets/item/c05.webp', desc: '設定 1 到 7 位數的靚號，顯示在牌桌、排行榜和個人頁' },
   { id: 'card_wild', type: 'card', sub: 'wild', name: '萬象隨心', price: null, onSale: false, img: 'assets/item/c04.webp', desc: '功能尚未開放' }
 );
-/* 隱藏個人領域：只在管理員發放清單與持有者衣櫃出現，不上架、不進圖鑑或寶箱。 */
+/* 隱藏個人領域：不上架、不進圖鑑或寶箱；所有玩家衣櫃固定顯示欄位，物品由管理員發放。 */
 DEFAULTS.push({
-  id: 'fx_astral_dragon', type: 'effect', sub: 'profile', tier: 5, name: '星界龍域',
+  id: 'fx_astral_dragon', type: 'effect', sub: 'profile', tier: 5, name: '星界龍皇・領域降臨',
   price: null, onSale: false, hidden: true, img: 'assets/fx/astral-guardian-dragon.webp',
-  desc: '點開個人資料時展開星界守護龍領域。'
+  desc: '點開個人資料時，召喚星界龍皇並展開領域。'
 });
 for (let r = 1; r <= 7; r++) {
   DEFAULTS.push({ id: 'key_' + r, type: 'key', rarity: r, name: RARITY[r] + '鑰匙・' + KEY_NAME[r], price: KEY_PRICE[r], onSale: KEY_PRICE[r] != null, img: 'assets/item/' + KEY_IMG[r] + '.webp' });
