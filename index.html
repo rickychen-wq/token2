@@ -969,45 +969,36 @@ button.game:active{transform:scale(.99)}
 .domain-ring.r3{inset:27%;border:1px solid rgba(229,250,255,.75);background:repeating-conic-gradient(from 18deg,#dffaff 0 .8deg,transparent 1deg 30deg);mask:radial-gradient(circle,transparent 0 43%,#000 44% 48%,transparent 49%);animation-duration:3.2s}
 .domain-glyph{position:absolute;left:50%;top:50%;width:15px;height:15px;margin:-7px;color:#bcefff;text-shadow:0 0 8px #6be8ff;font:800 11px/15px var(--ui);transform:rotate(var(--a)) translateY(calc(min(300px,43vmin) * -1)) rotate(calc(var(--a) * -1));opacity:.8}
 .domain-dragon{position:absolute;left:50%;top:49%;z-index:6;width:min(980px,144vmin);max-width:none;pointer-events:none;transform-origin:50% 52%;filter:drop-shadow(0 0 12px rgba(98,223,255,.9)) drop-shadow(0 0 38px rgba(102,50,255,.7));opacity:0;will-change:transform,opacity,filter;animation:dragonAwake 5.35s .05s cubic-bezier(.12,.8,.16,1) forwards}
-.dragon-part{position:absolute;z-index:7;width:min(720px,104vmin);aspect-ratio:3/2;background-image:url("assets/fx/astral-dragon-v2-atlas.png");background-size:200% 200%;background-repeat:no-repeat;pointer-events:none;opacity:0;filter:drop-shadow(0 0 12px rgba(83,222,255,.95)) drop-shadow(0 0 34px rgba(112,54,255,.82));will-change:transform,opacity,filter}
-.dragon-head{left:67%;top:36%;background-position:0 0;transform-origin:36% 72%;animation:dragonHeadV2 5.35s .05s cubic-bezier(.12,.82,.15,1) forwards}
-.dragon-claw.left{left:18%;top:43%;background-position:100% 0;transform-origin:72% 58%;animation:dragonClawLeft 5.25s .1s cubic-bezier(.14,.88,.17,1) forwards}
-.dragon-claw.right{left:78%;top:65%;background-position:0 100%;transform-origin:28% 42%;animation:dragonClawRight 5.25s .13s cubic-bezier(.14,.88,.17,1) forwards}
-.dragon-tail{left:38%;top:72%;z-index:5;width:min(860px,128vmin);background-position:100% 100%;transform-origin:66% 46%;animation:dragonTailV2 5.4s cubic-bezier(.17,.72,.18,1) forwards}
-.domain-core{position:absolute;left:50%;top:50%;z-index:10;width:clamp(92px,22vmin,148px);height:clamp(92px,22vmin,148px);transform:translate(-50%,-50%) scale(.05) translateZ(-400px);border-radius:26%;display:grid;place-items:center;opacity:0;animation:coreLock 5.05s .25s cubic-bezier(.15,1.25,.25,1) forwards}
+.domain-core{position:absolute;left:50%;top:50%;z-index:7;width:clamp(92px,22vmin,148px);height:clamp(92px,22vmin,148px);transform:translate(-50%,-50%) scale(.05) translateZ(-400px);border-radius:26%;display:grid;place-items:center;opacity:0;animation:coreLock 5.05s .25s cubic-bezier(.15,1.25,.25,1) forwards}
 .domain-core::before,.domain-core::after{content:"";position:absolute;inset:-18%;border-radius:34%;border:1px solid rgba(167,238,255,.75);transform:rotate(45deg);box-shadow:0 0 22px #47d8ff,inset 0 0 20px rgba(122,57,255,.4);animation:coreTurn 2.4s linear infinite}
 .domain-core::after{inset:-31%;border-style:dashed;border-color:rgba(154,98,255,.65);animation-direction:reverse;animation-duration:3.2s}
 .domain-core .pav{width:100%!important;height:100%!important;border-radius:22%!important;border:2px solid rgba(220,251,255,.88);box-shadow:0 0 24px #54dcff,0 0 70px rgba(102,54,255,.88);transform:translateZ(50px)}
 .domain-shard{position:absolute;left:50%;top:50%;z-index:5;width:clamp(12px,3vmin,26px);height:clamp(55px,15vmin,126px);clip-path:polygon(50% 0,100% 70%,58% 100%,0 68%);background:linear-gradient(90deg,rgba(25,24,68,.92),rgba(143,233,255,.95) 48%,rgba(82,42,186,.85));box-shadow:0 0 20px #5ce4ff;opacity:0;transform:translate(-50%,-50%) rotate(var(--r)) translateY(var(--d)) translateZ(var(--z)) scale(.15);animation:shardBurst 5.1s var(--delay) cubic-bezier(.1,.8,.2,1) forwards}
-.domain-flash{position:absolute;inset:0;z-index:11;pointer-events:none;background:#eafcff;mix-blend-mode:screen;opacity:0;animation:domainFlash 5.4s linear forwards}
-.domain-title{position:absolute;left:50%;bottom:clamp(72px,12vh,125px);z-index:12;transform:translate(-50%,35px) scale(.7);text-align:center;white-space:nowrap;opacity:0;animation:titleReveal 5.35s .15s cubic-bezier(.15,.9,.2,1) forwards}
+.domain-flash{position:absolute;inset:0;z-index:9;pointer-events:none;background:#eafcff;mix-blend-mode:screen;opacity:0;animation:domainFlash 5.4s linear forwards}
+.domain-title{position:absolute;left:50%;bottom:clamp(72px,12vh,125px);z-index:10;transform:translate(-50%,35px) scale(.7);text-align:center;white-space:nowrap;opacity:0;animation:titleReveal 5.35s .15s cubic-bezier(.15,.9,.2,1) forwards}
 .domain-title small{display:block;margin-bottom:3px;color:#9eeeff;font:700 11px var(--ui);letter-spacing:.55em;text-indent:.55em;text-shadow:0 0 12px #4fdcff}
 .domain-title b{display:block;color:#f1fbff;font:900 clamp(27px,7vw,52px)/1 var(--ui);letter-spacing:.16em;text-indent:.16em;text-shadow:0 0 5px #fff,0 0 16px #3bdcff,0 0 42px #7549ff}
-.domain-name{position:absolute;left:50%;bottom:clamp(47px,7vh,82px);z-index:12;transform:translateX(-50%);color:rgba(216,240,255,.8);font:600 12px var(--ui);letter-spacing:.16em;opacity:0;animation:nameReveal 5.35s .2s ease-out forwards}
-.domain-skip{position:absolute;right:14px;top:calc(14px + var(--safe-t));z-index:13;padding:7px 10px;border-radius:999px;color:rgba(225,244,255,.65);font:600 10px var(--ui);letter-spacing:.08em;background:rgba(4,9,25,.38);border:1px solid rgba(153,223,255,.18);opacity:0;animation:skipReveal .3s 1s forwards}
+.domain-name{position:absolute;left:50%;bottom:clamp(47px,7vh,82px);z-index:10;transform:translateX(-50%);color:rgba(216,240,255,.8);font:600 12px var(--ui);letter-spacing:.16em;opacity:0;animation:nameReveal 5.35s .2s ease-out forwards}
+.domain-skip{position:absolute;right:14px;top:calc(14px + var(--safe-t));z-index:11;padding:7px 10px;border-radius:999px;color:rgba(225,244,255,.65);font:600 10px var(--ui);letter-spacing:.08em;background:rgba(4,9,25,.38);border:1px solid rgba(153,223,255,.18);opacity:0;animation:skipReveal .3s 1s forwards}
 .fx-none{display:grid;place-items:center;color:var(--faint);font-size:22px;background:rgba(3,8,18,.55)}
 @keyframes domainCurtain{0%{opacity:0}4%,86%{opacity:1}100%{opacity:0}}
 @keyframes domainSkip{to{opacity:0;transform:scale(1.04);filter:brightness(1.8)}}
-@keyframes domainCamera{0%{transform:scale(1.16) rotateZ(-2deg)}16%{transform:scale(1)}31%{transform:scale(1.04) rotateZ(1deg)}35%{transform:scale(1.075) translate3d(-8px,5px,0) rotateZ(-1deg)}38%{transform:scale(1.04) translate3d(7px,-4px,0)}43%{transform:scale(1.06)}61%{transform:scale(1.1) rotateZ(-1deg)}78%{transform:scale(1.07) rotateZ(1deg)}100%{transform:scale(1.14)}}
+@keyframes domainCamera{0%{transform:scale(1.14) rotateZ(-1deg)}18%{transform:scale(1)}39%{transform:scale(1.035) translate3d(-2px,1px,0)}42%{transform:scale(1.05) translate3d(5px,-3px,0)}46%{transform:scale(1.03)}70%{transform:scale(1.08)}100%{transform:scale(1.13)}}
 @keyframes domainNebula{0%{filter:brightness(.3) saturate(.5);transform:scale(1.15)}30%{filter:brightness(.65) saturate(1)}52%{filter:brightness(1.4) saturate(1.6)}100%{filter:brightness(.7) saturate(1.25);transform:scale(1)}}
 @keyframes riftLeft{0%{transform:translateX(55%) scaleX(.03);opacity:0}20%{opacity:1}52%{transform:translateX(4%) scaleX(.08)}100%{transform:translateX(-46%) scaleX(1.25);opacity:.45}}
 @keyframes riftRight{0%{transform:translateX(-55%) scaleX(-.03);opacity:0}20%{opacity:1}52%{transform:translateX(-4%) scaleX(-.08)}100%{transform:translateX(46%) scaleX(-1.25);opacity:.45}}
 @keyframes floorRise{0%,15%{opacity:0;transform:translate(-50%,-30%) rotateX(82deg) translateZ(-380px) scale(.3)}43%{opacity:.8}100%{opacity:.38;transform:translate(-50%,-50%) rotateX(67deg) translateZ(-120px) scale(1.18)}}
 @keyframes sealArrive{0%,20%{opacity:0;transform:translate(-50%,-50%) translateZ(-800px) rotateZ(-70deg) scale(.08)}43%{opacity:1}58%{transform:translate(-50%,-50%) translateZ(80px) rotateZ(5deg) scale(1.08)}100%{opacity:.7;transform:translate(-50%,-50%) translateZ(0) rotateZ(16deg) scale(1)}}
 @keyframes ringSpin{to{transform:rotate(360deg)}}
-@keyframes dragonAwake{0%,12%{opacity:0;transform:translate(-50%,-48%) translateZ(-1000px) rotateZ(-78deg) scale(.04);filter:blur(12px) brightness(.2)}25%{opacity:.3}38%{opacity:.9;transform:translate(-50%,-50%) translateZ(70px) rotateZ(11deg) scale(.88);filter:blur(0) brightness(1.6)}50%{transform:translate(-50%,-51%) translateZ(40px) rotateZ(-7deg) scale(1.04);filter:brightness(1.05)}63%{transform:translate(-50%,-49%) translateZ(85px) rotateZ(5deg) scale(1.1)}76%{transform:translate(-50%,-52%) translateZ(110px) rotateZ(-4deg) scale(1.14)}89%{opacity:1;transform:translate(-50%,-50%) translateZ(130px) rotateZ(3deg) scale(1.19)}100%{opacity:.86;transform:translate(-50%,-52%) translateZ(150px) rotateZ(-1deg) scale(1.23);filter:brightness(.82)}}
-@keyframes dragonHeadV2{0%,22%{opacity:0;transform:translate(-50%,-50%) translate3d(28vw,-24vh,-500px) rotate(28deg) scale(.24);filter:blur(9px) brightness(.35)}34%{opacity:1;transform:translate(-50%,-50%) translate3d(3vw,-2vh,90px) rotate(-7deg) scale(.92);filter:blur(0) brightness(1.5)}43%{transform:translate(-50%,-50%) translate3d(-5vw,5vh,180px) rotate(5deg) scale(1.18);filter:brightness(1.9)}52%{transform:translate(-50%,-50%) translate3d(-1vw,1vh,120px) rotate(-4deg) scale(1.02);filter:brightness(1.05)}65%{transform:translate(-50%,-50%) translate3d(-3vw,3vh,150px) rotate(3deg) scale(1.1)}78%{transform:translate(-50%,-50%) translate3d(-2vw,1vh,135px) rotate(-3deg) scale(1.06)}90%{opacity:1;transform:translate(-50%,-50%) translate3d(-4vw,4vh,175px) rotate(4deg) scale(1.13)}100%{opacity:.78;transform:translate(-50%,-50%) translate3d(-2vw,2vh,130px) rotate(-2deg) scale(1.08)}}
-@keyframes dragonClawLeft{0%,25%{opacity:0;transform:translate(-50%,-50%) translate3d(-58vw,22vh,-350px) rotate(-65deg) scale(.35)}38%{opacity:1;transform:translate(-50%,-50%) translate3d(1vw,1vh,130px) rotate(13deg) scale(.95)}47%{transform:translate(-50%,-50%) translate3d(7vw,-1vh,230px) rotate(-8deg) scale(1.15)}58%{transform:translate(-50%,-50%) translate3d(3vw,2vh,160px) rotate(6deg) scale(1.02)}73%{transform:translate(-50%,-50%) translate3d(6vw,-1vh,195px) rotate(-5deg) scale(1.1)}88%{opacity:1;transform:translate(-50%,-50%) translate3d(4vw,1vh,170px) rotate(5deg) scale(1.04)}100%{opacity:.7;transform:translate(-50%,-50%) translate3d(6vw,0,190px) rotate(-2deg) scale(1.08)}}
-@keyframes dragonClawRight{0%,27%{opacity:0;transform:translate(-50%,-50%) translate3d(58vw,26vh,-380px) rotate(72deg) scale(.32)}40%{opacity:1;transform:translate(-50%,-50%) translate3d(-2vw,-2vh,150px) rotate(-15deg) scale(.96)}49%{transform:translate(-50%,-50%) translate3d(-9vw,-5vh,240px) rotate(9deg) scale(1.16)}60%{transform:translate(-50%,-50%) translate3d(-4vw,-2vh,170px) rotate(-5deg) scale(1.02)}75%{transform:translate(-50%,-50%) translate3d(-7vw,-4vh,205px) rotate(6deg) scale(1.1)}89%{opacity:1;transform:translate(-50%,-50%) translate3d(-5vw,-2vh,180px) rotate(-4deg) scale(1.04)}100%{opacity:.7;transform:translate(-50%,-50%) translate3d(-7vw,-3vh,200px) rotate(2deg) scale(1.08)}}
-@keyframes dragonTailV2{0%,16%{opacity:0;transform:translate(-50%,-50%) translate3d(-38vw,36vh,-600px) rotate(-54deg) scale(.28)}31%{opacity:.75;transform:translate(-50%,-50%) translate3d(-4vw,5vh,20px) rotate(16deg) scale(.86)}43%{opacity:1;transform:translate(-50%,-50%) translate3d(2vw,-1vh,80px) rotate(-13deg) scale(1.06)}55%{transform:translate(-50%,-50%) translate3d(-3vw,2vh,55px) rotate(10deg) scale(1)}67%{transform:translate(-50%,-50%) translate3d(3vw,-2vh,95px) rotate(-9deg) scale(1.08)}79%{transform:translate(-50%,-50%) translate3d(-2vw,1vh,65px) rotate(7deg) scale(1.02)}91%{opacity:.95;transform:translate(-50%,-50%) translate3d(2vw,-1vh,90px) rotate(-6deg) scale(1.07)}100%{opacity:.7;transform:translate(-50%,-50%) translate3d(0,1vh,60px) rotate(4deg) scale(1.04)}}
-@keyframes coreLock{0%,39%{opacity:0;transform:translate(-50%,-50%) scale(.05) translateZ(-400px) rotate(-45deg)}53%{opacity:1;transform:translate(-50%,-50%) scale(1.25) translateZ(520px) rotate(3deg)}66%,100%{opacity:1;transform:translate(-50%,-50%) scale(1) translateZ(440px)}}
+@keyframes dragonAwake{0%,20%{opacity:0;transform:translate(-50%,-48%) translateZ(-900px) rotateZ(-48deg) scale(.06);filter:blur(10px) brightness(.2)}34%{opacity:.18}48%{opacity:1;transform:translate(-50%,-50%) translateZ(100px) rotateZ(7deg) scale(.9);filter:blur(0) brightness(1.85)}61%{transform:translate(-50%,-50%) translateZ(30px) rotateZ(-2deg) scale(1.06);filter:brightness(1.1)}82%{opacity:1;transform:translate(-50%,-51%) translateZ(80px) rotateZ(1deg) scale(1.12)}100%{opacity:.94;transform:translate(-50%,-52%) translateZ(130px) rotateZ(3deg) scale(1.2);filter:brightness(.8)}}
+@keyframes coreLock{0%,39%{opacity:0;transform:translate(-50%,-50%) scale(.05) translateZ(-400px) rotate(-45deg)}53%{opacity:1;transform:translate(-50%,-50%) scale(1.25) translateZ(90px) rotate(3deg)}66%,100%{opacity:1;transform:translate(-50%,-50%) scale(1) translateZ(40px)}}
 @keyframes coreTurn{to{transform:rotate(405deg)}}
 @keyframes shardBurst{0%,28%{opacity:0;transform:translate(-50%,-50%) rotate(var(--r)) translateY(0) translateZ(-400px) scale(.1)}47%{opacity:1}65%{transform:translate(-50%,-50%) rotate(var(--r)) translateY(var(--d)) translateZ(var(--z)) scale(1)}100%{opacity:.25;transform:translate(-50%,-50%) rotate(calc(var(--r) + 35deg)) translateY(calc(var(--d) * 1.16)) translateZ(var(--z)) scale(.8)}}
 @keyframes domainFlash{0%,37%,43%,51%,100%{opacity:0}39%{opacity:.82}41%{opacity:.05}53%{opacity:.38}56%{opacity:0}}
 @keyframes titleReveal{0%,55%{opacity:0;transform:translate(-50%,35px) scale(.7);filter:blur(8px)}68%,88%{opacity:1;transform:translate(-50%,0) scale(1);filter:none}100%{opacity:.3;transform:translate(-50%,-8px) scale(1.04)}}
 @keyframes nameReveal{0%,66%{opacity:0;transform:translate(-50%,10px)}78%,92%{opacity:1;transform:translate(-50%,0)}100%{opacity:.2}}
 @keyframes skipReveal{to{opacity:1}}
-@media (prefers-reduced-motion:reduce){.profile-domain,.domain-nebula,.domain-rift,.domain-floor,.domain-seal,.domain-dragon,.dragon-part,.domain-core,.domain-title,.domain-name,.domain-flash{animation-delay:0s!important;animation-duration:4.2s!important}.domain-shard{display:none}}
+@media (prefers-reduced-motion:reduce){.profile-domain,.domain-nebula,.domain-rift,.domain-floor,.domain-seal,.domain-dragon,.domain-core,.domain-title,.domain-name,.domain-flash{animation-delay:0s!important;animation-duration:4.2s!important}.domain-shard{display:none}}
 @media (max-width:360px){
   .gate .mark{font-size:34px}
   .cell{height:100px;font-size:64px}
@@ -1671,24 +1662,19 @@ function profileDomainSound() {
     var AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
     var ctx = new AC(), master = ctx.createGain(), t = ctx.currentTime;
-    master.gain.setValueAtTime(.0001, t); master.gain.exponentialRampToValueAtTime(.22, t + .08); master.gain.exponentialRampToValueAtTime(.0001, t + 5.05); master.connect(ctx.destination);
+    master.gain.setValueAtTime(.0001, t); master.gain.exponentialRampToValueAtTime(.22, t + .08); master.gain.exponentialRampToValueAtTime(.0001, t + 3.2); master.connect(ctx.destination);
     var bass = ctx.createOscillator(), bassGain = ctx.createGain();
     bass.type = 'sawtooth'; bass.frequency.setValueAtTime(58, t); bass.frequency.exponentialRampToValueAtTime(24, t + 1.25);
     bassGain.gain.setValueAtTime(.42, t); bassGain.gain.exponentialRampToValueAtTime(.0001, t + 1.6); bass.connect(bassGain).connect(master); bass.start(t); bass.stop(t + 1.65);
     var strike = ctx.createOscillator(), strikeGain = ctx.createGain();
     strike.type = 'triangle'; strike.frequency.setValueAtTime(420, t + .9); strike.frequency.exponentialRampToValueAtTime(72, t + 1.3);
     strikeGain.gain.setValueAtTime(.0001, t); strikeGain.gain.setValueAtTime(.3, t + .9); strikeGain.gain.exponentialRampToValueAtTime(.0001, t + 1.65); strike.connect(strikeGain).connect(master); strike.start(t); strike.stop(t + 1.7);
-    var growl = ctx.createOscillator(), growlGain = ctx.createGain(), growlFilter = ctx.createBiquadFilter();
-    growl.type = 'sawtooth'; growl.frequency.setValueAtTime(96, t + 1.35); growl.frequency.exponentialRampToValueAtTime(34, t + 3.45);
-    growlFilter.type = 'lowpass'; growlFilter.frequency.setValueAtTime(620, t + 1.35); growlFilter.frequency.exponentialRampToValueAtTime(150, t + 3.5);
-    growlGain.gain.setValueAtTime(.0001, t); growlGain.gain.setValueAtTime(.24, t + 1.4); growlGain.gain.exponentialRampToValueAtTime(.0001, t + 3.65);
-    growl.connect(growlFilter).connect(growlGain).connect(master); growl.start(t + 1.3); growl.stop(t + 3.75);
     var len = Math.floor(ctx.sampleRate * 1.4), buf = ctx.createBuffer(1, len, ctx.sampleRate), data = buf.getChannelData(0);
     for (var i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2);
     var noise = ctx.createBufferSource(), filter = ctx.createBiquadFilter(), noiseGain = ctx.createGain();
     noise.buffer = buf; filter.type = 'bandpass'; filter.frequency.value = 650; filter.Q.value = .55; noiseGain.gain.value = .16;
     noise.connect(filter).connect(noiseGain).connect(master); noise.start(t + .48); noise.stop(t + 1.9);
-    setTimeout(function () { try { ctx.close(); } catch (e) {} }, 5700);
+    setTimeout(function () { try { ctx.close(); } catch (e) {} }, 3800);
   } catch (e) {}
 }
 function playProfileFx(p, done) {
@@ -1706,12 +1692,11 @@ function playProfileFx(p, done) {
     shards += '<i class="domain-shard" style="--r:' + deg + 'deg;--d:' + dist + 'px;--z:' + z + 'px;--delay:' + (180 + i * 28) + 'ms"></i>';
   }
   var fx = document.createElement('div');
-  fx.className = 'profile-domain'; fx.setAttribute('role', 'presentation'); fx.setAttribute('aria-label', '星界龍皇領域降臨 V2，點擊可跳過');
+  fx.className = 'profile-domain'; fx.setAttribute('role', 'presentation'); fx.setAttribute('aria-label', '星界龍域登場特效，點擊可跳過');
   fx.innerHTML = '<div class="domain-space"><div class="domain-nebula"></div><canvas class="domain-stars"></canvas>' +
     '<div class="domain-rift left"></div><div class="domain-rift right"></div><div class="domain-floor"></div>' +
     '<div class="domain-seal"><i class="domain-ring r1"></i><i class="domain-ring r2"></i><i class="domain-ring r3"></i>' + glyphs + '</div>' +
-    shards + '<div class="dragon-part dragon-tail"></div><img class="domain-dragon" src="' + esc(it.img) + '" alt="" draggable="false">' +
-    '<div class="dragon-part dragon-head"></div><div class="dragon-part dragon-claw left"></div><div class="dragon-part dragon-claw right"></div>' +
+    shards + '<img class="domain-dragon" src="' + esc(it.img) + '" alt="" draggable="false">' +
     '<div class="domain-core">' + playerAvatar(p, 140) + '</div><div class="domain-flash"></div></div>' +
     '<div class="domain-title"><small>領域展開</small><b>' + esc(it.name) + '</b></div><div class="domain-name">#' + esc(idOf(p)) + '　' + esc(p.name) + '</div>' +
     '<div class="domain-skip">點擊跳過</div>';
@@ -1724,7 +1709,7 @@ function playProfileFx(p, done) {
   for (i = 0; i < (w < 520 ? 72 : 110); i++) stars.push({ x: (Math.random() - .5) * w, y: (Math.random() - .5) * h, z: Math.random() * w + 20, p: 0 });
   function drawStars(now) {
     if (!alive) return;
-    var elapsed = now - start, speed = elapsed < 900 ? 5 : elapsed < 2800 ? 20 : elapsed < 4300 ? 9 : 4;
+    var elapsed = now - start, speed = elapsed < 800 ? 5 : elapsed < 1900 ? 18 : 7;
     ctx.clearRect(0, 0, w, h); ctx.globalCompositeOperation = 'lighter';
     stars.forEach(function (s) {
       s.p = s.z; s.z -= speed; if (s.z < 8) { s.x = (Math.random() - .5) * w; s.y = (Math.random() - .5) * h; s.z = w; s.p = s.z; }
