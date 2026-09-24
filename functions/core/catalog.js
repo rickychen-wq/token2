@@ -58,13 +58,13 @@ const ITEMS = [
    avatar / ur / bg / dex 是額外的獨立加抽，不佔道具格。
    全部都可以在後台改。 */
 const CHEST_LOOT = {
-  1: { stars: [3, 5],     items: [['bankruptcy_protection', 1, 1], ['forced_duel', 1, 1, 0.2], ['forced_action', 1, 2], ['premium_dry_shampoo', 1, 1], ['iron_bowl', 1, 1, 0.2], ['broken_bowl', 1, 3]], avatar: 0, ur: 0, bg: 0, dex: 0 },
-  2: { stars: [5, 7],     items: [['bankruptcy_protection', 1, 2], ['forced_duel', 1, 1, 0.5], ['forced_action', 3, 3], ['premium_dry_shampoo', 2, 2], ['iron_bowl', 1, 1, 0.5], ['broken_bowl', 3, 6]], avatar: 0.02, ur: 0, bg: 0.005, dex: 0 },
-  3: { stars: [7, 10],    items: [['bankruptcy_protection', 3, 3], ['forced_duel', 1, 2], ['forced_action', 3, 3], ['premium_dry_shampoo', 2, 2], ['iron_bowl', 2, 2], ['broken_bowl', 3, 6]], avatar: 0.03, ur: 0, bg: 0.01, dex: 0.2 },
-  4: { stars: [10, 20],   items: [['bankruptcy_protection', 5, 5], ['forced_duel', 3, 3], ['forced_action', 3, 3], ['premium_dry_shampoo', 3, 3], ['iron_bowl', 3, 3], ['broken_bowl', 3, 6]], avatar: 0.1, ur: 0, bg: 0.035, dex: 0.35 },
-  5: { stars: [20, 25],   items: [['bankruptcy_protection', 5, 5], ['forced_duel', 5, 5], ['forced_action', 3, 3], ['premium_dry_shampoo', 3, 3], ['iron_bowl', 3, 3], ['broken_bowl', 3, 6]], avatar: 0.2, ur: 0.05, bg: 0.075, dex: 0.6 },
+  1: { stars: [3, 5],     items: [['forced_duel', 1, 1, 0.2], ['forced_action', 1, 2], ['premium_dry_shampoo', 1, 1], ['iron_bowl', 1, 1, 0.2], ['broken_bowl', 1, 3]], avatar: 0, ur: 0, bg: 0, dex: 0 },
+  2: { stars: [5, 7],     items: [['forced_duel', 1, 1, 0.5], ['forced_action', 3, 3], ['premium_dry_shampoo', 2, 2], ['iron_bowl', 1, 1, 0.5], ['broken_bowl', 3, 6]], avatar: 0.02, ur: 0, bg: 0.005, dex: 0 },
+  3: { stars: [7, 10],    items: [['bankruptcy_protection', 0, 1], ['forced_duel', 1, 2], ['forced_action', 3, 3], ['premium_dry_shampoo', 2, 2], ['iron_bowl', 2, 2], ['broken_bowl', 3, 6]], avatar: 0.03, ur: 0, bg: 0.01, dex: 0.2 },
+  4: { stars: [10, 20],   items: [['bankruptcy_protection', 1, 2], ['forced_duel', 3, 3], ['forced_action', 3, 3], ['premium_dry_shampoo', 3, 3], ['iron_bowl', 3, 3], ['broken_bowl', 3, 6]], avatar: 0.1, ur: 0, bg: 0.035, dex: 0.35 },
+  5: { stars: [20, 25],   items: [['bankruptcy_protection', 1, 3], ['forced_duel', 5, 5], ['forced_action', 3, 3], ['premium_dry_shampoo', 3, 3], ['iron_bowl', 3, 3], ['broken_bowl', 3, 6]], avatar: 0.2, ur: 0.05, bg: 0.075, dex: 0.6 },
   6: { stars: [25, 50],   items: [['bankruptcy_protection', 5, 5], ['forced_duel', 5, 5], ['forced_action', 3, 3], ['premium_dry_shampoo', 3, 3], ['iron_bowl', 3, 3], ['broken_bowl', 3, 6]], avatar: 0.3, ur: 0.1, bg: 0.1, dex: 0.75 },
-  7: { stars: [150, 150], items: [['bankruptcy_protection', 10, 10], ['forced_duel', 10, 10], ['forced_action', 10, 10], ['premium_dry_shampoo', 10, 10], ['iron_bowl', 10, 10], ['broken_bowl', 50, 50]], avatar: 1, ur: 1, bg: 1, dex: 1 }
+  7: { stars: [150, 150], items: [['bankruptcy_protection', 20, 20], ['forced_duel', 10, 10], ['forced_action', 10, 10], ['premium_dry_shampoo', 10, 10], ['iron_bowl', 10, 10], ['broken_bowl', 50, 50]], avatar: 1, ur: 1, bg: 1, dex: 1 }
 };
 const DEX_FULL_STARS = 30;   // 圖鑑已經收集完時，dex 那一抽改發的星幣
 
@@ -130,6 +130,23 @@ const STACKABLE = { card: 1, key: 1, chest: 1 };   // 可以累積數量的物�
 /* 後台可以改的欄位 */
 const EDITABLE = ['name', 'price', 'onSale', 'tier', 'desc', 'stock', 'perUser', 'startAt', 'endAt', 'salvage', 'rewards', 'loot', 'sub'];
 
+const LEGACY_REVIVE_LOOT = { 1: [1, 1], 2: [1, 2], 3: [3, 3], 4: [5, 5], 5: [5, 5], 6: [5, 5], 7: [10, 10] };
+const TARGET_REVIVE_LOOT = { 1: null, 2: null, 3: [0, 1], 4: [1, 2], 5: [1, 3], 6: [5, 5], 7: [20, 20] };
+
+/* 舊版後台若存著原始寶箱內容，只遷移破產防護卷的舊預設；管理員另行調過的數值不覆蓋。 */
+function migrateReviveLoot(x) {
+  if (!x || x.type !== 'chest' || !x.loot || !Array.isArray(x.loot.items)) return;
+  const legacy = LEGACY_REVIVE_LOOT[x.rarity], target = TARGET_REVIVE_LOOT[x.rarity];
+  if (!legacy) return;
+  const items = x.loot.items.map((e) => Object.assign({}, e));
+  const at = items.findIndex((e) => e.itemId === 'bankruptcy_protection');
+  if (at < 0) return;
+  const e = items[at], oldDefault = Number(e.min) === legacy[0] && Number(e.max) === legacy[1] && (e.p === undefined || Number(e.p) >= 1);
+  if (!oldDefault) return;
+  if (target) items[at] = Object.assign({}, e, { min: target[0], max: target[1] });
+  else items.splice(at, 1);
+  x.loot = Object.assign({}, x.loot, { items });
+}
 function merge(overrides) {
   const o = overrides || {};
   const out = {};
@@ -138,6 +155,7 @@ function merge(overrides) {
     if (o[d.id]) EDITABLE.forEach((k) => { if (o[d.id][k] !== undefined) x[k] = o[d.id][k]; });
     // 舊版名稱若曾被寫進 config/catalog，隨新版圖片一起遷移；之後手動改的新名稱仍會保留。
     if (x.type === 'back' && LEGACY_BACKS.indexOf(x.name) >= 0) x.name = d.name;
+    migrateReviveLoot(x);
     out[x.id] = x;
   });
   return out;
