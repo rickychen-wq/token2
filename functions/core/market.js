@@ -21,7 +21,7 @@ function isMarketOpen(t) {
   const d = new Date(Number(t) + TW_OFFSET);
   const day = d.getUTCDay();
   const mins = d.getUTCHours() * 60 + d.getUTCMinutes();
-  return day >= 1 && day <= 5 && mins >= 8 * 60 && mins < 16 * 60;
+  return day >= 1 && day <= 5 && mins >= 7 * 60 && mins < 17 * 60 + 30;
 }
 
 function freshState(t) {
@@ -291,7 +291,7 @@ function createMarket({ db, now, requireSession, requireAdmin, mutate, FieldValu
 
   async function trade(req) {
     const session = await requireSession(req);
-    if (!isMarketOpen(now())) throw new AppError('目前已收盤，交易時間是週一到週五 08:00–16:00', 'market-closed');
+    if (!isMarketOpen(now())) throw new AppError('目前已收盤，交易時間是週一到週五 07:00–17:30（17:00 後為盤後交易）', 'market-closed');
     const d = req.data || {};
     const symbol = String(d.symbol || '').toUpperCase();
     const side = String(d.side || '').toLowerCase();
@@ -340,7 +340,7 @@ function createMarket({ db, now, requireSession, requireAdmin, mutate, FieldValu
 
   async function leverageOpen(req) {
     const session = await requireSession(req);
-    if (!isMarketOpen(now())) throw new AppError('目前已收盤，交易時間是週一到週五 08:00–16:00', 'market-closed');
+    if (!isMarketOpen(now())) throw new AppError('目前已收盤，交易時間是週一到週五 07:00–17:30（17:00 後為盤後交易）', 'market-closed');
     const d = req.data || {};
     const symbol = String(d.symbol || '').toUpperCase();
     const side = String(d.side || '').toLowerCase();
@@ -377,7 +377,7 @@ function createMarket({ db, now, requireSession, requireAdmin, mutate, FieldValu
 
   async function leverageClose(req) {
     const session = await requireSession(req);
-    if (!isMarketOpen(now())) throw new AppError('目前已收盤，交易時間是週一到週五 08:00–16:00', 'market-closed');
+    if (!isMarketOpen(now())) throw new AppError('目前已收盤，交易時間是週一到週五 07:00–17:30（17:00 後為盤後交易）', 'market-closed');
     const symbol = String((req.data && req.data.symbol) || '').toUpperCase();
     if (!STOCKS.some((s) => s.symbol === symbol)) throw new AppError('找不到這支股票', 'bad-stock', 'invalid-argument');
     const marketState = await getState();
