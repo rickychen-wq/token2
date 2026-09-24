@@ -44,6 +44,12 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // 星界交易所：行情公開給已登入玩家，交易與管理操作只走 Cloud Functions
+    match /market/{doc} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
     // 德州：牌桌公開；每個人只讀得到自己的底牌；整副牌（secret）完全不開放
     match /games/poker/tables/{tid} {
       allow read: if signedIn();

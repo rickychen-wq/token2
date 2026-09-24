@@ -79,6 +79,7 @@ function newAccount(pid, cfg, t) {
     bank: { balance: 0, periodKey: 0, periodMin: 0 },
     loans: 0,
     inPlay: {},
+    market: { holdings: {}, positions: {}, value: 0, realized: 0, fees: 0 },
     daily: { day: null, hands: 0, claimed: false },
     handsPlayed: 0, plays: 0,
     everBorrowed: false,
@@ -96,7 +97,7 @@ function inPlayTotal(acc) {
 }
 
 function computeNet(acc, cfg) {
-  return acc.wallet + acc.bank.balance + inPlayTotal(acc) - acc.loans * cfg.loanUnit;
+  return acc.wallet + acc.bank.balance + inPlayTotal(acc) + ((acc.market && acc.market.value) || 0) - acc.loans * cfg.loanUnit;
 }
 
 /* 改完帳戶後一定要呼叫：更新淨資產和本季最高 */

@@ -22,6 +22,7 @@ const { createBlackjack } = require('./games/blackjack');
 const { createBig2 } = require('./games/big2');
 const { createRewards } = require('./core/rewards');
 const { createFeedback } = require('./core/feedback');
+const { createMarket } = require('./core/market');
 
 const db = admin.firestore();
 const now = () => Date.now();
@@ -38,6 +39,10 @@ const SE = createSeason({ db, now, requireAdmin: A.requireAdmin, runInterest: EC
   closeTables: async (sid) => { const r = await PK.closeSeason(sid); await BJ.closeSeason(sid); await B2.closeSeason(sid); return r; } });
 const RW = createRewards({ db, now, requireAdmin: A.requireAdmin });
 const FB = createFeedback({ db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin });
+const MK = createMarket({
+  db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin,
+  mutate: EC.mutate, FieldValue: admin.firestore.FieldValue
+});
 
 /* 把自訂錯誤轉成前端讀得到的 HttpsError，其他錯誤不外洩細節 */
 function wrap(fn) {
@@ -79,6 +84,14 @@ exports.adminAdjust = wrap(EC.adminAdjust);
 exports.adminSetEcon = wrap(EC.adminSetEcon);
 exports.adminLedger = wrap(EC.adminLedger);
 exports.adminRunInterest = wrap(EC.adminRunInterest);
+
+/* ---------- 星界交易所 ---------- */
+exports.marketState = wrap(MK.state);
+exports.marketTrade = wrap(MK.trade);
+exports.marketLeverageOpen = wrap(MK.leverageOpen);
+exports.marketLeverageClose = wrap(MK.leverageClose);
+exports.adminMarketMove = wrap(MK.adminMove);
+exports.adminMarketSignals = wrap(MK.adminSignals);
 
 /* ---------- 德州 ---------- */
 exports.pokerSit = wrap(PK.sit);
@@ -178,4 +191,15 @@ exports.rewardsWeekly = onSchedule({ schedule: '15 0 * * 1', timeZone: 'Asia/Tai
 exports.econInterest = onSchedule({ schedule: '0 */3 * * *', timeZone: 'Asia/Taipei', retryCount: 3 }, async () => {
   const r = await EC.runInterest(Date.now());
   logger.info('interest', r);
+});
+
+/* 每 5 分鐘更新虛擬股價，並同步持股玩家的當季淨資產。 */
+exports.marketTick = onSchedule({ schedule: '*/5 * * * *', timeZone: 'Asia/Taipei', retryCount: 3 }, async () => {
+  logger.info('market tick', await MK.tick(Date.now()));
+});
+
+/* 情報網：每天台灣時間 08、10、12、14、16 點各發布一則消息與管理員建議。 */
+exports.marketIntel = onSchedule({ schedule: '0 8,10,12,14,16 * * *', timeZone: 'Asia/Taipei', retryCount: 3 }, async (event) => {
+  const scheduledAt = Date.parse(event.scheduleTime) || Date.now();
+  logger.info('market intel', await MK.publishIntel(scheduledAt));
 });
