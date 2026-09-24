@@ -6,6 +6,10 @@
 const { AppError, seasonId, TW_OFFSET } = require('./util');
 const E = require('./econ');
 
+const TOTAL_SHARES = 100000;
+const PLAYER_SHARE_RATE = 0.3;
+const HISTORY_LIMIT = 750;
+
 const STOCKS = [
   { symbol: 'TKN', name: 'TOKEN 科技', tag: '核心平台', color: '#62e7ff', price: 128 },
   { symbol: 'BNK', name: '星界銀行', tag: '金融服務', color: '#79f2b1', price: 96 },
@@ -16,6 +20,14 @@ const STOCKS = [
 
 function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
 function round2(n) { return Math.round(n * 100) / 100; }
+
+function applySupply(stock, playerShares) {
+  stock.totalShares = TOTAL_SHARES;
+  stock.playerLimit = Math.floor(TOTAL_SHARES * PLAYER_SHARE_RATE);
+  stock.playerShares = clamp(Math.floor(Number(playerShares) || 0), 0, TOTAL_SHARES);
+  stock.systemShares = Math.max(0, TOTAL_SHARES - stock.playerShares);
+  return stock;
+}
 
 function isMarketOpen(t) {
   const d = new Date(Number(t) + TW_OFFSET);
@@ -30,7 +42,9 @@ function freshState(t) {
     stocks[s.symbol] = {
       symbol: s.symbol, name: s.name, tag: s.tag, color: s.color,
       price: s.price, base: s.price, previous: s.price,
-      buyVolume: 0, sellVolume: 0, history: [{ t, p: s.price }]
+      buyVolume: 0, sellVolume: 0, history: [{ t, p: s.price }],
+      totalShares: TOTAL_SHARES, playerLimit: Math.floor(TOTAL_SHARES * PLAYER_SHARE_RATE),
+      playerShares: 0, systemShares: TOTAL_SHARES
     };
   });
   return {
@@ -42,11 +56,11 @@ function freshState(t) {
 
 function normalizeStock(raw, def, t) {
   const price = Math.max(5, Math.round(Number(raw && raw.price) || def.price));
-  const history = Array.isArray(raw && raw.history) ? raw.history.slice(-72).map((x) => ({
+  const history = Array.isArray(raw && raw.history) ? raw.history.slice(-HISTORY_LIMIT).map((x) => ({
     t: Number(x.t) || t, p: Math.max(5, Math.round(Number(x.p) || price))
   })) : [];
   if (!history.length) history.push({ t, p: price });
-  return {
+  return applySupply({
     symbol: def.symbol,
     name: String((raw && raw.name) || def.name).slice(0, 24),
     tag: String((raw && raw.tag) || def.tag).slice(0, 24),
@@ -57,7 +71,7 @@ function normalizeStock(raw, def, t) {
     buyVolume: Math.max(0, Number(raw && raw.buyVolume) || 0),
     sellVolume: Math.max(0, Number(raw && raw.sellVolume) || 0),
     history
-  };
+  }, raw && raw.playerShares);
 }
 
 function normalizeState(raw, t) {
@@ -138,6 +152,40 @@ function portfolioValue(market, state) {
   return Math.round(total);
 }
 
+function settlePortfolio(acc, state, cfg, t) {
+  const market = normalizePortfolio(acc);
+  const holdingSymbols = Object.keys(market.holdings);
+  const positionSymbols = Object.keys(market.positions);
+  if (!holdingSymbols.length && !positionSymbols.length) {
+    market.value = 0;
+    E.refresh(acc, cfg, t);
+    return { changed: false, credited: 0, stockValue: 0, leverageEquity: 0, pnl: 0, repayEntries: [] };
+  }
+  let stockValue = 0, stockCost = 0, leverageEquity = 0, leverageMargin = 0;
+  holdingSymbols.forEach((symbol) => {
+    const holding = market.holdings[symbol], stock = state.stocks[symbol];
+    if (!stock) return;
+    stockValue += holding.qty * stock.price;
+    stockCost += holding.cost;
+  });
+  positionSymbols.forEach((symbol) => {
+    const position = market.positions[symbol];
+    leverageEquity += positionEquity(position, state);
+    leverageMargin += position.margin;
+  });
+  const credited = Math.max(0, Math.round(stockValue + leverageEquity));
+  const pnl = Math.round((stockValue - stockCost) + (leverageEquity - leverageMargin));
+  acc.wallet += credited;
+  market.realized += pnl;
+  market.holdings = {};
+  market.positions = {};
+  market.value = 0;
+  const closeWallet = acc.wallet;
+  const repayEntries = E.autoRepay(acc, cfg, t);
+  E.refresh(acc, cfg, t);
+  return { changed: true, credited, stockValue, leverageEquity, pnl, closeWallet, repayEntries };
+}
+
 function tickState(raw, t, random) {
   const state = normalizeState(raw, t);
   const rnd = typeof random === 'function' ? random : Math.random;
@@ -153,7 +201,7 @@ function tickState(raw, t, random) {
     s.price = Math.max(5, Math.round(old * (1 + pct)));
     s.buyVolume = round2(s.buyVolume * 0.2);
     s.sellVolume = round2(s.sellVolume * 0.2);
-    s.history = (s.history || []).concat([{ t, p: s.price }]).slice(-72);
+    s.history = (s.history || []).concat([{ t, p: s.price }]).slice(-HISTORY_LIMIT);
   });
   state.news = state.news.slice(0, 150);
   state.updatedAt = t;
@@ -216,6 +264,42 @@ function makeIntelBatch(state, t, random) {
 function createMarket({ db, now, requireSession, requireAdmin, mutate, FieldValue }) {
   const ref = () => db.collection('market').doc('main');
   const signalsRef = () => db.collection('marketAdmin').doc('signals');
+
+  function marketTxnMeta() {
+    return {
+      load: async (tx, ctx) => {
+        const snap = await tx.get(ref());
+        return { market: normalizeState(snap.exists ? snap.data() : null, ctx.t) };
+      },
+      write: async (tx, extra) => { tx.set(ref(), extra.market); }
+    };
+  }
+
+  async function syncSupplyTotals(totals) {
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref());
+      const state = normalizeState(snap.exists ? snap.data() : null, now());
+      STOCKS.forEach((def) => { applySupply(state.stocks[def.symbol], totals[def.symbol] || 0); });
+      tx.set(ref(), state);
+    });
+  }
+
+  async function syncSupply(t) {
+    const at = Number(t) || now();
+    const sid = seasonId(at);
+    const accSnap = await db.collection('seasons').doc(sid).collection('accounts').get();
+    const totals = {};
+    STOCKS.forEach((stock) => { totals[stock.symbol] = 0; });
+    accSnap.forEach((doc) => {
+      const account = doc.data();
+      const market = normalizePortfolio(account);
+      Object.keys(market.holdings).forEach((symbol) => {
+        totals[symbol] = (totals[symbol] || 0) + market.holdings[symbol].qty;
+      });
+    });
+    await syncSupplyTotals(totals);
+    return { ok: true, sid, accounts: accSnap.size, totals };
+  }
 
   async function getState() {
     const snap = await ref().get();
@@ -299,20 +383,25 @@ function createMarket({ db, now, requireSession, requireAdmin, mutate, FieldValu
     if (!STOCKS.some((s) => s.symbol === symbol)) throw new AppError('找不到這支股票', 'bad-stock', 'invalid-argument');
     if (side !== 'buy' && side !== 'sell') throw new AppError('交易方向錯誤', 'bad-side', 'invalid-argument');
     if (!Number.isFinite(qty) || qty < 1 || qty > 1000) throw new AppError('每次交易股數要在 1 到 1000 之間', 'bad-qty', 'invalid-argument');
-    const marketState = await getState();
-    const stock = marketState.stocks[symbol];
-    const gross = stock.price * qty;
-    const fee = Math.max(1, Math.ceil(gross * marketState.feeRate));
-    const result = await mutate(session.pid, (acc) => {
+    let tradeInfo = null;
+    const result = await mutate(session.pid, (acc, cfg, t, rawCfg, pl, setPlayer, extra) => {
+      const marketState = extra.market;
+      const stock = marketState.stocks[symbol];
+      const gross = stock.price * qty;
+      const fee = Math.max(1, Math.ceil(gross * marketState.feeRate));
       const market = normalizePortfolio(acc);
       const old = market.holdings[symbol] || { qty: 0, cost: 0 };
       if (side === 'buy') {
         const total = gross + fee;
         if (acc.wallet < total) throw new AppError('錢包餘額不足', 'no-money');
         if (old.qty + qty > 5000) throw new AppError('單支股票最多持有 5000 股', 'holding-limit');
+        const available = Math.max(0, stock.playerLimit - stock.playerShares);
+        if (qty > available) throw new AppError('市場只剩 ' + available + ' 股可供玩家持有；系統必須保留至少 70%', 'market-supply');
         acc.wallet -= total;
         market.holdings[symbol] = { qty: old.qty + qty, cost: old.cost + total };
         market.fees += fee;
+        applySupply(stock, stock.playerShares + qty);
+        stock.buyVolume = round2(stock.buyVolume + qty);
       } else {
         if (old.qty < qty) throw new AppError('持股不足，不能賣出', 'no-shares');
         const basis = Math.round(old.cost * qty / old.qty);
@@ -323,19 +412,19 @@ function createMarket({ db, now, requireSession, requireAdmin, mutate, FieldValu
         const left = old.qty - qty;
         if (left) market.holdings[symbol] = { qty: left, cost: Math.max(0, old.cost - basis) };
         else delete market.holdings[symbol];
+        applySupply(stock, Math.max(0, stock.playerShares - qty));
+        stock.sellVolume = round2(stock.sellVolume + qty);
       }
       market.value = portfolioValue(market, marketState);
+      tradeInfo = { side, symbol, qty, price: stock.price, fee };
       return [{
         type: side === 'buy' ? 'market_buy' : 'market_sell',
         amount: side === 'buy' ? -(gross + fee) : (gross - fee),
         wallet: acc.wallet, bank: acc.bank.balance, loans: acc.loans,
         note: stock.name + ' ' + qty + ' 股 @ ' + stock.price
       }];
-    });
-    const field = side === 'buy' ? 'stocks.' + symbol + '.buyVolume' : 'stocks.' + symbol + '.sellVolume';
-    // 成交量只影響下一輪價格壓力；就算這個非關鍵更新失敗，也不能讓玩家誤以為交易失敗而重複下單。
-    await ref().update({ [field]: FieldValue.increment(qty) }).catch(() => {});
-    return { ok: true, side, symbol, qty, price: stock.price, fee, market: marketState, account: result.account };
+    }, marketTxnMeta());
+    return Object.assign({ ok: true, market: result.extra.market, account: result.account }, tradeInfo);
   }
 
   async function leverageOpen(req) {
@@ -455,6 +544,67 @@ function createMarket({ db, now, requireSession, requireAdmin, mutate, FieldValu
     return { rows, latestSlot: String(data.latestSlot || (rows[0] && rows[0].slot) || '') };
   }
 
+  async function closeWeek(t) {
+    const at = Number(t) || now();
+    const sid = seasonId(at);
+    const runRef = db.collection('seasons').doc(sid).collection('marketRuns').doc('friday-close');
+    const existing = await runRef.get();
+    if (existing.exists && existing.data().status === 'completed') {
+      return Object.assign({ skipped: true, sid }, existing.data());
+    }
+    const marketState = await getState();
+    const savedPrices = existing.exists && existing.data().prices ? existing.data().prices : null;
+    const prices = {};
+    STOCKS.forEach((stock) => {
+      const saved = savedPrices && Number(savedPrices[stock.symbol]);
+      if (saved > 0) marketState.stocks[stock.symbol].price = Math.round(saved);
+      prices[stock.symbol] = marketState.stocks[stock.symbol].price;
+    });
+    await runRef.set({ status: 'running', sid, startedAt: at, prices }, { merge: true });
+    const [cfgSnap, accSnap] = await Promise.all([
+      db.collection('config').doc('app').get(),
+      db.collection('seasons').doc(sid).collection('accounts').get()
+    ]);
+    const cfg = E.cfgOf(cfgSnap.exists ? cfgSnap.data() : null);
+    let accounts = 0, credited = 0, pnl = 0;
+    for (const accountDoc of accSnap.docs) {
+      const result = await db.runTransaction(async (tx) => {
+        const playerRef = db.collection('players').doc(accountDoc.id);
+        const [accLatest, playerSnap] = await Promise.all([tx.get(accountDoc.ref), tx.get(playerRef)]);
+        if (!accLatest.exists) return null;
+        const acc = accLatest.data();
+        const settled = settlePortfolio(acc, marketState, cfg, at);
+        if (!settled.changed) return null;
+        tx.set(accountDoc.ref, acc);
+        tx.set(accountDoc.ref.collection('ledger').doc(), {
+          type: 'market_weekly_close', amount: settled.credited,
+          wallet: settled.closeWallet, bank: acc.bank.balance, loans: acc.loans,
+          at, by: 'system',
+          note: '星期五收盤自動結算：股票 ' + settled.stockValue + '、槓桿權益 ' + settled.leverageEquity + '、損益 ' + (settled.pnl >= 0 ? '+' : '') + settled.pnl
+        });
+        settled.repayEntries.forEach((entry) => {
+          tx.set(accountDoc.ref.collection('ledger').doc(), Object.assign({}, entry, { at, by: 'system', note: '收盤結算後自動還款' }));
+        });
+        const player = playerSnap.exists ? playerSnap.data() : null;
+        if (player && acc.peakNet > ((player.stats && player.stats.peakNet) || 0)) {
+          tx.update(playerRef, { 'stats.peakNet': acc.peakNet, 'stats.peakNetSeason': sid });
+        }
+        return settled;
+      });
+      if (result) { accounts++; credited += result.credited; pnl += result.pnl; }
+    }
+    await syncSupplyTotals({});
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref());
+      const state = normalizeState(snap.exists ? snap.data() : null, at);
+      state.lastWeeklyClose = { sid, at, accounts, credited, pnl };
+      tx.set(ref(), state);
+    });
+    const output = { status: 'completed', sid, completedAt: now(), accounts, credited, pnl, prices };
+    await runRef.set(output, { merge: true });
+    return output;
+  }
+
   async function publishIntel(t, random) {
     const at = Number(t) || now();
     let output;
@@ -491,7 +641,7 @@ function createMarket({ db, now, requireSession, requireAdmin, mutate, FieldValu
     return { ok: true, refreshed, updatedAt: result.updatedAt };
   }
 
-  return { state, trade, leverageOpen, leverageClose, adminMove, adminSignals, publishIntel, tick, getState, refreshPortfolios };
+  return { state, trade, leverageOpen, leverageClose, adminMove, adminSignals, publishIntel, tick, closeWeek, syncSupply, getState, refreshPortfolios };
 }
 
-module.exports = { createMarket, freshState, normalizeState, normalizePortfolio, portfolioValue, positionEquity, liquidationPrice, isMarketOpen, tickState, makeIntel, makeIntelBatch, intelSlotKey, STOCKS };
+module.exports = { createMarket, freshState, normalizeState, normalizePortfolio, portfolioValue, settlePortfolio, positionEquity, liquidationPrice, isMarketOpen, tickState, makeIntel, makeIntelBatch, intelSlotKey, STOCKS, TOTAL_SHARES, PLAYER_SHARE_RATE, HISTORY_LIMIT };

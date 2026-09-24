@@ -198,7 +198,19 @@ exports.marketTick = onSchedule({ schedule: '*/5 * * * *', timeZone: 'Asia/Taipe
   logger.info('market tick', await MK.tick(Date.now()));
 });
 
-/* 情報網：每天台灣時間 08、10、12、14、16 點各發布一則消息與管理員建議。 */
+/* 每個交易日 06:55 依帳戶實際持股校正市場比例，再於 07:00 開盤。 */
+exports.marketSupplySync = onSchedule({ schedule: '55 6 * * 1-5', timeZone: 'Asia/Taipei', retryCount: 3 }, async (event) => {
+  const scheduledAt = Date.parse(event.scheduleTime) || Date.now();
+  logger.info('market supply sync', await MK.syncSupply(scheduledAt));
+});
+
+/* 星期五 17:30 收盤：所有持股與槓桿按固定收盤價換回現金，行情本身跨週延續。 */
+exports.marketWeeklyClose = onSchedule({ schedule: '30 17 * * 5', timeZone: 'Asia/Taipei', retryCount: 5 }, async (event) => {
+  const scheduledAt = Date.parse(event.scheduleTime) || Date.now();
+  logger.info('market weekly close', await MK.closeWeek(scheduledAt));
+});
+
+/* 情報網：每天台灣時間 08、10、12、14、16 點各發布五則消息與管理員建議。 */
 exports.marketIntel = onSchedule({ schedule: '0 8,10,12,14,16 * * *', timeZone: 'Asia/Taipei', retryCount: 3 }, async (event) => {
   const scheduledAt = Date.parse(event.scheduleTime) || Date.now();
   logger.info('market intel', await MK.publishIntel(scheduledAt));

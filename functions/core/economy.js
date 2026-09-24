@@ -33,6 +33,9 @@ function createEconomy({ db, now, requireSession, requireAdmin }) {
       }
       const rawCfg = cfgSnap.exists ? cfgSnap.data() : {};
       const cfg = E.cfgOf(rawCfg);
+      const extra = meta && typeof meta.load === 'function'
+        ? await meta.load(tx, { t, sid, pid, cfg, rawCfg })
+        : null;
       const entries = [];
       let acc;
       if (aSnap.exists) {
@@ -50,7 +53,7 @@ function createEconomy({ db, now, requireSession, requireAdmin }) {
       if (expireTemp(pl, t)) { plPatch.temp = pl.temp || {}; plPatch.equipped = pl.equipped || {}; }
       // v12：任何一次動到帳戶（登入讀帳戶也會走這裡）就算今天登入過
       if (T.bump(pl, t, 'login', 1, rawCfg)) plPatch.tasks = pl.tasks;
-      const produced = fn ? fn(acc, cfg, t, rawCfg, pl, setPlayer) : [];
+      const produced = fn ? fn(acc, cfg, t, rawCfg, pl, setPlayer, extra) : [];
       entries.push.apply(entries, produced || []);
       // 統一規則：任何流程結束後，錢包達到門檻就自動還款（登入讀帳戶時也會補做）。
       // 收入紀錄在前、還款紀錄在後；已經還過的不會再觸發，所以重複讀取不會重複扣。
@@ -60,6 +63,9 @@ function createEconomy({ db, now, requireSession, requireAdmin }) {
       if (!sSnap.exists) {
         const r = seasonRange(t);
         tx.set(seasonRef(sid), { id: sid, startAt: r.start, endAt: r.end, status: 'active', createdAt: t });
+      }
+      if (meta && typeof meta.write === 'function') {
+        await meta.write(tx, extra, { t, sid, pid, cfg, rawCfg, acc });
       }
       tx.set(accRef(sid, pid), acc);
       const accDoc = accRef(sid, pid);
@@ -73,7 +79,7 @@ function createEconomy({ db, now, requireSession, requireAdmin }) {
         plPatch['stats.peakNetSeason'] = sid;
       }
       if (Object.keys(plPatch).length) tx.update(playerRef(pid), plPatch);
-      return { sid, account: acc, cfg };
+      return { sid, account: acc, cfg, extra };
     });
   }
 
