@@ -5094,15 +5094,20 @@ function renderMarket(force) {
   });
   h += '</div>';
 
-  h += '<div class="market-section"><div class="market-section-title"><h2>市場快訊</h2><span>最新消息</span></div>';
-  (state.news || []).slice(0, 5).forEach(function (n) {
+  var allNews = state.news || [], latestSlot = state.latestIntelSlot || '';
+  var currentNews = latestSlot ? allNews.filter(function (n) { return n.kind === 'intel' && n.batch === latestSlot; }).slice(0, 5) : allNews.slice(0, 5);
+  var historyNews = latestSlot ? allNews.filter(function (n) { return !(n.kind === 'intel' && n.batch === latestSlot); }) : allNews.slice(5);
+  h += '<div class="market-section"><div class="market-section-title"><h2>即時情報</h2><span>最新一批・' + currentNews.length + ' 則</span></div>';
+  currentNews.forEach(function (n) {
     h += '<div class="market-news-row"><span class="market-news-time">' + twClock(n.t) + '</span><div><b>' + (n.kind === 'intel' ? '<span class="intel-tag">情報網</span>' : '') + esc(n.title) + '</b><small>' + esc(n.body) + '</small></div></div>';
   });
+  if (historyNews.length) h += '<button class="btn ghost" id="marketHistory" type="button" style="width:100%;margin-top:10px">查看歷史情報（' + historyNews.length + '）</button>';
   h += '</div></div>';
 
   if (put('vMarket', h, force)) {
     $('marketBack').onclick = function () { switchTab('home'); };
     $('marketHelp').onclick = sheetMarketHelp;
+    if ($('marketHistory')) $('marketHistory').onclick = sheetMarketHistory;
     $('vMarket').querySelectorAll('[data-stock]').forEach(function (b) {
       b.onclick = function () { MKUI.selected = b.getAttribute('data-stock'); renderMarket(true); };
     });
@@ -5680,12 +5685,24 @@ function sheetMarketHelp() {
   openSheet('<h3>星界交易所規則</h3><p class="desc">右上角的問號隨時可以再打開。</p>' +
     '<div class="market-rules">' +
       '<div class="market-rule"><b>開盤時間</b><p>週一到週五 08:00 開盤、16:00 收盤。六日不能交易，但情報網仍可能發布消息。</p></div>' +
-      '<div class="market-rule"><b>情報網</b><p>每天 08、10、12、14、16 點發布一則公司事件。08:00 的第一則情報會和開盤同時出現。</p></div>' +
+      '<div class="market-rule"><b>情報網</b><p>每天 08、10、12、14、16 點各發布 5 則公司事件。新一批會取代首頁的舊情報，舊批次可在歷史情報查看。</p></div>' +
       '<div class="market-rule"><b>一般股票</b><p>買進後會成為持股，賣出時依目前價格結算。每筆成交收取 1% 手續費。</p></div>' +
       '<div class="market-rule"><b>槓桿與做多／做空</b><p>做多是押上漲，做空是押下跌。2×、3×、5× 會把漲跌損益放大相同倍數，只需要投入保證金。</p></div>' +
       '<div class="market-rule"><b>爆倉</b><p>當反向波動吃完全部保證金，倉位會自動清算，保證金歸零。5× 大約反向 20% 就會爆倉，風險最高。</p></div>' +
     '</div><div class="leverage-warning">槓桿不會讓錢包變成負數，但可能一次損失整筆保證金。同時最多持有 3 個槓桿倉位，同一支股票只能有 1 個。</div>' +
     '<div class="acts"><button class="btn" type="button" data-close>知道了</button></div>', function (sh) { sh.querySelector('[data-close]').onclick = closeSheet; });
+}
+
+function sheetMarketHistory() {
+  var state = MKUI.state || {}, allNews = state.news || [], latestSlot = state.latestIntelSlot || '';
+  var rows = latestSlot ? allNews.filter(function (n) { return !(n.kind === 'intel' && n.batch === latestSlot); }) : allNews.slice(5);
+  var h = '<h3>歷史情報</h3><p class="desc">新一批上線後，前一批會自動移到這裡。</p><div class="market-history-list">';
+  if (!rows.length) h += '<div class="empty">目前還沒有歷史情報</div>';
+  rows.forEach(function (n) {
+    h += '<div class="market-news-row"><span class="market-news-time">' + twDate(n.t) + '<br>' + twClock(n.t) + '</span><div><b>' + (n.kind === 'intel' ? '<span class="intel-tag">情報網</span>' : '') + esc(n.title) + '</b><small>' + esc(n.body) + '</small></div></div>';
+  });
+  h += '</div><div class="acts" style="margin-top:14px"><button class="btn ghost" type="button" data-close>關閉</button></div>';
+  openSheet(h, function (sh) { sh.classList.add('flush'); sh.querySelector('[data-close]').onclick = closeSheet; });
 }
 
 function sheetLeverageOpen(symbol, side) {
@@ -5743,9 +5760,10 @@ function sheetMarketAdmin() {
   toast('正在讀取情報網…');
   call('adminMarketSignals').then(function (r) {
     var stocks = MKUI.state.stocks, symbols = Object.keys(stocks), rows = (r && r.rows) || [];
-    var pending = rows.filter(function (x) { return x.status !== 'applied'; }).slice(0, 5);
+    var latestSlot = (r && r.latestSlot) || (rows[0] && rows[0].slot) || '';
+    var pending = rows.filter(function (x) { return x.status !== 'applied' && (!latestSlot || x.slot === latestSlot); }).slice(0, 5);
     var selectedSignal = null;
-    var intel = '<div class="intel-panel"><div class="intel-panel-head"><b>情報網建議</b><span>每日 08・10・12・14・16 點</span></div>';
+    var intel = '<div class="intel-panel"><div class="intel-panel-head"><b>情報網建議</b><span>每個時段 5 則</span></div>';
     if (!pending.length) intel += '<div class="intel-empty">目前沒有待處理情報，可以直接手動操作。</div>';
     pending.forEach(function (x) {
       var stock = stocks[x.symbol];

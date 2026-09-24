@@ -35,7 +35,7 @@ function freshState(t) {
   });
   return {
     version: 1, feeRate: 0.01, intervalMin: 5, updatedAt: t,
-    nextAt: t + 5 * 60000, stocks,
+    nextAt: t + 5 * 60000, stocks, latestIntelSlot: '',
     news: [{ t, title: '星界交易所正式開盤', body: '五支虛擬股票同步上線，價格每 5 分鐘更新。' }]
   };
 }
@@ -68,13 +68,15 @@ function normalizeState(raw, t) {
   out.intervalMin = 5;
   out.updatedAt = Number(out.updatedAt) || t;
   out.nextAt = Number(out.nextAt) || (t + 5 * 60000);
+  out.latestIntelSlot = String(out.latestIntelSlot || '').slice(0, 20);
   out.stocks = {};
   STOCKS.forEach((def) => { out.stocks[def.symbol] = normalizeStock(raw && raw.stocks && raw.stocks[def.symbol], def, t); });
-  out.news = Array.isArray(raw && raw.news) ? raw.news.slice(0, 30).map((n) => ({
+  out.news = Array.isArray(raw && raw.news) ? raw.news.slice(0, 150).map((n) => ({
     t: Number(n.t) || t,
     title: String(n.title || '市場快訊').slice(0, 60),
     body: String(n.body || '').slice(0, 120),
-    kind: n.kind === 'intel' ? 'intel' : 'market'
+    kind: n.kind === 'intel' ? 'intel' : 'market',
+    batch: String(n.batch || '').slice(0, 20)
   })) : base.news;
   return out;
 }
@@ -161,7 +163,7 @@ function tickState(raw, t, random) {
       });
     }
   });
-  state.news = state.news.slice(0, 30);
+  state.news = state.news.slice(0, 150);
   state.updatedAt = t;
   state.nextAt = t + 5 * 60000;
   return state;
@@ -185,10 +187,11 @@ function intelSlotKey(t) {
   return d.getUTCFullYear() + String(d.getUTCMonth() + 1).padStart(2, '0') + String(d.getUTCDate()).padStart(2, '0') + '-' + String(d.getUTCHours()).padStart(2, '0');
 }
 
-function makeIntel(state, t, random) {
+function makeIntel(state, t, random, index, targetSymbol) {
   const rnd = typeof random === 'function' ? random : Math.random;
   const defs = STOCKS.map((def) => state.stocks[def.symbol] || def);
-  const ai = Math.min(defs.length - 1, Math.floor(rnd() * defs.length));
+  const requested = defs.findIndex((def) => def.symbol === targetSymbol);
+  const ai = requested >= 0 ? requested : Math.min(defs.length - 1, Math.floor(rnd() * defs.length));
   let bi = Math.min(defs.length - 1, Math.floor(rnd() * (defs.length - 1)));
   if (bi >= ai) bi++;
   const a = defs[ai], b = defs[bi % defs.length];
@@ -199,13 +202,23 @@ function makeIntel(state, t, random) {
   const body = event.body(a, b, money);
   const slot = intelSlotKey(t);
   return {
-    news: { t, title, body, kind: 'intel' },
+    news: { t, title, body, kind: 'intel', batch: slot },
     signal: {
-      id: 'intel-' + slot, slot, t, title, symbol: a.symbol,
+      id: 'intel-' + slot + '-' + (Number(index) || 0), slot, t, title, symbol: a.symbol,
       direction: event.direction, percent, status: 'pending',
       reason: '情報網判定「' + title + '」主要影響 ' + a.name + '，建議' + (event.direction === 'up' ? '上漲 ' : '下跌 ') + percent + '%。'
     }
   };
+}
+
+function makeIntelBatch(state, t, random) {
+  const rnd = typeof random === 'function' ? random : Math.random;
+  const symbols = STOCKS.map((stock) => stock.symbol);
+  for (let i = symbols.length - 1; i > 0; i--) {
+    const j = Math.min(i, Math.floor(rnd() * (i + 1)));
+    const tmp = symbols[i]; symbols[i] = symbols[j]; symbols[j] = tmp;
+  }
+  return symbols.map((symbol, index) => makeIntel(state, t, rnd, index, symbol));
 }
 
 function createMarket({ db, now, requireSession, requireAdmin, mutate, FieldValue }) {
@@ -425,7 +438,7 @@ function createMarket({ db, now, requireSession, requireAdmin, mutate, FieldValu
         body: (sign > 0 ? '大量買盤突然湧入，' : '市場出現集中賣單，') + '最新價格來到 ' + stock.price.toLocaleString('zh-TW') + '。',
         kind: 'market'
       });
-      state.news = state.news.slice(0, 30);
+      state.news = state.news.slice(0, 150);
       tx.set(ref(), state);
       result = state;
     });
@@ -452,7 +465,9 @@ function createMarket({ db, now, requireSession, requireAdmin, mutate, FieldValu
   async function adminSignals(req) {
     await requireAdmin(req);
     const snap = await signalsRef().get();
-    return { rows: snap.exists && Array.isArray(snap.data().rows) ? snap.data().rows.slice(0, 30) : [] };
+    const data = snap.exists ? snap.data() : {};
+    const rows = Array.isArray(data.rows) ? data.rows.slice(0, 150) : [];
+    return { rows, latestSlot: String(data.latestSlot || (rows[0] && rows[0].slot) || '') };
   }
 
   async function publishIntel(t, random) {
@@ -463,15 +478,17 @@ function createMarket({ db, now, requireSession, requireAdmin, mutate, FieldValu
       const state = normalizeState(marketSnap.exists ? marketSnap.data() : null, at);
       const oldRows = signalSnap.exists && Array.isArray(signalSnap.data().rows) ? signalSnap.data().rows : [];
       const slot = intelSlotKey(at);
-      const old = oldRows.find((row) => row.slot === slot);
-      if (old) { output = { skipped: true, slot, signal: old }; return; }
-      const intel = makeIntel(state, at, random);
-      state.news.unshift(intel.news);
-      state.news = state.news.slice(0, 30);
+      const oldBatch = oldRows.filter((row) => row.slot === slot);
+      if (oldBatch.length >= 5) { output = { skipped: true, slot, signals: oldBatch.slice(0, 5) }; return; }
+      const batch = makeIntelBatch(state, at, random);
+      const news = batch.map((intel) => intel.news);
+      const signals = batch.map((intel) => intel.signal);
+      state.latestIntelSlot = slot;
+      state.news = news.concat(state.news).slice(0, 150);
       state.updatedAt = at;
       tx.set(ref(), state);
-      tx.set(signalsRef(), { rows: [intel.signal].concat(oldRows).slice(0, 30), updatedAt: at });
-      output = { skipped: false, slot, news: intel.news, signal: intel.signal };
+      tx.set(signalsRef(), { rows: signals.concat(oldRows.filter((row) => row.slot !== slot)).slice(0, 150), latestSlot: slot, updatedAt: at });
+      output = { skipped: false, slot, news, signals };
     });
     return output;
   }
@@ -492,4 +509,4 @@ function createMarket({ db, now, requireSession, requireAdmin, mutate, FieldValu
   return { state, trade, leverageOpen, leverageClose, adminMove, adminSignals, publishIntel, tick, getState, refreshPortfolios };
 }
 
-module.exports = { createMarket, freshState, normalizeState, normalizePortfolio, portfolioValue, positionEquity, liquidationPrice, isMarketOpen, tickState, makeIntel, intelSlotKey, STOCKS };
+module.exports = { createMarket, freshState, normalizeState, normalizePortfolio, portfolioValue, positionEquity, liquidationPrice, isMarketOpen, tickState, makeIntel, makeIntelBatch, intelSlotKey, STOCKS };
