@@ -5095,13 +5095,13 @@ function renderMarket(force) {
   h += '</div>';
 
   var allNews = state.news || [], latestSlot = state.latestIntelSlot || '';
-  var currentNews = latestSlot ? allNews.filter(function (n) { return n.kind === 'intel' && n.batch === latestSlot; }).slice(0, 5) : allNews.slice(0, 5);
-  var historyNews = latestSlot ? allNews.filter(function (n) { return !(n.kind === 'intel' && n.batch === latestSlot); }) : allNews.slice(5);
+  var intelNews = allNews.filter(function (n) { return n.kind === 'intel'; });
+  var currentNews = latestSlot ? intelNews.filter(function (n) { return n.batch === latestSlot; }).slice(0, 5) : intelNews.slice(0, 5);
   h += '<div class="market-section"><div class="market-section-title"><h2>即時情報</h2><span>最新一批・' + currentNews.length + ' 則</span></div>';
   currentNews.forEach(function (n) {
-    h += '<div class="market-news-row"><span class="market-news-time">' + twClock(n.t) + '</span><div><b>' + (n.kind === 'intel' ? '<span class="intel-tag">情報網</span>' : '') + esc(n.title) + '</b><small>' + esc(n.body) + '</small></div></div>';
+    h += '<div class="market-news-row"><span class="market-news-time">' + twClock(n.t) + '</span><div><b><span class="intel-tag">情報網</span>' + esc(n.title) + '</b><small>' + esc(n.body) + '</small></div></div>';
   });
-  if (historyNews.length) h += '<button class="btn ghost" id="marketHistory" type="button" style="width:100%;margin-top:10px">查看歷史情報（' + historyNews.length + '）</button>';
+  if (intelNews.length) h += '<button class="btn ghost" id="marketHistory" type="button" style="width:100%;margin-top:10px">查看最近 20 則情報網</button>';
   h += '</div></div>';
 
   if (put('vMarket', h, force)) {
@@ -5685,7 +5685,7 @@ function sheetMarketHelp() {
   openSheet('<h3>星界交易所規則</h3><p class="desc">右上角的問號隨時可以再打開。</p>' +
     '<div class="market-rules">' +
       '<div class="market-rule"><b>開盤時間</b><p>週一到週五 08:00 開盤、16:00 收盤。六日不能交易，但情報網仍可能發布消息。</p></div>' +
-      '<div class="market-rule"><b>情報網</b><p>每天 08、10、12、14、16 點各發布 5 則公司事件。新一批會取代首頁的舊情報，舊批次可在歷史情報查看。</p></div>' +
+      '<div class="market-rule"><b>情報網</b><p>每天 08、10、12、14、16 點各發布 5 則特殊公司事件。一般價格波動不會列入情報；首頁顯示最新一批，另外保留最近 20 則。</p></div>' +
       '<div class="market-rule"><b>一般股票</b><p>買進後會成為持股，賣出時依目前價格結算。每筆成交收取 1% 手續費。</p></div>' +
       '<div class="market-rule"><b>槓桿與做多／做空</b><p>做多是押上漲，做空是押下跌。2×、3×、5× 會把漲跌損益放大相同倍數，只需要投入保證金。</p></div>' +
       '<div class="market-rule"><b>爆倉</b><p>當反向波動吃完全部保證金，倉位會自動清算，保證金歸零。5× 大約反向 20% 就會爆倉，風險最高。</p></div>' +
@@ -5694,12 +5694,12 @@ function sheetMarketHelp() {
 }
 
 function sheetMarketHistory() {
-  var state = MKUI.state || {}, allNews = state.news || [], latestSlot = state.latestIntelSlot || '';
-  var rows = latestSlot ? allNews.filter(function (n) { return !(n.kind === 'intel' && n.batch === latestSlot); }) : allNews.slice(5);
-  var h = '<h3>歷史情報</h3><p class="desc">新一批上線後，前一批會自動移到這裡。</p><div class="market-history-list">';
-  if (!rows.length) h += '<div class="empty">目前還沒有歷史情報</div>';
+  var state = MKUI.state || {};
+  var rows = (state.news || []).filter(function (n) { return n.kind === 'intel'; }).slice(0, 20);
+  var h = '<h3>最近 20 則情報網</h3><p class="desc">只收錄可能影響行情的特殊事件，不顯示一般價格漲跌。</p><div class="market-history-list">';
+  if (!rows.length) h += '<div class="empty">目前還沒有情報網事件</div>';
   rows.forEach(function (n) {
-    h += '<div class="market-news-row"><span class="market-news-time">' + twDate(n.t) + '<br>' + twClock(n.t) + '</span><div><b>' + (n.kind === 'intel' ? '<span class="intel-tag">情報網</span>' : '') + esc(n.title) + '</b><small>' + esc(n.body) + '</small></div></div>';
+    h += '<div class="market-news-row"><span class="market-news-time">' + twDate(n.t) + '<br>' + twClock(n.t) + '</span><div><b><span class="intel-tag">情報網</span>' + esc(n.title) + '</b><small>' + esc(n.body) + '</small></div></div>';
   });
   h += '</div><div class="acts" style="margin-top:14px"><button class="btn ghost" type="button" data-close>關閉</button></div>';
   openSheet(h, function (sh) { sh.classList.add('flush'); sh.querySelector('[data-close]').onclick = closeSheet; });

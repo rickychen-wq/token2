@@ -154,14 +154,6 @@ function tickState(raw, t, random) {
     s.buyVolume = round2(s.buyVolume * 0.2);
     s.sellVolume = round2(s.sellVolume * 0.2);
     s.history = (s.history || []).concat([{ t, p: s.price }]).slice(-72);
-    const actual = old ? (s.price - old) / old : 0;
-    if (Math.abs(actual) >= 0.045) {
-      state.news.unshift({
-        t,
-        title: s.name + (actual > 0 ? ' 強勢上攻' : ' 遭遇賣壓'),
-        body: '最新價格 ' + s.price.toLocaleString('zh-TW') + '，單次波動 ' + (actual > 0 ? '+' : '') + round2(actual * 100) + '%。'
-      });
-    }
   });
   state.news = state.news.slice(0, 150);
   state.updatedAt = t;
@@ -432,13 +424,6 @@ function createMarket({ db, now, requireSession, requireAdmin, mutate, FieldValu
       stock.price = Math.max(5, Math.round(old * (1 + sign * percent / 100)));
       stock.history = stock.history.concat([{ t, p: stock.price }]).slice(-72);
       state.updatedAt = t;
-      state.news.unshift({
-        t,
-        title: stock.name + (sign > 0 ? ' 突然急升' : ' 突然跳水'),
-        body: (sign > 0 ? '大量買盤突然湧入，' : '市場出現集中賣單，') + '最新價格來到 ' + stock.price.toLocaleString('zh-TW') + '。',
-        kind: 'market'
-      });
-      state.news = state.news.slice(0, 150);
       tx.set(ref(), state);
       result = state;
     });
