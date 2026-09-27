@@ -204,7 +204,7 @@ const HIDDEN_REVEAL = {
   H03: { condition: '台灣時間同一天完成 100 場德州', effect: '每日固定獲得 1,000' }
 };
 function publicTitle(x, unlocked, admin) {
-  const secret = (x.hidden || x.limited) && !admin;
+  const secret = (x.hidden || x.limited) && !admin && !unlocked;
   return {
     id: x.id, category: x.category, achievement: x.achievement, name: x.name,
     condition: secret ? '？？？' : ((HIDDEN_REVEAL[x.id] || {}).condition || x.condition),

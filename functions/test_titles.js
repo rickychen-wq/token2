@@ -28,11 +28,14 @@ const richUnlocked = automaticUnlocks(rich, LAUNCH_AT + 12 * 3600000, { peakNet:
 assert(!richUnlocked.includes('B05'));
 
 const hiddenForPlayer = publicTitle(BY_ID.H01, false, false);
+const limitedLocked = publicTitle(BY_ID.L01, false, false);
 const limitedForPlayer = publicTitle(BY_ID.L01, true, false);
 assert.strictEqual(hiddenForPlayer.condition, '？？？');
 assert.strictEqual(hiddenForPlayer.effect, '？？？');
-assert.strictEqual(limitedForPlayer.condition, '？？？');
-assert.strictEqual(limitedForPlayer.effect, '？？？');
+assert.strictEqual(limitedLocked.condition, '？？？');
+assert.strictEqual(limitedLocked.effect, '？？？');
+assert.notStrictEqual(limitedForPlayer.condition, '？？？');
+assert.notStrictEqual(limitedForPlayer.effect, '？？？');
 assert.notStrictEqual(publicTitle(BY_ID.L01, false, true).condition, '？？？');
 
 const allA = TITLES.filter((x) => x.category === 'A').map((x) => x.id);
