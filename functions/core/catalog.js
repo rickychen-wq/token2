@@ -16,6 +16,11 @@ const TEST_RANK_AVATARS = [
   { id: 'av_test_2', name: '測試服第二名限定頭像', file: 'test02.webp' },
   { id: 'av_test_3', name: '測試服第三名限定頭像', file: 'test03.webp' }
 ];
+const SEASON_ONE_RANK_AVATARS = [
+  { id: 'av_s1_1', name: '第一賽季冠軍頭像', file: 'season1-rank-1.webp', rank: 1, tier: 4 },
+  { id: 'av_s1_2', name: '第一賽季亞軍頭像', file: 'season1-rank-2.webp', rank: 2, tier: 3 },
+  { id: 'av_s1_3', name: '第一賽季季軍頭像', file: 'season1-rank-3.webp', rank: 3, tier: 3 }
+];
 const DEX = ['缺角的聖杯', '看不懂的真跡', '成精的高麗菜', '奏樂令旗', '綠豆勇者', '藏寶圖殘卷', '見紅彎刀',
   '藍焰爪刀', '不會謝的玫瑰', '班草的求愛花束', '班花的情書', '紅線纏柄刀', '阿嬤的剁刀'];
 const DEX_RARE_IDS = ['dex_06', 'dex_11', 'dex_13'];
@@ -89,6 +94,11 @@ TEST_RANK_AVATARS.forEach((x) => DEFAULTS.push({
   id: x.id, type: 'avatar', sub: 'test_rank', tier: 1, name: x.name,
   price: null, onSale: false, img: 'assets/av/' + x.file,
   desc: '測試服排行限定，只能由管理員手動發放。'
+}));
+SEASON_ONE_RANK_AVATARS.forEach((x) => DEFAULTS.push({
+  id: x.id, type: 'avatar', sub: 'season1_rank', tier: x.tier, name: x.name,
+  price: null, onSale: false, img: 'assets/av/' + x.file,
+  desc: '第一賽季排行榜第 ' + x.rank + ' 名限定，換季結算後透過信箱發放。'
 }));
 BGS.forEach((n, i) => DEFAULTS.push({ id: 'bg_' + pad(i + 1), type: 'bg', tier: 1, name: n, price: 450, onSale: true, img: 'assets/bg/g' + pad(i + 1) + '.webp' }));
 BACKS.forEach((n, i) => DEFAULTS.push({ id: 'bk_' + pad(i + 1), type: 'back', tier: 3, name: n, price: null, onSale: false, img: 'assets/back/b' + pad(i + 1) + '.webp' }));
@@ -187,6 +197,7 @@ function dexInterest(p, items) {
 }
 
 module.exports = {
-  DEFAULTS, RARITY, BASIC_EMOTES, SLOT_KEY, STACKABLE, EDITABLE, ITEMS, TEST_RANK_AVATARS, CHEST_LOOT,
+  DEFAULTS, RARITY, BASIC_EMOTES, SLOT_KEY, STACKABLE, EDITABLE, ITEMS,
+  TEST_RANK_AVATARS, SEASON_ONE_RANK_AVATARS, CHEST_LOOT,
   DEX_FULL_STARS, DEX_RARE_IDS, DEX_MAX_EQUIPPED, DEX_COMPLETE_BONUS, dexInterest, merge, loadCatalog
 };

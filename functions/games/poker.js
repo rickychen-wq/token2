@@ -10,6 +10,7 @@ const H = require('./holdem');
 const C = require('./cards');
 const { publishHighlights } = require('../core/highlights');
 const { BASIC_EMOTES, merge } = require('../core/catalog');
+const { recordTitleProgress } = require('../core/titles');
 const byId = merge(null);
 
 const DEFAULT_SETTINGS = {
@@ -333,7 +334,10 @@ function createPoker({ db, now, requireSession, requireAdmin }) {
           g.net += x.net;
           if (x.won > g.biggestPot) g.biggestPot = x.won;
           p.games = Object.assign({}, p.games, { poker: g });
-          ctx.patchPlayer(s.pid, { 'games.poker': g });
+          if (x.won > 0) recordTitleProgress(p, ctx.t, 'pokerWin', 1);
+          if (x.allIn && x.won > 0) recordTitleProgress(p, ctx.t, 'pokerAllInWin', 1);
+          recordTitleProgress(p, ctx.t, 'pokerPot', x.won);
+          ctx.patchPlayer(s.pid, { 'games.poker': g, tasks: p.tasks || {} });
         }
       }
     }

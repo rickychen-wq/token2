@@ -16,6 +16,7 @@
 
 const { AppError, seasonId } = require('./util');
 const E = require('./econ');
+const { recordTitleProgress } = require('./titles');
 
 /* 任務從哪一週開始算。9/21 是 2026-W39，在那之前是測試期，
    不計進度也不能領獎，避免大家在測試週先把生涯任務刷滿。
@@ -198,7 +199,12 @@ function bump(p, t, what, n, rawCfg) {
   } else if (['firstAvatar', 'firstBg', 'firstItem', 'firstFuse'].indexOf(what) >= 0) {
     if (!c[what]) { c[what] = t; changed = true; }
   }
-  return changed;
+  let titleChanged = false;
+  if (what === 'login') titleChanged = recordTitleProgress(p, t, 'login', 1);
+  else if (what === 'play') titleChanged = recordTitleProgress(p, t, 'play', n || 1);
+  else if (what === 'pokerHand') titleChanged = recordTitleProgress(p, t, 'pokerHand', n || 1);
+  else if (what === 'pokerStraightFlush') titleChanged = recordTitleProgress(p, t, 'pokerStraightFlush', 1);
+  return changed || titleChanged;
 }
 
 /* ---------- 進度計算 ---------- */
@@ -323,6 +329,7 @@ function claim(p, acc, t, id, rawCfg, choice) {
     tk.daily.claimed = cl;
     tk.week.dailyDone += 1;
     tk.career.dailyDone += 1;
+    recordTitleProgress(p, t, 'dailyDone', 1);
     // 今日全清領完就記一天「模範生」
     if (id === 'd_all' && tk.career.lastPerfect !== tk.daily.day) {
       tk.career.lastPerfect = tk.daily.day;

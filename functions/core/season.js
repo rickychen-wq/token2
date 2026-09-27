@@ -5,9 +5,31 @@
 
 const { AppError, seasonId, seasonRange } = require('./util');
 const E = require('./econ');
+const { SEASON_ONE_RANK_AVATARS } = require('./catalog');
+const { TITLES } = require('./titles');
 
 const POINTS = { 1: 5, 2: 3, 3: 1 };
 const DEFAULT_RANK_FROM = '2026-W39';   // 這一季之前是練習季，不發積分
+const FIRST_SEASON_ID = '2026-W39';
+const FIRST_SEASON_AVATAR = Object.fromEntries(SEASON_ONE_RANK_AVATARS.map((x) => [x.rank, x]));
+
+function firstSeasonAvatarMail(sid, practice, row, t) {
+  if (practice || sid !== FIRST_SEASON_ID || !row || !(row.rank >= 1 && row.rank <= 3)) return null;
+  const avatar = FIRST_SEASON_AVATAR[row.rank];
+  if (!avatar) return null;
+  const id = 'season-one-avatar-' + sid + '-r' + row.rank + '-' + row.pid;
+  return {
+    id,
+    data: {
+      id,
+      title: '第一賽季・第 ' + row.rank + ' 名限定頭像',
+      body: '恭喜你在第一賽季資產排行獲得第 ' + row.rank + ' 名。這款頭像只會發給本季對應名次。',
+      money: 0, stars: 0, items: { [avatar.id]: 1 },
+      to: [row.pid], all: false, toList: [row.pid],
+      at: t, by: 'system', kind: 'seasonOneAvatar', seasonId: sid, rank: row.rank
+    }
+  };
+}
 
 /* 排名：打滿手數的人依淨資產排序，同分同名次；沒打滿的排在後面、沒有名次 */
 function rankSeason(accounts, players, minHands) {
@@ -72,6 +94,21 @@ function createSeason({ db, now, requireAdmin, runInterest, closeTables }) {
       accSnap.forEach((d) => { const a = d.data(); E.refresh(a, cfg, t); accounts.push(a); });
       plSnap.forEach((d) => { players[d.id] = d.data(); });
       const rows = rankSeason(accounts, players, cfg.rankMinHands);
+      const limitedIds = new Set(TITLES.filter((x) => x.limited).map((x) => x.id));
+      const mistaken = players['01'];
+      let cleanup01 = null, cleanup01Written = false;
+      if (mistaken) {
+        mistaken.unlocked = Object.assign({}, mistaken.unlocked || {});
+        mistaken.unlocked.titles = Array.isArray(mistaken.unlocked.titles)
+          ? mistaken.unlocked.titles.filter((id) => !limitedIds.has(id)) : [];
+        mistaken.equipped = Object.assign({}, mistaken.equipped || {});
+        mistaken.titleState = Object.assign({ showcase: [] }, mistaken.titleState || {});
+        if (limitedIds.has(mistaken.equipped.title)) mistaken.equipped.title = null;
+        mistaken.titleState.showcase = Array.isArray(mistaken.titleState.showcase)
+          ? mistaken.titleState.showcase.filter((id) => !limitedIds.has(id)) : [];
+        mistaken.titleState.clearedMistakenLimited20260927 = t;
+        cleanup01 = { unlocked: mistaken.unlocked, equipped: mistaken.equipped, titleState: mistaken.titleState };
+      }
 
       rows.forEach((r) => {
         const p = players[r.pid];
@@ -101,6 +138,7 @@ function createSeason({ db, now, requireAdmin, runInterest, closeTables }) {
           }
         }
         const patch = { stats: st, lastSettledSeason: sid };
+        if (r.pid === '01' && cleanup01) { Object.assign(patch, cleanup01); cleanup01Written = true; }
         if (r.stars) { p.stars = (p.stars || 0) + r.stars; patch.stars = p.stars; }
         const hist = Array.isArray(p.history) ? p.history.slice() : [];
         if (r.hands > 0) {
@@ -109,6 +147,14 @@ function createSeason({ db, now, requireAdmin, runInterest, closeTables }) {
         }
         tx.update(db.collection('players').doc(r.pid), patch);
       });
+      if (cleanup01 && !cleanup01Written) tx.update(db.collection('players').doc('01'), cleanup01);
+
+      if (!practice && sid === FIRST_SEASON_ID) {
+        rows.forEach((r) => {
+          const mail = firstSeasonAvatarMail(sid, practice, r, t);
+          if (mail) tx.set(db.collection('mail').doc(mail.id), mail.data);
+        });
+      }
 
       const final = rows.map((r) => ({ pid: r.pid, name: r.name, net: r.net, rank: r.rank, hands: r.hands, eligible: r.eligible, stars: r.stars }));
       const doc = { id: sid, status: 'closed', settledAt: t, final, practice, minHands: cfg.rankMinHands };
@@ -178,4 +224,7 @@ function createSeason({ db, now, requireAdmin, runInterest, closeTables }) {
   };
 }
 
-module.exports = { createSeason, rankSeason, POINTS, DEFAULT_RANK_FROM };
+module.exports = {
+  createSeason, rankSeason, firstSeasonAvatarMail,
+  POINTS, DEFAULT_RANK_FROM, FIRST_SEASON_ID
+};

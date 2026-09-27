@@ -4,7 +4,7 @@
 const { AppError, cleanPid, cleanName } = require('./util');
 const { SLOT_KEY, STACKABLE, EDITABLE, RARITY, DEX_FULL_STARS, DEX_MAX_EQUIPPED, dexInterest, loadCatalog } = require('./catalog');
 const T = require('./tasks');
-const { benefitsOf } = require('./titles');
+const { benefitsOf, recordTitleProgress } = require('./titles');
 
 function inv(p) {
   const u = Object.assign({}, p.unlocked || {});
@@ -318,13 +318,15 @@ function createShop({ db, now, requireSession, requireAdmin }) {
           else { dexFull = L.dexFullStars || DEX_FULL_STARS; p.stars = (p.stars || 0) + dexFull; }
         }
 
-        const fused = fuseBowls(p, now());
-        if (got.some((x) => x.tag === 'item')) T.bump(p, now(), 'firstItem');
+        const t = now();
+        const fused = fuseBowls(p, t);
+        if (got.some((x) => x.tag === 'item')) T.bump(p, t, 'firstItem');
+        recordTitleProgress(p, t, 'chest', cr);
         p.titleStats = Object.assign({}, p.titleStats || {});
         p.titleStats.maxChestRarity = Math.max(Number(p.titleStats.maxChestRarity || 0), cr);
         const result = { chest: cr, key: kr, stars, items: got, fused, dexFull };
         tx.update(playerRef(s.pid), playerPatch(p));
-        tx.set(playerRef(s.pid).collection('logs').doc(), Object.assign({ kind: 'open', at: now() }, result));
+        tx.set(playerRef(s.pid).collection('logs').doc(), Object.assign({ kind: 'open', at: t }, result));
         return result;
       });
     },

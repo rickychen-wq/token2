@@ -92,6 +92,7 @@ exports.titleState = wrap(TI.state);
 exports.titleEquip = wrap(TI.equip);
 exports.titleShowcase = wrap(TI.showcase);
 exports.adminTitleGrant = wrap(TI.adminGrant);
+exports.adminTitleClearLimited = wrap(TI.adminClearLimited);
 
 /* ---------- 星界交易所 ---------- */
 exports.marketState = wrap(MK.state);

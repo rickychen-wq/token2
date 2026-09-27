@@ -2,6 +2,9 @@
   "name": "token2-functions",
   "private": true,
   "main": "index.js",
+  "scripts": {
+    "test": "node test_titles.js && node test_season_avatar.js"
+  },
   "engines": { "node": "22" },
   "dependencies": {
     "firebase-admin": "^13.0.0",

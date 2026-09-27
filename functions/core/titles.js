@@ -7,6 +7,7 @@ const { AppError, cleanPid, seasonId, TW_OFFSET } = require('./util');
 
 const LAUNCH_AT = Date.UTC(2026, 8, 27, 16, 0, 0); // 2026/09/28 00:00 Asia/Taipei
 const FIRST_SEASON_END = LAUNCH_AT + 7 * 86400000;
+const TITLE_PROGRESS_VERSION = 1;
 
 const CATEGORY = {
   A: { name: '旅程', color: '#62dcff', completeEffect: '任務金錢永久 +10%', benefit: { taskBonus: 0.10 } },
@@ -77,23 +78,87 @@ function statOf(p, key) { return Number(((p.stats || {})[key]) || 0); }
 function dexOf(p) { return Array.isArray((p.unlocked || {}).dex) ? p.unlocked.dex : []; }
 function equippedDexOf(p) { return Array.isArray((p.equipped || {}).dex) ? p.equipped.dex : []; }
 
-function automaticUnlocks(p, t) {
-  const c = taskOf(p, 'career'), s = taskOf(p, 'special'), pk = pokerOf(p);
-  const peak = Math.max(statOf(p, 'peakNet'), Number(pk.peakNet || 0));
-  const maxChest = Number(((p.titleStats || {}).maxChestRarity) || 0);
+function blankTitleProgress() {
+  return {
+    version: TITLE_PROGRESS_VERSION, startedAt: LAUNCH_AT,
+    loginDays: 0, lastLogin: '', plays: 0, dailyDone: 0,
+    pokerWins: 0, pokerAllInWins: 0, pokerBiggestPot: 0,
+    pokerStraightFlush: false, pokerDay: '', pokerDayHands: 0, pokerDay100: false,
+    maxChestRarity: 0
+  };
+}
+
+function ensureTitleProgress(p, t) {
+  if (t < LAUNCH_AT) return null;
+  p.tasks = p.tasks && typeof p.tasks === 'object' ? p.tasks : {};
+  const cur = p.tasks.titleProgress;
+  if (!cur || Number(cur.version || 0) !== TITLE_PROGRESS_VERSION) p.tasks.titleProgress = blankTitleProgress();
+  else p.tasks.titleProgress = Object.assign(blankTitleProgress(), cur);
+  return p.tasks.titleProgress;
+}
+
+function recordTitleProgress(p, t, what, value) {
+  const q = ensureTitleProgress(p, t);
+  if (!q) return false;
+  const n = Math.max(0, Number(value === undefined ? 1 : value) || 0), day = dayOf(t);
+  if (what === 'login') {
+    if (q.lastLogin === day) return false;
+    q.lastLogin = day; q.loginDays += 1;
+  } else if (what === 'play') q.plays += n;
+  else if (what === 'dailyDone') q.dailyDone += n;
+  else if (what === 'pokerWin') q.pokerWins += n;
+  else if (what === 'pokerAllInWin') q.pokerAllInWins += n;
+  else if (what === 'pokerPot') q.pokerBiggestPot = Math.max(Number(q.pokerBiggestPot || 0), n);
+  else if (what === 'pokerStraightFlush') q.pokerStraightFlush = true;
+  else if (what === 'pokerHand') {
+    if (q.pokerDay !== day) { q.pokerDay = day; q.pokerDayHands = 0; q.pokerDay100 = false; }
+    q.pokerDayHands += n;
+    if (q.pokerDayHands >= 100) { q.pokerDayHands = 100; q.pokerDay100 = true; }
+  } else if (what === 'chest') q.maxChestRarity = Math.max(Number(q.maxChestRarity || 0), n);
+  else return false;
+  return true;
+}
+
+function progressMap(p, t, acc) {
+  const q = t >= LAUNCH_AT ? (ensureTitleProgress(p, t) || blankTitleProgress()) : blankTitleProgress();
+  const peak = t >= LAUNCH_AT && acc ? Math.max(0, Number(acc.peakNet || acc.net || 0)) : 0;
+  const dex = dexOf(p).length, equippedDex = equippedDexOf(p).length;
+  const cur = {
+    A01: q.loginDays, A02: q.loginDays, A03: q.loginDays, A04: q.plays, A05: q.dailyDone,
+    B01: peak, B02: peak, B03: peak, B04: peak, B05: peak,
+    P01: q.pokerWins, P02: q.pokerWins, P03: q.pokerWins,
+    P04: q.pokerAllInWins, P05: q.pokerBiggestPot,
+    C01: dex, C02: equippedDex, C03: dex, C04: dex,
+    C05: q.maxChestRarity, C06: q.maxChestRarity, C07: q.maxChestRarity,
+    H01: t >= LAUNCH_AT && hourOf(t) < 4 ? 1 : 0,
+    H02: q.pokerStraightFlush ? 1 : 0,
+    H03: q.pokerDay100 ? 100 : q.pokerDayHands
+  };
+  const need = {
+    A01: 1, A02: 7, A03: 30, A04: 100, A05: 100,
+    B01: 100000, B02: 500000, B03: 1000000, B04: 5000000, B05: 10000000,
+    P01: 1, P02: 10, P03: 100, P04: 1, P05: 100000,
+    C01: 1, C02: 3, C03: 7, C04: 13, C05: 4, C06: 5, C07: 7,
+    H01: 1, H02: 1, H03: 100
+  };
+  const out = {};
+  Object.keys(need).forEach((id) => { out[id] = { current: Math.min(Number(cur[id] || 0), need[id]), target: need[id] }; });
+  return out;
+}
+
+function automaticUnlocks(p, t, acc) {
+  if (t < LAUNCH_AT) return [];
+  const progress = progressMap(p, t, acc);
   const tests = {
-    A01: Number(c.loginDays || 0) >= 1,
-    A02: Number(c.loginDays || 0) >= 7,
-    A03: Number(c.loginDays || 0) >= 30,
-    A04: Number(c.plays || 0) >= 100,
-    A05: Number(c.dailyDone || 0) >= 100,
-    B01: peak >= 100000, B02: peak >= 500000, B03: peak >= 1000000, B04: peak >= 5000000, B05: peak >= 10000000,
-    P01: Number(pk.wins || 0) >= 1, P02: Number(pk.wins || 0) >= 10, P03: Number(pk.wins || 0) >= 100,
-    P04: Number(pk.allInWins || 0) >= 1, P05: Number(pk.biggestPot || 0) >= 100000,
-    C01: dexOf(p).length >= 1, C02: equippedDexOf(p).length >= 3, C03: dexOf(p).length >= 7, C04: dexOf(p).length >= 13,
-    C05: maxChest >= 4, C06: maxChest >= 5, C07: maxChest >= 7,
-    H01: t >= LAUNCH_AT && hourOf(t) < 4,
-    H02: !!s.straightFlush, H03: !!s.pokerDay100,
+    A01: progress.A01.current >= 1, A02: progress.A02.current >= 7, A03: progress.A03.current >= 30,
+    A04: progress.A04.current >= 100, A05: progress.A05.current >= 100,
+    B01: progress.B01.current >= 100000, B02: progress.B02.current >= 500000,
+    B03: progress.B03.current >= 1000000, B04: progress.B04.current >= 5000000, B05: progress.B05.current >= 10000000,
+    P01: progress.P01.current >= 1, P02: progress.P02.current >= 10, P03: progress.P03.current >= 100,
+    P04: progress.P04.current >= 1, P05: progress.P05.current >= 100000,
+    C01: progress.C01.current >= 1, C02: progress.C02.current >= 3, C03: progress.C03.current >= 7, C04: progress.C04.current >= 13,
+    C05: progress.C05.current >= 4, C06: progress.C06.current >= 5, C07: progress.C07.current >= 7,
+    H01: progress.H01.current >= 1, H02: progress.H02.current >= 1, H03: progress.H03.current >= 100,
     L01: Number(p.createdAt || 0) > 0 && Number(p.createdAt) < LAUNCH_AT,
     L02: p.role === 'admin',
     L03: t >= LAUNCH_AT && t < FIRST_SEASON_END
@@ -136,11 +201,9 @@ const HIDDEN_REVEAL = {
   H03: { condition: '台灣時間同一天完成 100 場德州', effect: '每日固定獲得 1,000' }
 };
 function publicTitle(x, unlocked, admin) {
-  const secret = x.hidden && !unlocked && !admin;
+  const secret = (x.hidden || x.limited) && !admin;
   return {
     id: x.id, category: x.category, achievement: x.achievement, name: x.name,
-    condition: secret ? '？？？' : x.condition,
-    effect: secret ? '？？？' : x.effect,
     condition: secret ? '？？？' : ((HIDDEN_REVEAL[x.id] || {}).condition || x.condition),
     effect: secret ? '？？？' : ((HIDDEN_REVEAL[x.id] || {}).effect || x.effect),
     hidden: x.hidden, limited: x.limited, unlocked: !!unlocked
@@ -167,11 +230,28 @@ function createTitles({ db, now, requireSession, requireAdmin }) {
       if (!pSnap.exists) throw new AppError('找不到這個編號', 'not-found');
       const p = pSnap.data();
       ensureShapes(p);
-      const unlocked = ownedTitles(p);
-      automaticUnlocks(p, t).forEach((id) => { if (unlocked.indexOf(id) < 0) unlocked.push(id); });
+      let unlocked = ownedTitles(p);
+      if (pid === '01' && !p.titleState.clearedMistakenLimited20260927) {
+        const limitedIds = new Set(TITLES.filter((x) => x.limited).map((x) => x.id));
+        unlocked = unlocked.filter((id) => !limitedIds.has(id));
+        if (limitedIds.has(p.equipped.title)) p.equipped.title = null;
+        p.titleState.showcase = p.titleState.showcase.filter((id) => !limitedIds.has(id));
+        p.titleState.clearedMistakenLimited20260927 = t;
+      }
+      if (!p.titleState.launchPrepared) {
+        unlocked = unlocked.filter((id) => MANUAL.indexOf(id) >= 0);
+        if (launched) p.titleState.launchPrepared = LAUNCH_AT;
+      }
+      if (launched) {
+        ensureTitleProgress(p, t);
+        automaticUnlocks(p, t, aSnap.exists ? aSnap.data() : null).forEach((id) => {
+          if (unlocked.indexOf(id) < 0) unlocked.push(id);
+        });
+      }
       p.unlocked.titles = unlocked;
 
-      if (!p.equipped.title && unlocked.length) p.equipped.title = unlocked[0];
+      if (unlocked.indexOf(p.equipped.title) < 0) p.equipped.title = unlocked[0] || null;
+      p.titleState.showcase = p.titleState.showcase.filter((id) => unlocked.indexOf(id) >= 0).slice(0, 3);
       let daily = p.titleState.daily;
       if (launched && (!daily || daily.day !== day)) {
         daily = { day, activeId: unlocked.indexOf(p.equipped.title) >= 0 ? p.equipped.title : null, cashPaid: 0, starsPaid: 0 };
@@ -199,12 +279,19 @@ function createTitles({ db, now, requireSession, requireAdmin }) {
       }
 
       p.titleState.daily = daily || null;
-      tx.update(pRef, { unlocked: p.unlocked, equipped: p.equipped, titleState: p.titleState, stars: Number(p.stars || 0) });
+      tx.update(pRef, {
+        unlocked: p.unlocked, equipped: p.equipped, titleState: p.titleState,
+        tasks: p.tasks || {}, stars: Number(p.stars || 0)
+      });
       const owned = new Set(unlocked);
+      const progress = progressMap(p, t, aSnap.exists ? aSnap.data() : null);
       return {
         now: t, launchAt: LAUNCH_AT, locked: !launched && !isAdmin, adminPreview: !launched && !!isAdmin,
         categories: CATEGORY,
-        titles: TITLES.map((x) => publicTitle(x, owned.has(x.id), isAdmin)),
+        titles: TITLES.map((x) => Object.assign(
+          publicTitle(x, owned.has(x.id), isAdmin),
+          ((x.hidden || x.limited) && !isAdmin) ? { progress: null } : { progress: progress[x.id] || null }
+        )),
         equippedId: p.equipped.title || null,
         activeId: daily && daily.day === day ? daily.activeId : null,
         showcase: p.titleState.showcase.filter((id) => owned.has(id)).slice(0, 3),
@@ -271,11 +358,29 @@ function createTitles({ db, now, requireSession, requireAdmin }) {
         tx.set(ref.collection('logs').doc(), { kind: grant ? 'title-grant' : 'title-revoke', titleId: id, by: a.pid, at: now() });
       });
       return { ok: true, pid, id, grant };
+    },
+
+    async adminClearLimited(req) {
+      const a = await requireAdmin(req), pid = cleanPid((req.data || {}).pid);
+      await db.runTransaction(async (tx) => {
+        const ref = playerRef(pid), snap = await tx.get(ref);
+        if (!snap.exists) throw new AppError('找不到這個編號', 'not-found');
+        const p = snap.data(); ensureShapes(p);
+        const limitedIds = new Set(TITLES.filter((x) => x.limited).map((x) => x.id));
+        const list = ownedTitles(p).filter((id) => !limitedIds.has(id));
+        p.unlocked.titles = list;
+        if (limitedIds.has(p.equipped.title)) p.equipped.title = null;
+        p.titleState.showcase = p.titleState.showcase.filter((id) => !limitedIds.has(id));
+        tx.update(ref, { unlocked: p.unlocked, equipped: p.equipped, titleState: p.titleState });
+        tx.set(ref.collection('logs').doc(), { kind: 'title-clear-limited', by: a.pid, at: now() });
+      });
+      return { ok: true, pid };
     }
   };
 }
 
 module.exports = {
-  LAUNCH_AT, FIRST_SEASON_END, CATEGORY, TITLES, BY_ID, MANUAL,
-  dayOf, automaticUnlocks, completedCategories, benefitsOf, createTitles
+  LAUNCH_AT, FIRST_SEASON_END, TITLE_PROGRESS_VERSION, CATEGORY, TITLES, BY_ID, MANUAL,
+  dayOf, blankTitleProgress, ensureTitleProgress, recordTitleProgress, progressMap,
+  automaticUnlocks, publicTitle, completedCategories, benefitsOf, createTitles
 };
