@@ -23,7 +23,9 @@ const DEFAULTS = {
     enabled: false,
     bets: [200, 500, 1000, 2000, 5000],
     maxAttempts: 6,
-    payouts: [2.2, 2.2, 1.65, 1.3, 1.05, 0.75]
+    payouts: [3, 2.5, 2, 2, 1.75, 1.25],
+    specialBet: 5000,
+    specialChances: [0.5, 0.3, 0.2, 0.1, 0, 0]
   },
   gate: { enabled: true, minBet: 200, maxBet: 5000, edge: 0.05 },
   slot: { enabled: true, bets: [100, 200, 500, 1000] },
@@ -45,7 +47,8 @@ function gamesCfg(raw) {
       specialMinBet: 2000, safeSpecialChance: 0.05, treasureSpecialChance: 0.10
     }),
     cipher: Object.assign({}, DEFAULTS.cipher, g.cipher, {
-      bets: DEFAULTS.cipher.bets.slice(), maxAttempts: 6, payouts: DEFAULTS.cipher.payouts.slice()
+      bets: DEFAULTS.cipher.bets.slice(), maxAttempts: 6, payouts: DEFAULTS.cipher.payouts.slice(),
+      specialBet: 5000, specialChances: DEFAULTS.cipher.specialChances.slice()
     }),
     gate: Object.assign({}, DEFAULTS.gate, g.gate),
     slot: Object.assign({}, DEFAULTS.slot, g.slot),
@@ -89,6 +92,11 @@ function cipherMultiplier(attempt, cfg) {
   const payouts = (cfg && cfg.payouts) || DEFAULTS.cipher.payouts;
   return Number.isInteger(a) && a >= 1 && a <= payouts.length ? Number(payouts[a - 1]) : 0;
 }
+function cipherSpecialRate(cfg, attempt, bet) {
+  if (Number(bet) !== Number((cfg && cfg.specialBet) || 5000)) return 0;
+  const a = Number(attempt), chances = (cfg && cfg.specialChances) || DEFAULTS.cipher.specialChances;
+  return Number.isInteger(a) && a >= 1 && a <= chances.length ? Number(chances[a - 1]) : 0;
+}
 
 /* ---------- 礦洞探險 ----------
    每輪三門等機率：安全、寶藏、陷阱。結果只在玩家選門後由伺服器抽出，
@@ -130,11 +138,11 @@ function mineRewardForRoll(roll) {
   delete out.until;
   return out;
 }
-function applyMineReward(acc, pl, reward) {
+function applyMineReward(acc, pl, reward, source) {
   if (!reward) return {};
   if (reward.kind === 'money') {
     acc.wallet += reward.amount;
-    return { ledger: [{ type: 'game', amount: reward.amount, wallet: acc.wallet, bank: acc.bank.balance, loans: acc.loans, note: '礦洞探險・特殊獎勵・' + reward.name }] };
+    return { ledger: [{ type: 'game', amount: reward.amount, wallet: acc.wallet, bank: acc.bank.balance, loans: acc.loans, note: (source || '礦洞探險') + '・特殊獎勵・' + reward.name }] };
   }
   if (reward.kind === 'stars') {
     pl.stars = Number(pl.stars || 0) + reward.amount;
@@ -396,10 +404,19 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
         history.push({ guess, exact: score.exact, misplaced: score.misplaced });
         const won = score.exact === 4;
         ended = won || attempt >= C.maxAttempts;
-        let payout = 0;
+        let payout = 0, payoutEntry = null, rewardResult = {}, specialRate = 0, specialHit = false, specialReward = null;
         if (won) {
           payout = Math.floor(Number(run.bet || 0) * cipherMultiplier(attempt, C));
           acc.wallet += payout;
+          payoutEntry = {
+            type: 'game', amount: payout, wallet: acc.wallet, bank: acc.bank.balance, loans: acc.loans,
+            note: '星核解碼・第 ' + attempt + ' 次破解'
+          };
+          specialRate = cipherSpecialRate(C, attempt, run.bet);
+          specialHit = specialRate > 0 && crypto.randomInt(10000) < Math.round(specialRate * 10000);
+          specialReward = specialHit ? mineRewardForRoll(crypto.randomInt(10000)) : null;
+          rewardResult = applyMineReward(acc, pl, specialReward, '星核解碼');
+          if (rewardResult.player) setPlayer(rewardResult.player);
         }
         if (ended) {
           delete acc.cipher;
@@ -412,14 +429,13 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
         out = {
           won, ended, attempt, exact: score.exact, misplaced: score.misplaced,
           payout, profit: payout - Number(run.bet || 0),
+          specialEligible: specialRate > 0, specialRate, specialTriggered: specialHit, specialReward,
           answer: ended ? secret.code : null,
           session: ended ? null : acc.cipher
         };
         if (!ended) return [];
-        return [{
-          type: 'game', amount: payout, wallet: acc.wallet, bank: acc.bank.balance, loans: acc.loans,
-          note: won ? '星核解碼・第 ' + attempt + ' 次破解' : '星核解碼・防線鎖死'
-        }];
+        if (won) return [payoutEntry].concat(rewardResult.ledger || []);
+        return [{ type: 'game', amount: 0, wallet: acc.wallet, bank: acc.bank.balance, loans: acc.loans, note: '星核解碼・防線鎖死' }];
       }, cipherMeta(async (tx, extra) => {
         if (ended) tx.delete(extra.ref);
       }));
@@ -632,5 +648,5 @@ module.exports = {
   createMini, gateOdds, slotPayout, slotRTP, gamesCfg, SYMBOLS, PAY3, diceOdds, DICE_KEYS, newDeck,
   MINE_OUTCOMES, MINE_REWARDS, mineCanPlay, mineNextValue, mineSpecialRate, mineCanCashout,
   mineRewardForRoll, applyMineReward,
-  CIPHER_SYMBOLS, cipherCanPlay, cipherCreateCode, cipherCleanGuess, cipherScore, cipherMultiplier
+  CIPHER_SYMBOLS, cipherCanPlay, cipherCreateCode, cipherCleanGuess, cipherScore, cipherMultiplier, cipherSpecialRate
 };

@@ -857,6 +857,7 @@ button.game:active{transform:scale(.99)}
 @keyframes cipherSpin{to{transform:rotate(360deg)}}
 .cipher-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0}.cipher-stat{padding:12px 8px;border:1px solid rgba(91,211,255,.14);border-radius:12px;background:rgba(3,9,24,.64);text-align:center}.cipher-stat span{display:block;color:#71809c;font-size:9px;letter-spacing:.1em}.cipher-stat b{display:block;margin-top:6px;color:#cdeeff;font:800 16px/1 var(--ui)}
 .cipher-bets{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin:18px 0}.cipher-bet{padding:13px 5px;border:1px solid rgba(95,205,255,.16);border-radius:11px;background:rgba(4,10,27,.66);color:#76849d;font:800 13px/1 var(--ui)}.cipher-bet.on{border-color:#58d6ff;color:#dff8ff;background:linear-gradient(145deg,rgba(61,210,255,.2),rgba(103,65,231,.18));box-shadow:0 0 22px rgba(62,198,255,.12)}
+.cipher-bet small{display:block;margin-top:6px;color:#b38cff;font-size:8px;letter-spacing:.06em}.cipher-special{margin:0 0 13px;padding:9px;border:1px solid rgba(159,112,255,.28);border-radius:10px;background:rgba(119,69,220,.09);color:#c9adff;text-align:center;font-size:10px;line-height:1.5}
 .cipher-payouts{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:15px 0 20px}.cipher-pay{padding:10px 4px;border-radius:9px;background:rgba(255,255,255,.025);text-align:center}.cipher-pay small{display:block;color:#687792;font-size:9px}.cipher-pay b{display:block;margin-top:4px;color:#a9b9d4;font:800 13px/1 var(--ui)}.cipher-pay.hot{background:rgba(75,220,255,.09)}.cipher-pay.hot b{color:#79e9ff}
 .cipher-console{margin:16px 0;padding:16px;border:1px solid rgba(88,213,255,.15);border-radius:17px;background:linear-gradient(145deg,rgba(3,12,30,.82),rgba(10,7,28,.83));box-shadow:inset 0 0 30px rgba(71,78,213,.05)}
 .cipher-slots{display:grid;grid-template-columns:repeat(4,58px);justify-content:center;gap:10px;margin:12px 0 16px}.cipher-slot{display:grid;place-items:center;width:58px;height:64px;border:1px solid rgba(95,213,255,.24);border-radius:14px;background:rgba(1,7,18,.76);box-shadow:inset 0 0 18px rgba(84,123,255,.08)}.cipher-slot.empty{color:#37445e;font:800 20px/1 var(--ui);border-style:dashed}
@@ -3982,11 +3983,19 @@ function sheetLock() {
 /* =====================================================================
    小遊戲：21 點、射龍門、拉霸機
    ===================================================================== */
-var GAMES_DEF = { mine: { enabled: false, bets: [200, 500, 1000, 2000, 5000], safeMult: 1.25, treasureMult: 1.55, specialMinBet: 2000, safeSpecialChance: 0.05, treasureSpecialChance: 0.10 }, cipher: { enabled: false, bets: [200, 500, 1000, 2000, 5000], maxAttempts: 6, payouts: [2.2, 2.2, 1.65, 1.3, 1.05, 0.75] }, gate: { enabled: true, minBet: 200, maxBet: 5000, edge: 0.05 }, slot: { enabled: true, bets: [100, 200, 500, 1000] },
+var GAMES_DEF = { mine: { enabled: false, bets: [200, 500, 1000, 2000, 5000], safeMult: 1.25, treasureMult: 1.55, specialMinBet: 2000, safeSpecialChance: 0.05, treasureSpecialChance: 0.10 }, cipher: { enabled: false, bets: [200, 500, 1000, 2000, 5000], maxAttempts: 6, payouts: [3, 2.5, 2, 2, 1.75, 1.25], specialBet: 5000, specialChances: [0.5, 0.3, 0.2, 0.1, 0, 0] }, gate: { enabled: true, minBet: 200, maxBet: 5000, edge: 0.05 }, slot: { enabled: true, bets: [100, 200, 500, 1000] },
   bj: { enabled: true, minBet: 200, maxBet: 5000, betSec: 30, turnSec: 20, resultSec: 6 },
   big2: { enabled: true, buyIn: 1000, reserve: 2000, readySec: 20, turnSec: 30, resultSec: 20 },
   dice: { enabled: true, minBet: 100, maxTotal: 10000 } };
-function gcfg(k) { return Object.assign({}, GAMES_DEF[k], ((S.cfg && S.cfg.games) || {})[k]); }
+function gcfg(k) {
+  var out = Object.assign({}, GAMES_DEF[k], ((S.cfg && S.cfg.games) || {})[k]);
+  if (k === 'cipher') {
+    out.bets = GAMES_DEF.cipher.bets.slice(); out.maxAttempts = 6;
+    out.payouts = GAMES_DEF.cipher.payouts.slice(); out.specialBet = 5000;
+    out.specialChances = GAMES_DEF.cipher.specialChances.slice();
+  }
+  return out;
+}
 
 function gameHead(title, right) {
   return '<div class="g-head"><button class="g-back" data-gback>‹ 大廳</button><h2>' + title + '</h2><div class="g-r">' + (right || '') + '</div></div>';
@@ -4351,7 +4360,8 @@ function big2Heartbeat() {
 
 /* ---------- 礦洞探險 ---------- */
 var MN = { bet: 200, busy: false, last: null, picking: -1, rewardReveal: null };
-function mineRewardReveal(reward) {
+function mineRewardReveal(reward, mode) {
+  var cipher = mode === 'cipher';
   var it = reward && reward.itemId ? ITEM[reward.itemId] : null;
   var rarity = it && it.rarity ? it.rarity : reward.kind === 'stars' ? 6 : 5;
   var color = (typeof RARITY_COLOR !== 'undefined' && RARITY_COLOR[rarity]) || (reward.kind === 'stars' ? '#b889ff' : '#ffd36d');
@@ -4359,11 +4369,11 @@ function mineRewardReveal(reward) {
   var shards = '';
   for (var i = 0; i < 12; i++) shards += '<i class="mine-drop-shard" style="--a:' + (i * 30) + 'deg;--d:' + ((i % 4) * .07) + 's"></i>';
   return '<div class="mine-drop-overlay" role="dialog" aria-modal="true" aria-label="特殊獎勵" style="--drop:' + color + '">' +
-    '<div class="mine-drop-stage"><div class="mine-drop-kicker">SPECIAL DROP</div><div class="mine-drop-title">特殊獎勵降臨</div>' +
-    '<div class="mine-drop-sub">THE DEEP MINE HAS CHOSEN YOU</div><div class="mine-drop-altar"><i class="mine-drop-ring"></i><i class="mine-drop-ring r2"></i><i class="mine-drop-ring r3"></i>' +
+    '<div class="mine-drop-stage"><div class="mine-drop-kicker">' + (cipher ? 'CIPHER JACKPOT' : 'SPECIAL DROP') + '</div><div class="mine-drop-title">' + (cipher ? '星核獎勵解鎖' : '特殊獎勵降臨') + '</div>' +
+    '<div class="mine-drop-sub">' + (cipher ? 'THE STELLAR VAULT HAS ANSWERED' : 'THE DEEP MINE HAS CHOSEN YOU') + '</div><div class="mine-drop-altar"><i class="mine-drop-ring"></i><i class="mine-drop-ring r2"></i><i class="mine-drop-ring r3"></i>' +
     shards + '<div class="mine-drop-art">' + art + '</div></div><div class="mine-drop-name">' + esc(reward.name) + '</div>' +
     '<div class="mine-drop-note">獎勵已安全送入你的<b>' + (reward.kind === 'item' ? '背包' : reward.kind === 'stars' ? '星幣帳戶' : '錢包') + '</b></div>' +
-    '<button class="btn gold mine-drop-ok" type="button" data-mine-reward-ok>收下獎勵</button></div></div>';
+    '<button class="btn gold mine-drop-ok" type="button" ' + (cipher ? 'data-cipher-reward-ok' : 'data-mine-reward-ok') + '>收下獎勵</button></div></div>';
 }
 function mineDoors(last) {
   var nums = ['I', 'II', 'III'];
@@ -4472,7 +4482,7 @@ var CIPHER_META = {
   crown: { glyph: '♜', color: '#ffd36f' }, rune: { glyph: '◇', color: '#ff86dc' }
 };
 var CIPHER_IDS = Object.keys(CIPHER_META);
-var CP = { bet: 200, pick: [], busy: false, last: null };
+var CP = { bet: 200, pick: [], busy: false, last: null, rewardReveal: null };
 function cipherGem(id, small) {
   var m = CIPHER_META[id] || { glyph: '?', color: '#71809c' };
   return '<span class="cipher-gem' + (small ? ' sm' : '') + '" style="--gem:' + m.color + '"><i>' + m.glyph + '</i></span>';
@@ -4505,12 +4515,14 @@ function renderCipher(force) {
       '<p>' + (won ? '你的推理吻合全部四個位置，金庫已經完成派彩。' : '六次解碼機會已耗盡，正確的星核序列在最後一刻顯現。') + '</p>' +
       '<div class="cipher-answer">' + cipherCode(CP.last.answer, false) + '</div>' +
       '<div class="cipher-prize">' + (won ? fmt(CP.last.payout) : '0') + '<small>' + (won ? '已放入錢包・本次淨利 ' + (CP.last.profit >= 0 ? '+' : '') + fmt(CP.last.profit) : '本次本金全數失去') + '</small></div>' +
+      (CP.last.specialTriggered && CP.last.specialReward ? '<div class="cipher-special">特殊獎勵已入帳・' + esc(CP.last.specialReward.name) + '</div>' : '') +
       '<button class="btn gold" type="button" data-cipher-restart>再次解碼</button></div>';
   } else if (run) {
     var attempts = Array.isArray(run.attempts) ? run.attempts : [];
     var nextNo = attempts.length + 1, mult = (c.payouts || [])[nextNo - 1] || 0;
     h += '<div class="cipher-stats"><div class="cipher-stat"><span>破解進度</span><b>' + attempts.length + ' / ' + c.maxAttempts + '</b></div>' +
       '<div class="cipher-stat"><span>投入本金</span><b>' + fmt(run.bet) + '</b></div><div class="cipher-stat"><span>本次破解派彩</span><b>× ' + mult + '</b></div></div>' +
+      (Number(run.bet) === Number(c.specialBet) && Number((c.specialChances || [])[nextNo - 1] || 0) > 0 ? '<div class="cipher-special">本次若成功破解，另有 ' + Math.round(c.specialChances[nextNo - 1] * 100) + '% 機率抽中特殊獎勵</div>' : '') +
       cipherHistory(attempts) + '<div class="cipher-legend"><span><i class="cipher-dot"></i>符號與位置正確</span><span><i class="cipher-dot mis"></i>符號正確、位置錯誤</span></div>' +
       '<div class="cipher-console"><div class="cipher-slots">' + [0, 1, 2, 3].map(function (i) {
         return CP.pick[i] ? '<button class="cipher-slot" type="button" data-cslot="' + i + '">' + cipherGem(CP.pick[i], false) + '</button>' : '<span class="cipher-slot empty">0' + (i + 1) + '</span>';
@@ -4520,16 +4532,17 @@ function renderCipher(force) {
       }).join('') + '</div><div class="cipher-actions"><button class="btn" type="button" data-cipher-guess' + (CP.busy || CP.pick.length !== 4 ? ' disabled' : '') + '>' + (CP.busy ? '星核比對中…' : '送出第 ' + nextNo + ' 次解碼') + '</button>' +
       '<button class="btn ghost cipher-clear" type="button" data-cipher-clear' + (!CP.pick.length || CP.busy ? ' disabled' : '') + '>清除</button></div></div>';
   } else {
-    var bets = c.bets || [200, 500, 1000, 2000, 5000], payouts = c.payouts || [2.2, 2.2, 1.65, 1.3, 1.05, 0.75];
+    var bets = c.bets || [200, 500, 1000, 2000, 5000], payouts = c.payouts || [3, 2.5, 2, 2, 1.75, 1.25];
     if (bets.indexOf(CP.bet) < 0) CP.bet = bets[0];
     h += walletLine() + '<div class="cipher-reactor"></div><div class="cipher-bets">' + bets.map(function (v) {
-      return '<button class="cipher-bet' + (CP.bet === v ? ' on' : '') + '" type="button" data-cbet="' + v + '">' + fmt(v) + '</button>';
+      return '<button class="cipher-bet' + (CP.bet === v ? ' on' : '') + '" type="button" data-cbet="' + v + '">' + fmt(v) + (v === Number(c.specialBet) ? '<small>特殊獎勵資格</small>' : '') + '</button>';
     }).join('') + '</div><div class="cipher-payouts">' + payouts.map(function (v, i) {
       return '<div class="cipher-pay' + (i < 2 ? ' hot' : '') + '"><small>第 ' + (i + 1) + ' 次</small><b>× ' + v + '</b></div>';
     }).join('') + '</div><button class="btn" type="button" data-cipher-start' + (CP.busy || !S.acc || S.acc.wallet < CP.bet ? ' disabled' : '') + '>投入 ' + fmt(CP.bet) + '・啟動破解器</button>' +
-      '<p class="cipher-sub" style="margin-top:12px">越早破解派彩越高；第六次雖然成功仍只返還 0.75 倍。本輪開始後會保存進度，重新整理不會遺失。</p>';
+      '<p class="cipher-sub" style="margin-top:12px">越早破解派彩越高；只有投入 5,000，並在前四次內破解，才有機會觸發特殊獎勵。本輪開始後會保存進度。</p>';
   }
   h += '</div></div>';
+  if (CP.rewardReveal) h += mineRewardReveal(CP.rewardReveal, 'cipher');
   if (put('vCipher', h, force)) {
     var root = $('vCipher'); bindBack(root);
     root.querySelectorAll('[data-cbet]').forEach(function (b) { b.onclick = function () { CP.bet = +b.getAttribute('data-cbet'); CP.last = null; renderCipher(true); }; });
@@ -4556,11 +4569,15 @@ function renderCipher(force) {
       CP.busy = true; var sent = CP.pick.slice(); renderCipher(true);
       call('cipherGuess', { guess: sent }).then(function (r) {
         if (S.acc) { S.acc.wallet = r.wallet; if (r.ended) delete S.acc.cipher; else S.acc.cipher = r.session; }
-        CP.busy = false; CP.pick = []; CP.last = r; renderCipher(true);
+        CP.busy = false; CP.pick = []; CP.last = r;
+        CP.rewardReveal = r.specialTriggered && r.specialReward ? r.specialReward : null;
+        renderCipher(true);
       }).catch(function (e) { CP.busy = false; CP.pick = sent; toast(e.message, 'bad'); renderCipher(true); });
     };
     var again = root.querySelector('[data-cipher-restart]');
-    if (again) again.onclick = function () { CP.last = null; CP.pick = []; renderCipher(true); };
+    if (again) again.onclick = function () { CP.last = null; CP.pick = []; CP.rewardReveal = null; renderCipher(true); };
+    var rewardOk = root.querySelector('[data-cipher-reward-ok]');
+    if (rewardOk) rewardOk.onclick = function () { CP.rewardReveal = null; renderCipher(true); };
   }
 }
 
@@ -4835,7 +4852,9 @@ function sheetRules(game) {
       ['輸入方式', '每次必須選四個不重複的符號；已經送過的相同排列不能重複送出'],
       ['藍色提示', '代表符號正確，而且所在位置也完全正確'],
       ['紫色提示', '代表符號有出現在密碼中，但目前放錯位置'],
-      ['派彩', '第 1～2 次 2.2 倍、第 3 次 1.65 倍、第 4 次 1.3 倍、第 5 次 1.05 倍、第 6 次 0.75 倍'],
+      ['派彩', '第 1 次 3 倍、第 2 次 2.5 倍、第 3～4 次 2 倍、第 5 次 1.75 倍、第 6 次 1.25 倍'],
+      ['特殊資格', '只有投入 5,000 才有；第 1～4 次破解成功時，中獎率依序為 50%、30%、20%、10%'],
+      ['特殊獎池', '3,000 遊戲幣 30%、5,000 遊戲幣 20%、史詩／神話／傳奇寶箱各 10%、傳奇／神話鑰匙各 5%、30 星幣 5%、神秘寶箱／神秘鑰匙各 2.5%'],
       ['失敗', '六次都沒有完全破解，本次本金全數失去'],
       ['進度', '遊戲中重新整理不會遺失猜測紀錄，可以繼續完成同一組密碼'],
       ['公平性', '真正答案只保存在伺服器端，不會寫入玩家能讀取的帳戶或前端畫面']
@@ -5191,7 +5210,7 @@ function endSession() {
   MKUI.state = null; MKUI.selected = 'TKN'; MKUI.loading = false; MKUI.error = null; MKUI.open = null; MKUI.phase = null;
   TITLEUI.state = null; TITLEUI.loading = false; TITLEUI.error = null; TITLEUI.cat = 'A';
   MN.bet = 200; MN.busy = false; MN.last = null; MN.picking = -1; MN.rewardReveal = null;
-  CP.bet = 200; CP.pick = []; CP.busy = false; CP.last = null;
+  CP.bet = 200; CP.pick = []; CP.busy = false; CP.last = null; CP.rewardReveal = null;
   _last = {};
   closeSheet();
   showGate();

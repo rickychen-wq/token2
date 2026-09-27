@@ -4,7 +4,7 @@ const assert = require('assert');
 const {
   createMini, gamesCfg, mineCanPlay, mineNextValue, mineSpecialRate, mineCanCashout, MINE_OUTCOMES,
   MINE_REWARDS, mineRewardForRoll, applyMineReward,
-  CIPHER_SYMBOLS, cipherCanPlay, cipherCreateCode, cipherCleanGuess, cipherScore, cipherMultiplier
+  CIPHER_SYMBOLS, cipherCanPlay, cipherCreateCode, cipherCleanGuess, cipherScore, cipherMultiplier, cipherSpecialRate
 } = require('./games/minigames');
 
 const base = gamesCfg({}).mine;
@@ -66,13 +66,21 @@ assert.deepStrictEqual(cipher.bets, [200, 500, 1000, 2000, 5000]);
 assert.strictEqual(cipherCanPlay(cipher, 'admin'), true);
 assert.strictEqual(cipherCanPlay(cipher, 'player'), false);
 assert.strictEqual(cipherCanPlay(Object.assign({}, cipher, { enabled: true }), 'player'), true);
-assert.deepStrictEqual(cipher.payouts, [2.2, 2.2, 1.65, 1.3, 1.05, 0.75]);
+assert.deepStrictEqual(cipher.payouts, [3, 2.5, 2, 2, 1.75, 1.25]);
 assert.deepStrictEqual(cipherScore(['nova', 'prism', 'orbit', 'flare'], ['nova', 'orbit', 'void', 'prism']), { exact: 1, misplaced: 2 });
 assert.deepStrictEqual(cipherScore(['nova', 'prism', 'orbit', 'flare'], ['nova', 'prism', 'orbit', 'flare']), { exact: 4, misplaced: 0 });
-assert.strictEqual(cipherMultiplier(1, cipher), 2.2);
-assert.strictEqual(cipherMultiplier(4, cipher), 1.3);
-assert.strictEqual(cipherMultiplier(6, cipher), 0.75);
+assert.strictEqual(cipherMultiplier(1, cipher), 3);
+assert.strictEqual(cipherMultiplier(2, cipher), 2.5);
+assert.strictEqual(cipherMultiplier(4, cipher), 2);
+assert.strictEqual(cipherMultiplier(5, cipher), 1.75);
+assert.strictEqual(cipherMultiplier(6, cipher), 1.25);
 assert.strictEqual(cipherMultiplier(7, cipher), 0);
+assert.strictEqual(cipherSpecialRate(cipher, 1, 5000), 0.5);
+assert.strictEqual(cipherSpecialRate(cipher, 2, 5000), 0.3);
+assert.strictEqual(cipherSpecialRate(cipher, 3, 5000), 0.2);
+assert.strictEqual(cipherSpecialRate(cipher, 4, 5000), 0.1);
+assert.strictEqual(cipherSpecialRate(cipher, 5, 5000), 0);
+assert.strictEqual(cipherSpecialRate(cipher, 1, 2000), 0);
 assert.deepStrictEqual(cipherCleanGuess(['nova', 'prism', 'orbit', 'flare']), ['nova', 'prism', 'orbit', 'flare']);
 assert.throws(() => cipherCleanGuess(['nova', 'nova', 'orbit', 'flare']), /不重複/);
 assert.throws(() => cipherCleanGuess(['nova', 'prism', 'orbit', 'bad']), /不重複/);
@@ -80,11 +88,13 @@ const generated = cipherCreateCode((n) => n - 1);
 assert.strictEqual(generated.length, 4);
 assert.strictEqual(new Set(generated).size, 4);
 assert.strictEqual(generated.every((x) => CIPHER_SYMBOLS.indexOf(x) >= 0), true);
-const guardedCipher = gamesCfg({ games: { cipher: { enabled: true, bets: [1], maxAttempts: 99, payouts: [100] } } }).cipher;
+const guardedCipher = gamesCfg({ games: { cipher: { enabled: true, bets: [1], maxAttempts: 99, payouts: [100], specialBet: 1, specialChances: [1, 1, 1, 1, 1, 1] } } }).cipher;
 assert.strictEqual(guardedCipher.enabled, true);
 assert.deepStrictEqual(guardedCipher.bets, [200, 500, 1000, 2000, 5000]);
 assert.strictEqual(guardedCipher.maxAttempts, 6);
-assert.deepStrictEqual(guardedCipher.payouts, [2.2, 2.2, 1.65, 1.3, 1.05, 0.75]);
+assert.deepStrictEqual(guardedCipher.payouts, [3, 2.5, 2, 2, 1.75, 1.25]);
+assert.strictEqual(guardedCipher.specialBet, 5000);
+assert.deepStrictEqual(guardedCipher.specialChances, [0.5, 0.3, 0.2, 0.1, 0, 0]);
 
 (async function endpointChecks() {
   let role = 'player';
@@ -144,12 +154,13 @@ assert.deepStrictEqual(guardedCipher.payouts, [2.2, 2.2, 1.65, 1.3, 1.05, 0.75])
   assert.strictEqual(cipherWon.won, true);
   assert.strictEqual(cipherWon.ended, true);
   assert.strictEqual(cipherWon.attempt, 2);
-  assert.strictEqual(cipherWon.payout, 2200);
-  assert.strictEqual(cipherWon.wallet, 11200);
+  assert.strictEqual(cipherWon.payout, 2500);
+  assert.strictEqual(cipherWon.specialEligible, false);
+  assert.strictEqual(cipherWon.wallet, 11500);
   assert.strictEqual(cipherSecret, null);
   assert.strictEqual(account.cipher, undefined);
   const losingStarted = await api.cipherStart({ data: { bet: 200 } });
-  assert.strictEqual(losingStarted.wallet, 11000);
+  assert.strictEqual(losingStarted.wallet, 11300);
   const losingCode = cipherSecret.code.slice();
   const remaining = CIPHER_SYMBOLS.filter((x) => losingCode.indexOf(x) < 0).slice(0, 4);
   const losingGuesses = [
@@ -164,7 +175,7 @@ assert.deepStrictEqual(guardedCipher.payouts, [2.2, 2.2, 1.65, 1.3, 1.05, 0.75])
   assert.strictEqual(cipherLost.attempt, 6);
   assert.strictEqual(cipherLost.payout, 0);
   assert.deepStrictEqual(cipherLost.answer, losingCode);
-  assert.strictEqual(cipherLost.wallet, 11000);
+  assert.strictEqual(cipherLost.wallet, 11300);
   assert.strictEqual(cipherSecret, null);
   assert.strictEqual(account.cipher, undefined);
   console.log('minigame tests passed');
