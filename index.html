@@ -774,6 +774,57 @@ button.game:active{transform:scale(.99)}
 .g-bar .quick{margin-bottom:10px}
 .g-rule{margin-top:14px;font-size:12px;color:var(--faint);line-height:1.7}
 .btn.gold{background:linear-gradient(135deg,#FFE7B0,var(--gold) 55%,#D9A93E);color:#2A1A00}
+.mine-shell{position:relative;overflow:hidden;min-height:540px;padding:22px;border:1px solid rgba(217,168,74,.3);border-radius:22px;background:
+  radial-gradient(circle at 50% -5%,rgba(255,191,75,.2),transparent 35%),
+  radial-gradient(circle at 10% 75%,rgba(31,203,170,.09),transparent 28%),
+  linear-gradient(160deg,#111923 0%,#080d14 48%,#11100d 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 18px 45px rgba(0,0,0,.28)}
+.mine-shell:before,.mine-shell:after{content:"";position:absolute;z-index:0;pointer-events:none}
+.mine-shell:before{inset:0;background:linear-gradient(135deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:31px 31px;mask-image:linear-gradient(to bottom,#000,transparent 70%)}
+.mine-shell:after{left:-8%;right:-8%;bottom:-105px;height:220px;border-radius:50%;background:radial-gradient(ellipse at 50% 0,rgba(206,151,55,.15),transparent 64%);filter:blur(6px)}
+.mine-inner{position:relative;z-index:1}
+.mine-kicker{display:flex;align-items:center;justify-content:center;gap:8px;color:#d6b66d;font:700 10px/1 var(--ui);letter-spacing:.22em;text-transform:uppercase}
+.mine-kicker:before,.mine-kicker:after{content:"";width:38px;height:1px;background:linear-gradient(90deg,transparent,#9d7536)}
+.mine-kicker:after{transform:scaleX(-1)}
+.mine-title{text-align:center;margin:13px 0 6px;font:800 28px/1.15 var(--ui);letter-spacing:.08em;color:#fff4d4;text-shadow:0 0 24px rgba(255,189,70,.25)}
+.mine-sub{text-align:center;max-width:480px;margin:0 auto 18px;color:#8d9aaa;font-size:12px;line-height:1.8}
+.mine-preview{width:max-content;margin:0 auto 16px;padding:7px 12px;border:1px solid rgba(255,191,75,.35);border-radius:999px;background:rgba(255,179,51,.09);color:#ffd57c;font:700 11px/1 var(--ui);letter-spacing:.08em}
+.mine-lock{display:grid;place-items:center;min-height:370px;text-align:center}
+.mine-lock-core{position:relative;width:118px;height:118px;margin:8px auto 24px;border:1px solid rgba(217,168,74,.38);border-radius:50%;background:radial-gradient(circle,#302617 0 24%,#151719 25% 48%,#080d13 49%);box-shadow:0 0 0 10px rgba(217,168,74,.035),0 0 54px rgba(217,168,74,.15)}
+.mine-lock-core:before{content:"";position:absolute;left:40px;top:30px;width:36px;height:29px;border:5px solid #c79a43;border-bottom:0;border-radius:22px 22px 0 0}
+.mine-lock-core:after{content:"";position:absolute;left:35px;top:56px;width:48px;height:38px;border-radius:8px;background:linear-gradient(145deg,#f2d17f,#9c6e28);box-shadow:0 6px 22px rgba(0,0,0,.5)}
+.mine-lock h3{font-size:21px;color:#f4e4bd;letter-spacing:.08em}.mine-lock p{margin:10px auto 0;max-width:370px;color:#7d8997;line-height:1.8;font-size:13px}
+.mine-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0}
+.mine-stat{padding:12px 10px;border:1px solid rgba(217,168,74,.17);border-radius:12px;background:rgba(4,8,12,.55);text-align:center}
+.mine-stat span{display:block;color:#72808f;font-size:10px;letter-spacing:.08em}.mine-stat b{display:block;margin-top:5px;color:#f2d38d;font:700 17px/1 var(--ui)}
+.mine-bets{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin:17px 0}
+.mine-bet{padding:12px 5px;border:1px solid rgba(217,168,74,.2);border-radius:10px;background:rgba(2,7,12,.55);color:#9b8c6d;font:700 13px/1 var(--ui)}
+.mine-bet.on{border-color:#dfb557;background:linear-gradient(145deg,rgba(255,205,105,.18),rgba(154,103,28,.14));color:#ffe2a0;box-shadow:0 0 22px rgba(217,168,74,.13)}
+.mine-bet small{display:block;margin-top:6px;color:#af7cff;font-size:8px;letter-spacing:.08em}
+.mine-odds{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 18px}
+.mine-odd{padding:11px;border-radius:10px;background:rgba(255,255,255,.025);text-align:center;color:#7d8996;font-size:10px}.mine-odd b{display:block;margin-bottom:4px;font-size:13px;color:#cfdae5}
+.mine-odd.safe b{color:#7be0c1}.mine-odd.treasure b{color:#ffd778}.mine-odd.trap b{color:#ff8391}
+.mine-doors{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:22px auto 18px;max-width:580px;perspective:900px}
+.mine-door{position:relative;height:220px;padding:0;border:0;background:transparent;cursor:pointer;transform-style:preserve-3d;transition:transform .25s,filter .25s}
+.mine-door:not(:disabled):hover{transform:translateY(-5px) scale(1.015);filter:brightness(1.13)}
+.mine-door:disabled{cursor:wait}
+.mine-door-frame{position:absolute;inset:0;border:2px solid #74552d;border-radius:72px 72px 12px 12px;background:linear-gradient(100deg,#32291e,#8b6a39 6%,#241b13 10%,#15181a 88%,#6b4b26 94%,#241a10);box-shadow:inset 0 0 0 5px #080a0c,inset 0 0 35px #000,0 14px 28px rgba(0,0,0,.5)}
+.mine-door-panel{position:absolute;inset:15px 14px 12px;border:1px solid rgba(225,181,91,.35);border-radius:58px 58px 7px 7px;background:radial-gradient(circle at 50% 38%,rgba(208,157,64,.16),transparent 23%),repeating-linear-gradient(90deg,#171513 0 20px,#211c17 20px 22px);overflow:hidden}
+.mine-door-panel:before{content:"";position:absolute;left:50%;top:43%;width:62px;height:62px;transform:translate(-50%,-50%) rotate(45deg);border:1px solid rgba(231,183,87,.42);box-shadow:0 0 20px rgba(226,171,67,.14)}
+.mine-door-no{position:absolute;z-index:2;inset:0;display:grid;place-items:center;padding-bottom:8px;color:#e4c57f;font:700 28px/1 Georgia,serif;text-shadow:0 0 18px rgba(255,201,89,.42)}
+.mine-door small{position:absolute;z-index:3;left:0;right:0;bottom:28px;color:#806c4c;font:700 9px/1 var(--ui);letter-spacing:.18em}
+.mine-doors.choosing .mine-door{animation:minePulse .55s ease-in-out infinite alternate}
+.mine-door.chosen{transform:translateY(-6px) scale(1.02)}.mine-door.dim{opacity:.35;filter:saturate(.3)}
+.mine-door.r-safe .mine-door-frame{border-color:#53ddb7;box-shadow:inset 0 0 42px rgba(56,220,172,.26),0 0 28px rgba(56,220,172,.22)}
+.mine-door.r-treasure .mine-door-frame{border-color:#ffd36b;box-shadow:inset 0 0 50px rgba(255,191,61,.32),0 0 35px rgba(255,183,46,.28)}
+.mine-door.r-trap .mine-door-frame{border-color:#f35e72;box-shadow:inset 0 0 54px rgba(226,45,72,.3),0 0 32px rgba(226,45,72,.25)}
+@keyframes minePulse{to{transform:translateY(-3px);filter:brightness(1.18)}}
+.mine-result{margin:18px auto;max-width:470px;padding:18px;border:1px solid rgba(255,255,255,.09);border-radius:16px;background:rgba(2,7,12,.72);text-align:center}
+.mine-result .sigil{font-size:36px}.mine-result h3{margin:8px 0 5px;font-size:20px;letter-spacing:.06em}.mine-result p{color:#81909e;font-size:12px;line-height:1.7}
+.mine-result.safe h3{color:#78dfbd}.mine-result.treasure h3{color:#ffda79}.mine-result.trap h3{color:#ff8290}.mine-result.cashout h3{color:#8bdfff}
+.mine-value{margin:12px 0;color:#f4deb0;font:800 28px/1 var(--ui)}.mine-value small{display:block;margin-top:7px;color:#6f7d8b;font-size:10px;letter-spacing:.1em}
+.mine-special{margin:11px 0 0;padding:9px;border:1px solid rgba(164,102,255,.3);border-radius:9px;background:rgba(133,68,227,.1);color:#c8a8ff;font-size:11px}
+.mine-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}
+@media(max-width:520px){.mine-shell{min-height:510px;padding:18px 12px}.mine-title{font-size:24px}.mine-bets{grid-template-columns:repeat(3,1fr)}.mine-doors{gap:7px}.mine-door{height:190px}.mine-door-no{font-size:24px}.mine-stats{gap:5px}.mine-stat b{font-size:14px}}
 .pc.hole{background:repeating-linear-gradient(45deg,#1B3A60 0 4px,#0B1B30 4px 8px);border:1px solid rgba(120,220,255,.5);box-shadow:0 3px 10px rgba(0,0,0,.5)}
 .pc.big{width:64px;height:90px;border-radius:8px}
 .pc.big b{font-size:28px}.pc.big i{font-size:22px}
@@ -1138,6 +1189,7 @@ button.game:active{transform:scale(.99)}
     <section id="vBank" class="view" hidden></section>
     <section id="vBj" class="view game-view" hidden></section>
     <section id="vBig2" class="view game-view" hidden></section>
+    <section id="vMine" class="view game-view" hidden></section>
     <section id="vGate" class="view game-view" hidden></section>
     <section id="vSlot" class="view game-view" hidden></section>
     <section id="vDice" class="view game-view" hidden></section>
@@ -3887,7 +3939,7 @@ function sheetLock() {
 /* =====================================================================
    小遊戲：21 點、射龍門、拉霸機
    ===================================================================== */
-var GAMES_DEF = { gate: { enabled: true, minBet: 200, maxBet: 5000, edge: 0.05 }, slot: { enabled: true, bets: [100, 200, 500, 1000] },
+var GAMES_DEF = { mine: { enabled: false, bets: [200, 500, 1000, 2000, 5000], safeMult: 1.2, treasureMult: 1.5, specialMinBet: 2000, safeSpecialChance: 0.05, treasureSpecialChance: 0.10 }, gate: { enabled: true, minBet: 200, maxBet: 5000, edge: 0.05 }, slot: { enabled: true, bets: [100, 200, 500, 1000] },
   bj: { enabled: true, minBet: 200, maxBet: 5000, betSec: 30, turnSec: 20, resultSec: 6 },
   big2: { enabled: true, buyIn: 1000, reserve: 2000, readySec: 20, turnSec: 30, resultSec: 20 },
   dice: { enabled: true, minBet: 100, maxTotal: 10000 } };
@@ -4254,6 +4306,102 @@ function big2Heartbeat() {
   dueTick(B2, B2.tableId + ':' + R.no + ':' + R.phase + ':' + R.deadline, R.deadline, 'big2Tick', { tableId: B2.tableId });
 }
 
+/* ---------- 礦洞探險 ---------- */
+var MN = { bet: 200, busy: false, last: null, picking: -1 };
+function mineDoors(last) {
+  var nums = ['I', 'II', 'III'];
+  return '<div class="mine-doors' + (MN.busy ? ' choosing' : '') + '">' + nums.map(function (n, i) {
+    var chosen = last && last.door === i;
+    var cls = chosen ? ' chosen r-' + last.kind : last ? ' dim' : '';
+    return '<button class="mine-door' + cls + '" type="button" data-mdoor="' + i + '"' + (last || MN.busy ? ' disabled' : '') + '>' +
+      '<span class="mine-door-frame"></span><span class="mine-door-panel"></span><span class="mine-door-no">' + n + '</span>' +
+      '<small>' + (MN.busy && MN.picking === i ? '正在開啟' : chosen ? ({ safe: '安全通道', treasure: '寶藏密室', trap: '致命陷阱' }[last.kind] || '') : '未知區域') + '</small></button>';
+  }).join('') + '</div>';
+}
+
+function renderMine(force) {
+  var c = gcfg('mine'), admin = S.me.role === 'admin';
+  var run = S.acc && S.acc.mine && S.acc.mine.active ? S.acc.mine : null;
+  var access = c.enabled || admin || !!run;
+  var h = gameHead('礦洞探險', rulesBtn('mine'));
+  h += '<div class="mine-shell"><div class="mine-inner"><div class="mine-kicker">TOKEN DEEP MINE</div>' +
+    '<div class="mine-title">三門之下，命運無聲</div><p class="mine-sub">選一扇門深入地底。安全與寶藏會讓本金成長，但踩中陷阱，這趟探險就會一無所有。</p>';
+  if (!access) {
+    h += '<div class="mine-lock"><div><div class="mine-lock-core"></div><h3>請等待管理員開放</h3>' +
+      '<p>入口已經出現在大廳，但目前仍由管理員進行最後測試。正式開放後，所有玩家都能進入探險。</p></div></div>';
+  } else {
+    if (admin && !c.enabled) h += '<div class="mine-preview">管理員測試模式・一般玩家目前無法進入</div>';
+    if (MN.last && MN.last.kind === 'cashout') {
+      h += '<div class="mine-result cashout"><div class="sigil">◆</div><h3>成功撤離</h3><div class="mine-value">' + fmt(MN.last.payout) +
+        '<small>已放入錢包・本次淨利 ' + (MN.last.profit >= 0 ? '+' : '') + fmt(MN.last.profit) + '</small></div>' +
+        '<p>你在風險吞沒一切之前，帶著戰利品回到了地面。</p><button class="btn gold" type="button" data-mine-restart>再次探險</button></div>';
+    } else if (MN.last) {
+      var L = MN.last, won = L.kind !== 'trap';
+      h += '<div class="mine-stats"><div class="mine-stat"><span>抵達深度</span><b>第 ' + fmt(won ? Math.max(1, L.depth - 1) : L.depth) + ' 層</b></div>' +
+        '<div class="mine-stat"><span>開門前</span><b>' + fmt(L.before) + '</b></div><div class="mine-stat"><span>目前價值</span><b>' + fmt(L.value) + '</b></div></div>' +
+        mineDoors(L) +
+        '<div class="mine-result ' + L.kind + '"><div class="sigil">' + ({ safe: '◇', treasure: '✦', trap: '×' }[L.kind]) + '</div>' +
+        '<h3>' + ({ safe: '找到安全通道', treasure: '發現寶藏密室', trap: '踩中致命陷阱' }[L.kind]) + '</h3>' +
+        (won ? '<div class="mine-value">' + fmt(L.value) + '<small>' + (L.kind === 'safe' ? '本金 × 1.2' : '本金 × 1.5') + '</small></div>' :
+          '<div class="mine-value">0<small>本次本金全數失去</small></div>') +
+        (L.specialPreviewHit ? '<div class="mine-special">特殊獎勵測試命中！獎池將在正式開放前公布</div>' :
+          L.specialPending ? '<div class="mine-special">本輪具備 ' + Math.round((L.specialRate || 0) * 100) + '% 特殊獎勵抽取資格・本次未命中</div>' : '') +
+        '<p>' + (won ? '現在可以帶著錢安全離開，也可以繼續打開下一層的三扇門。' : '礦洞不會歸還任何投入；重新選本金後可以再次挑戰。') + '</p>' +
+        (won ? '<div class="mine-actions"><button class="btn ghost" type="button" data-mine-cash>帶走 ' + fmt(L.value) + '</button><button class="btn gold" type="button" data-mine-next>繼續深入</button></div>' :
+          '<button class="btn ghost" type="button" data-mine-restart>重新探險</button>') + '</div>';
+    } else if (run) {
+      h += '<div class="mine-stats"><div class="mine-stat"><span>目前層數</span><b>第 ' + fmt(run.depth || 1) + ' 層</b></div>' +
+        '<div class="mine-stat"><span>初始本金</span><b>' + fmt(run.bet) + '</b></div><div class="mine-stat"><span>目前價值</span><b>' + fmt(run.value) + '</b></div></div>' +
+        mineDoors(null) + '<p class="mine-sub">三扇門外觀完全相同，結果只會在你選定後由伺服器揭曉。</p>' +
+        (Number(run.depth || 1) > 1 ? '<button class="btn ghost" type="button" data-mine-cash' + (MN.busy ? ' disabled' : '') + '>先不冒險・帶走 ' + fmt(run.value) + '</button>' : '');
+    } else {
+      var bets = c.bets || [200, 500, 1000, 2000, 5000];
+      if (bets.indexOf(MN.bet) < 0) MN.bet = bets[0];
+      h += walletLine() + '<div class="mine-bets">' + bets.map(function (v) {
+        return '<button class="mine-bet' + (MN.bet === v ? ' on' : '') + '" type="button" data-mbet="' + v + '">' + fmt(v) +
+          (v > c.specialMinBet ? '<small>特殊獎勵資格</small>' : '') + '</button>';
+      }).join('') + '</div><div class="mine-odds"><div class="mine-odd safe"><b>安全門 × 1.2</b>穩定增加</div>' +
+        '<div class="mine-odd treasure"><b>寶藏門 × 1.5</b>高額成長</div><div class="mine-odd trap"><b>陷阱門 × 0</b>全數失去</div></div>' +
+        '<button class="btn gold" type="button" data-mine-start' + (MN.busy || !S.acc || S.acc.wallet < MN.bet ? ' disabled' : '') + '>投入 ' + fmt(MN.bet) + '・開始探險</button>' +
+        '<p class="mine-sub" style="margin-top:12px">只有投入 5,000 才能觸發特殊獎勵判定：安全門 5%、寶藏門 10%。獎池內容稍後公布。</p>';
+    }
+  }
+  h += '</div></div>';
+  if (put('vMine', h, force)) {
+    var root = $('vMine'); bindBack(root);
+    root.querySelectorAll('[data-mbet]').forEach(function (b) { b.onclick = function () { MN.bet = +b.getAttribute('data-mbet'); MN.last = null; renderMine(true); }; });
+    var start = root.querySelector('[data-mine-start]');
+    if (start) start.onclick = function () {
+      MN.busy = true; renderMine(true);
+      call('mineStart', { bet: MN.bet }).then(function (r) {
+        if (S.acc) { S.acc.wallet = r.wallet; S.acc.mine = r.session; }
+        MN.busy = false; MN.last = null; renderMine(true);
+      }).catch(function (e) { MN.busy = false; toast(e.message, 'bad'); renderMine(true); });
+    };
+    root.querySelectorAll('[data-mdoor]').forEach(function (b) { b.onclick = function () {
+      if (MN.busy) return;
+      MN.busy = true; MN.picking = +b.getAttribute('data-mdoor'); renderMine(true);
+      call('mineChoose', { door: MN.picking }).then(function (r) {
+        if (S.acc) { S.acc.wallet = r.wallet; if (r.ended) delete S.acc.mine; else S.acc.mine = r.session; }
+        MN.busy = false; MN.picking = -1; MN.last = r; renderMine(true);
+      }).catch(function (e) { MN.busy = false; MN.picking = -1; toast(e.message, 'bad'); renderMine(true); });
+    }; });
+    var cash = root.querySelector('[data-mine-cash]');
+    if (cash) cash.onclick = function () {
+      if (MN.busy) return;
+      MN.busy = true; renderMine(true);
+      call('mineCashout', {}).then(function (r) {
+        if (S.acc) { S.acc.wallet = r.wallet; delete S.acc.mine; }
+        MN.busy = false; MN.last = Object.assign({ kind: 'cashout' }, r); renderMine(true);
+      }).catch(function (e) { MN.busy = false; toast(e.message, 'bad'); renderMine(true); });
+    };
+    var next = root.querySelector('[data-mine-next]');
+    if (next) next.onclick = function () { MN.last = null; renderMine(true); };
+    var again = root.querySelector('[data-mine-restart]');
+    if (again) again.onclick = function () { MN.last = null; renderMine(true); };
+  }
+}
+
 /* ---------- 射龍門 ---------- */
 var GT = { posts: null, last: null, bet: null, busy: false };
 function gRank(c) { return ((c / 4) | 0) + 2; }
@@ -4410,10 +4558,11 @@ function spinSlot(bet) {
 }
 
 function sheetGames() {
-  var bj = gcfg('bj'), gt = gcfg('gate'), sl = gcfg('slot'), b2 = gcfg('big2');
+  var mn = gcfg('mine'), bj = gcfg('bj'), gt = gcfg('gate'), sl = gcfg('slot'), b2 = gcfg('big2');
   function sel(id, on) { return '<select id="' + id + '" class="sel"><option value="1"' + (on ? ' selected' : '') + '>開放</option><option value="0"' + (on ? '' : ' selected') + '>關閉</option></select>'; }
   function f(id, label, v) { return '<div class="fld"><label for="' + id + '">' + label + '</label><input id="' + id + '" inputmode="decimal" value="' + v + '"></div>'; }
   formSheet('小遊戲設定', '改完立刻生效。',
+    '<div class="stat-h">礦洞探險</div><p class="note-s">關閉時只有管理員能完整測試；一般玩家看得到入口，但進入後只會看到「請等待管理員開放」。</p><div class="fld-grid"><div class="fld"><label for="mnOn">公開狀態</label>' + sel('mnOn', mn.enabled) + '</div><div></div></div>' +
     '<div class="stat-h">21 點</div><div class="fld-grid"><div class="fld"><label for="bjOn">狀態</label>' + sel('bjOn', bj.enabled) + '</div><div></div>' +
       f('bjMin', '最低下注', bj.minBet) + f('bjMax', '最高下注', bj.maxBet) + f('bjBet', '下注倒數秒數', bj.betSec) + f('bjTurn', '思考秒數', bj.turnSec) + '</div>' +
     '<div class="stat-h">射龍門</div><div class="fld-grid"><div class="fld"><label for="gtOn">狀態</label>' + sel('gtOn', gt.enabled) + '</div>' + f('gtEdge', '莊家優勢 %', Math.round(gt.edge * 1000) / 10) +
@@ -4425,6 +4574,7 @@ function sheetGames() {
       var n = function (id) { return Number($(id).value); };
       var bets = $('slBets').value.split(/[,，\s]+/).filter(Boolean).map(Number);
       return call('adminGames', {
+        mine: { enabled: $('mnOn').value === '1' },
         bj: { enabled: $('bjOn').value === '1', minBet: n('bjMin'), maxBet: n('bjMax'), betSec: n('bjBet'), turnSec: n('bjTurn') },
         gate: { enabled: $('gtOn').value === '1', minBet: n('gtMin'), maxBet: n('gtMax'), edge: n('gtEdge') / 100 },
         slot: { enabled: $('slOn').value === '1', bets: bets },
@@ -4503,6 +4653,16 @@ function sheetRules(game) {
       ['時間', '每人 ' + b2c.turnSec + ' 秒。可以 Pass 時超時自動 Pass；拿到牌權時超時自動出最小合法單張'],
       ['金額', '入座鎖定 ' + fmt(b2c.reserve) + '。正常輸家賠 ' + fmt(b2c.buyIn) + '；手上只要有任何一張 2 就賠 ' + fmt(b2c.reserve) + '；贏家全拿'],
       ['離桌', '牌局中不能離座；斷線後可以重連。結算顯示 ' + b2c.resultSec + ' 秒後，四人全部自動離桌']
+    ]);
+  } else if (game === 'mine') {
+    h = '<h3>礦洞探險說明</h3><p class="desc">每一層都有三扇外觀相同的門，結果會在選定後由伺服器隨機揭曉。</p>' + ruleRows([
+      ['選擇本金', '每次可以投入 200、500、1,000、2,000 或 5,000'],
+      ['安全門', '目前價值乘上 1.2，可以收手或繼續深入'],
+      ['寶藏門', '目前價值乘上 1.5，可以收手或繼續深入'],
+      ['陷阱門', '本次探險目前累積的價值全部歸零，直接結束'],
+      ['安全撤離', '成功開門後隨時可以帶走目前價值；重新整理也會保留進度'],
+      ['特殊獎勵', '初始本金必須高於 2,000，所以只有投入 5,000 符合資格。安全門 5%、寶藏門 10%；獎池內容正式開放前公布'],
+      ['公平性', '門後結果不會預先放在前端，只有按下選擇後才由伺服器產生']
     ]);
   } else if (game === 'gate') {
     var g = gcfg('gate');
@@ -4854,6 +5014,7 @@ function endSession() {
   MAIL.list = []; MAIL.broadcast = []; MAIL.personal = []; MAIL.claimed = {}; HIGHLIGHTS = []; $('announce').hidden = true;
   MKUI.state = null; MKUI.selected = 'TKN'; MKUI.loading = false; MKUI.error = null; MKUI.open = null; MKUI.phase = null;
   TITLEUI.state = null; TITLEUI.loading = false; TITLEUI.error = null; TITLEUI.cat = 'A';
+  MN.bet = 200; MN.busy = false; MN.last = null; MN.picking = -1;
   _last = {};
   closeSheet();
   showGate();
@@ -4870,10 +5031,11 @@ document.querySelectorAll('.tab').forEach(function (b) {
 
 function switchTab(t) {
   S.tab = t;
-  var tabKey = ['bj', 'big2', 'gate', 'slot', 'dice', 'market'].indexOf(t) >= 0 ? 'home' : t;
+  var tabKey = ['bj', 'big2', 'mine', 'gate', 'slot', 'dice', 'market'].indexOf(t) >= 0 ? 'home' : t;
   document.querySelectorAll('.tab').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === tabKey); });
   $('vBj').hidden = t !== 'bj';
   $('vBig2').hidden = t !== 'big2';
+  $('vMine').hidden = t !== 'mine';
   $('vGate').hidden = t !== 'gate';
   $('vSlot').hidden = t !== 'slot';
   $('vDice').hidden = t !== 'dice';
@@ -4899,6 +5061,7 @@ function render(force) {
   else if (S.tab === 'poker') renderPoker(force);
   else if (S.tab === 'bj') renderBj(force);
   else if (S.tab === 'big2') renderBig2(force);
+  else if (S.tab === 'mine') renderMine(force);
   else if (S.tab === 'gate') renderGate(force);
   else if (S.tab === 'slot') renderSlot(force);
   else if (S.tab === 'dice') renderDice(force);
@@ -4985,6 +5148,7 @@ function renderHome(force) {
     '<button class="game mini-g b2-entry" data-b2table="main"><div class="game-suit">2</div><div class="game-txt"><h3>大老二・標準桌</h3><p>底注 1,000・有 2 賠 2,000</p></div></button>' +
     '<button class="game mini-g b2-entry" data-b2table="low"><div class="game-suit">2</div><div class="game-txt"><h3>大老二・輕鬆桌</h3><p>底注 500・有 2 賠 1,000</p></div></button>' +
     '<button class="game mini-g" data-go="bj"><div class="game-suit">21</div><div class="game-txt"><h3>21 點</h3><p>' + (bjLive ? '進行中' : bjSeated ? bjSeated + ' 人在桌上' : 'AI 荷官發牌') + '</p></div></button>' +
+    '<button class="game mini-g" data-go="mine"><div class="game-suit">⛏</div><div class="game-txt"><h3>礦洞探險<span class="tag ' + (gcfg('mine').enabled ? 'live' : 'gold') + '">' + (gcfg('mine').enabled ? '開放中' : '測試中') + '</span></h3><p>三扇門・越深獎金越高</p></div></button>' +
     '<button class="game mini-g" data-go="gate"><div class="game-suit">🐉</div><div class="game-txt"><h3>射龍門</h3><p>射進兩柱中間</p></div></button>' +
     '<button class="game mini-g" data-go="slot"><div class="game-suit">🎰</div><div class="game-txt"><h3>拉霸機</h3><p>拉一把試手氣</p></div></button>' +
     '<button class="game mini-g" data-go="dice"><div class="game-suit">🎲</div><div class="game-txt"><h3>骰寶</h3><p>大小單雙豹子</p></div></button>' +

@@ -131,6 +131,9 @@ exports.adminCatalog = wrap(SH.adminCatalog);
 exports.adminSetRole = wrap(A.adminSetRole);
 
 /* ---------- 小遊戲 ---------- */
+exports.mineStart = wrap(MG.mineStart);
+exports.mineChoose = wrap(MG.mineChoose);
+exports.mineCashout = wrap(MG.mineCashout);
 exports.gateDeal = wrap(MG.gateDeal);
 exports.gateShoot = wrap(MG.gateShoot);
 exports.slotSpin = wrap(MG.slotSpin);

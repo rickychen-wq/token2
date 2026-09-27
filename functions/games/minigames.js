@@ -1,5 +1,5 @@
 'use strict';
-/* games/minigames.js — 單人小遊戲：射龍門、拉霸機
+/* games/minigames.js — 單人小遊戲：礦洞探險、射龍門、拉霸機、骰寶
    都用經濟系統的 mutate()：一次 transaction 裡扣注、開獎、派彩、寫流水帳。 */
 
 const crypto = require('crypto');
@@ -10,6 +10,16 @@ const { publishHighlights } = require('../core/highlights');
 
 /* ---------- 設定 ---------- */
 const DEFAULTS = {
+  mine: {
+    enabled: false,
+    bets: [200, 500, 1000, 2000, 5000],
+    safeMult: 1.2,
+    treasureMult: 1.5,
+    specialMinBet: 2000,
+    safeSpecialChance: 0.05,
+    treasureSpecialChance: 0.10,
+    specialEnabled: false
+  },
   gate: { enabled: true, minBet: 200, maxBet: 5000, edge: 0.05 },
   slot: { enabled: true, bets: [100, 200, 500, 1000] },
   dice: { enabled: true, minBet: 100, maxTotal: 10000 },
@@ -25,12 +35,35 @@ function playCap(raw) {
 function gamesCfg(raw) {
   const g = (raw && raw.games) || {};
   return {
+    mine: Object.assign({}, DEFAULTS.mine, g.mine, {
+      bets: DEFAULTS.mine.bets.slice(), safeMult: 1.2, treasureMult: 1.5,
+      specialMinBet: 2000, safeSpecialChance: 0.05, treasureSpecialChance: 0.10
+    }),
     gate: Object.assign({}, DEFAULTS.gate, g.gate),
     slot: Object.assign({}, DEFAULTS.slot, g.slot),
     dice: Object.assign({}, DEFAULTS.dice, g.dice),
     bj: Object.assign({}, g.bj),
     big2: Object.assign({}, DEFAULTS.big2, g.big2, { buyIn: 1000, reserve: 2000 })
   };
+}
+
+/* ---------- 礦洞探險 ----------
+   每輪三門等機率：安全、寶藏、陷阱。結果只在玩家選門後由伺服器抽出，
+   不把門後內容預先寫進玩家可讀帳戶，避免前端偷看。 */
+const MINE_OUTCOMES = ['safe', 'treasure', 'trap'];
+function mineCanPlay(cfg, role) { return !!(cfg && cfg.enabled) || role === 'admin'; }
+function mineNextValue(value, kind, cfg) {
+  const mult = kind === 'safe' ? cfg.safeMult : kind === 'treasure' ? cfg.treasureMult : 0;
+  return mult > 0 ? Math.floor(Number(value || 0) * mult) : 0;
+}
+function mineSpecialRate(cfg, kind, initialBet) {
+  if (!(Number(initialBet) > Number(cfg.specialMinBet || 2000))) return 0;
+  if (kind === 'safe') return Number(cfg.safeSpecialChance || 0);
+  if (kind === 'treasure') return Number(cfg.treasureSpecialChance || 0);
+  return 0;
+}
+function mineCanCashout(run) {
+  return !!(run && run.active && Number(run.depth || 1) > 1);
 }
 
 /* ---------- 射龍門 ----------
@@ -151,6 +184,83 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
 
   return {
     gateOdds, slotPayout, slotRTP, gamesCfg,
+
+    async mineStart(req) {
+      const s = await requireSession(req);
+      const requested = Number(req.data && req.data.bet);
+      let out;
+      const r = await mutate(s.pid, (acc, cfg, t, raw) => {
+        const M = gamesCfg(raw).mine;
+        if (!mineCanPlay(M, s.player.role)) throw new AppError('礦洞探險尚未開放，請等待管理員開放', 'disabled');
+        if (M.bets.indexOf(requested) < 0) throw new AppError('探險本金不正確', 'bad-bet', 'invalid-argument');
+        if (acc.mine && acc.mine.active) throw new AppError('你還有一場探險尚未結束', 'mine-active');
+        if (acc.wallet < requested) throw new AppError('錢包不夠', 'poor');
+        acc.wallet -= requested;
+        acc.mine = { active: true, bet: requested, value: requested, depth: 1, startedAt: t };
+        out = { session: acc.mine, preview: !M.enabled && s.player.role === 'admin' };
+        return [{ type: 'game', amount: -requested, wallet: acc.wallet, bank: acc.bank.balance, loans: acc.loans, note: '礦洞探險・投入本金' }];
+      });
+      out.wallet = r.account.wallet;
+      return out;
+    },
+
+    async mineChoose(req) {
+      const s = await requireSession(req);
+      const door = Number(req.data && req.data.door);
+      if (!Number.isInteger(door) || door < 0 || door > 2) throw new AppError('請選擇一扇門', 'bad-door', 'invalid-argument');
+      let out;
+      const r = await mutate(s.pid, (acc, cfg, t, raw, pl, setPlayer) => {
+        const M = gamesCfg(raw).mine;
+        const run = acc.mine;
+        if (!run || !run.active) throw new AppError('目前沒有進行中的探險', 'no-mine');
+        const before = Number(run.value || run.bet || 0);
+        const kind = MINE_OUTCOMES[crypto.randomInt(MINE_OUTCOMES.length)];
+        const specialRate = mineSpecialRate(M, kind, run.bet);
+        const specialHit = specialRate > 0 && crypto.randomInt(10000) < Math.round(specialRate * 10000);
+        const specialTriggered = !!M.specialEnabled && specialHit;
+        if (kind === 'trap') {
+          const bet = Number(run.bet || 0), depth = Number(run.depth || 1);
+          delete acc.mine;
+          if (E.recordPlay(acc, t, 'mine', playCap(raw))) {
+            if (TK.bump(pl, t, 'play', 1, raw)) setPlayer({ tasks: pl.tasks });
+          }
+          out = { door, kind, before, value: 0, depth, ended: true, profit: -bet, specialEligible: false, specialTriggered: false };
+          return [{ type: 'game', amount: 0, wallet: acc.wallet, bank: acc.bank.balance, loans: acc.loans, note: '礦洞探險・陷阱吞沒本金' }];
+        }
+        const value = mineNextValue(before, kind, M);
+        acc.mine = Object.assign({}, run, { value, depth: Number(run.depth || 1) + 1, lastDoor: door, lastKind: kind, lastAt: t });
+        out = {
+          door, kind, before, value, depth: acc.mine.depth, ended: false,
+          specialEligible: specialRate > 0, specialRate, specialTriggered,
+          specialPreviewHit: specialHit && !M.specialEnabled,
+          specialPending: specialRate > 0 && !M.specialEnabled, session: acc.mine
+        };
+        return [];
+      });
+      out.wallet = r.account.wallet;
+      return out;
+    },
+
+    async mineCashout(req) {
+      const s = await requireSession(req);
+      let out;
+      const r = await mutate(s.pid, (acc, cfg, t, raw, pl, setPlayer) => {
+        const run = acc.mine;
+        if (!run || !run.active) throw new AppError('目前沒有可以帶走的獎金', 'no-mine');
+        if (!mineCanCashout(run)) throw new AppError('至少成功打開一扇門後才能收手', 'mine-no-win');
+        const payout = Math.max(0, Math.floor(Number(run.value || 0)));
+        const bet = Math.max(0, Math.floor(Number(run.bet || 0)));
+        acc.wallet += payout;
+        delete acc.mine;
+        if (E.recordPlay(acc, t, 'mine', playCap(raw))) {
+          if (TK.bump(pl, t, 'play', 1, raw)) setPlayer({ tasks: pl.tasks });
+        }
+        out = { payout, bet, profit: payout - bet, depth: Number(run.depth || 1), ended: true };
+        return [{ type: 'game', amount: payout, wallet: acc.wallet, bank: acc.bank.balance, loans: acc.loans, note: '礦洞探險・安全帶走' }];
+      });
+      out.wallet = r.account.wallet;
+      return out;
+    },
 
     /* 發門柱（也用來換牌） */
     async gateDeal(req) {
@@ -294,7 +404,7 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
       const d = req.data || {};
       const snap = await cfgRef().get();
       const cur = gamesCfg(snap.exists ? snap.data() : null);
-      const next = { gate: cur.gate, slot: cur.slot, bj: cur.bj, dice: cur.dice, big2: cur.big2 };
+      const next = { mine: cur.mine, gate: cur.gate, slot: cur.slot, bj: cur.bj, dice: cur.dice, big2: cur.big2 };
       const int = (v, lo, hi, name) => { const n = Number(v); if (!Number.isInteger(n) || n < lo || n > hi) throw new AppError(name + '數值不合理', 'bad-config', 'invalid-argument'); return n; };
       if (d.gate) {
         if (d.gate.enabled !== undefined) next.gate.enabled = !!d.gate.enabled;
@@ -302,6 +412,11 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
         if (d.gate.maxBet !== undefined) next.gate.maxBet = int(d.gate.maxBet, 1, 1e7, '射龍門最高下注');
         if (d.gate.edge !== undefined) { const e = Number(d.gate.edge); if (!(e >= 0 && e <= 0.5)) throw new AppError('莊家優勢要在 0 到 0.5', 'bad-config', 'invalid-argument'); next.gate.edge = e; }
         if (next.gate.minBet > next.gate.maxBet) throw new AppError('最低下注不能比最高高', 'bad-config', 'invalid-argument');
+      }
+      if (d.mine) {
+        const mine = Object.assign({}, next.mine || DEFAULTS.mine);
+        if (d.mine.enabled !== undefined) mine.enabled = !!d.mine.enabled;
+        next.mine = mine;
       }
       if (d.slot) {
         if (d.slot.enabled !== undefined) next.slot.enabled = !!d.slot.enabled;
@@ -343,4 +458,7 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
   };
 }
 
-module.exports = { createMini, gateOdds, slotPayout, slotRTP, gamesCfg, SYMBOLS, PAY3, diceOdds, DICE_KEYS, newDeck };
+module.exports = {
+  createMini, gateOdds, slotPayout, slotRTP, gamesCfg, SYMBOLS, PAY3, diceOdds, DICE_KEYS, newDeck,
+  MINE_OUTCOMES, mineCanPlay, mineNextValue, mineSpecialRate, mineCanCashout
+};
