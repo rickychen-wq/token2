@@ -5351,12 +5351,6 @@ function renderTitles() {
       '<button data-title-show="' + esc(x.id) + '"' + (!x.unlocked ? ' disabled' : '') + '>' + (isShow ? '移出展示' : '加入展示') + '</button></div></article>';
   });
   h += '</div>';
-  if (S.me.role === 'admin') {
-    var manual = list.filter(function (x) { return ['L04','L05','L06'].indexOf(x.id) >= 0; });
-    h += '<div class="title-admin"><h3>限定稱號頒發</h3><div class="title-admin-grid"><select class="sel" id="titleAdminPid">' + S.roster.map(function (p) { return '<option value="' + esc(p.pid) + '">#' + esc(p.pid) + ' ' + esc(p.name) + '</option>'; }).join('') + '</select>' +
-      '<select class="sel" id="titleAdminId">' + manual.map(function (x) { return '<option value="' + x.id + '">' + x.id + '・' + esc(x.name) + '</option>'; }).join('') + '</select></div>' +
-      '<div class="title-admin-actions"><button class="btn" data-title-grant="1">頒發</button><button class="btn ghost" data-title-grant="0">收回</button><button class="btn red" data-title-clear-limited>清空全部限定</button></div></div>';
-  }
   return h;
 }
 function bindTitles() {
@@ -5365,17 +5359,41 @@ function bindTitles() {
   root.querySelectorAll('[data-title-cat]').forEach(function (b) { b.onclick = function () { TITLEUI.cat = b.getAttribute('data-title-cat'); renderMe(true); }; });
   root.querySelectorAll('[data-title-equip]').forEach(function (b) { b.onclick = function () { busy(b, true); call('titleEquip', { id: b.getAttribute('data-title-equip') }).then(function (r) { TITLEUI.state = r; toast('稱號已裝備，能力依每日快照生效', 'good'); renderMe(true); }).catch(function (e) { toast(e.message, 'bad'); busy(b, false); }); }; });
   root.querySelectorAll('[data-title-show]').forEach(function (b) { b.onclick = function () { var id = b.getAttribute('data-title-show'), ids = (TITLEUI.state.showcase || []).slice(), at = ids.indexOf(id); if (at >= 0) ids.splice(at, 1); else { if (ids.length >= 3) return toast('展示欄最多三個，請先移除一個', 'bad'); ids.push(id); } busy(b, true); call('titleShowcase', { ids: ids }).then(function (r) { TITLEUI.state = r; renderMe(true); }).catch(function (e) { toast(e.message, 'bad'); busy(b, false); }); }; });
-  root.querySelectorAll('[data-title-grant]').forEach(function (b) { b.onclick = function () { var pid = $('titleAdminPid').value, id = $('titleAdminId').value, grant = b.getAttribute('data-title-grant') === '1'; busy(b, true); call('adminTitleGrant', { pid: pid, id: id, grant: grant }).then(function () { toast(grant ? '限定稱號已頒發' : '限定稱號已收回', 'good'); if (pid === S.me.pid) return loadTitles(true); }).catch(function (e) { toast(e.message, 'bad'); }).then(function () { busy(b, false); }); }; });
-  var clearLimited = root.querySelector('[data-title-clear-limited]');
-  if (clearLimited) clearLimited.onclick = function () {
-    var pid = $('titleAdminPid').value;
-    if (!confirm('確定要清空 #' + pid + ' 的全部限定稱號嗎？')) return;
-    busy(clearLimited, true);
-    call('adminTitleClearLimited', { pid: pid }).then(function () {
-      toast('#' + pid + ' 的限定稱號已全部清空', 'good');
-      if (pid === S.me.pid) return loadTitles(true);
-    }).catch(function (e) { toast(e.message, 'bad'); }).then(function () { busy(clearLimited, false); });
-  };
+}
+
+function sheetTitleAdmin() {
+  toast('正在讀取稱號資料…');
+  loadTitles(true).then(function (st) {
+    if (!st || !st.titles) { toast(TITLEUI.error || '稱號資料讀取失敗', 'bad'); return; }
+    var cats = st.categories || {}, order = ['A','B','P','C','H','L'];
+    var titleOptions = order.map(function (cat) {
+      var rows = st.titles.filter(function (x) { return x.category === cat; });
+      return '<optgroup label="' + esc((cats[cat] || {}).name || cat) + '">' + rows.map(function (x) {
+        return '<option value="' + esc(x.id) + '">' + esc(x.id + '・' + x.name + '（' + x.achievement + '）') + '</option>';
+      }).join('') + '</optgroup>';
+    }).join('');
+    var playerOptions = S.roster.map(function (p) {
+      return '<option value="' + esc(p.pid) + '">#' + esc(p.pid) + ' ' + esc(p.name) + (p.role === 'admin' ? '・管理員' : '') + '</option>';
+    }).join('');
+    openSheet('<h3>稱號管理</h3><p class="desc">可對任一玩家頒發或收回任何稱號。管理員帳號固定擁有全部稱號，因此不能永久收回管理員自己的稱號。</p>' +
+      '<div class="fld"><label for="titleAdminPid">玩家</label><select class="sel" id="titleAdminPid">' + playerOptions + '</select></div>' +
+      '<div class="fld"><label for="titleAdminId">稱號</label><select class="sel" id="titleAdminId">' + titleOptions + '</select></div>' +
+      '<div class="title-admin-actions"><button class="btn" type="button" data-title-admin-grant="1">頒發稱號</button><button class="btn ghost" type="button" data-title-admin-grant="0">收回稱號</button></div>' +
+      '<div class="acts" style="margin-top:14px"><button class="btn ghost" type="button" data-close>關閉</button></div>', function (sh) {
+        sh.querySelector('[data-close]').onclick = closeSheet;
+        sh.querySelectorAll('[data-title-admin-grant]').forEach(function (b) {
+          b.onclick = function () {
+            var pid = $('titleAdminPid').value, id = $('titleAdminId').value;
+            var grant = b.getAttribute('data-title-admin-grant') === '1';
+            busy(b, true);
+            call('adminTitleGrant', { pid: pid, id: id, grant: grant }).then(function () {
+              toast('#' + pid + ' 的 ' + id + (grant ? ' 已頒發' : ' 已收回'), 'good');
+              if (pid === S.me.pid) return loadTitles(true);
+            }).catch(function (e) { toast(e.message, 'bad'); }).then(function () { busy(b, false); });
+          };
+        });
+      });
+  });
 }
 
 /* ---------- 我的 ---------- */
@@ -5415,6 +5433,7 @@ function renderMe(force) {
       '<button class="row" data-act="catalog"><span class="k">商品管理<small>名字、價格、上架、限時、限量、寶箱內容</small></span><span class="chev">›</span></button>' +
       '<button class="row" data-act="announce"><span class="k">公告<small>' + (S.cfg && S.cfg.announce ? '目前：' + esc(S.cfg.announce.text.slice(0, 24)) : '顯示在所有人畫面最上方') + '</small></span><span class="chev">›</span></button>' +
       '<button class="row" data-act="mail"><span class="k">寄信<small>全服或指定玩家，可以附資產、星幣、物品</small></span><span class="chev">›</span></button>' +
+      '<button class="row" data-act="titlesAdmin"><span class="k">稱號管理<small>可對任一玩家頒發或收回全部種類的稱號</small></span><span class="chev">›</span></button>' +
       '<button class="row" data-act="feedbackAdmin"><span class="k">投稿管理<small>查看 Bug 與意見，決定收到、獎勵或刪除</small></span><span class="chev">›</span></button>' +
       '<div class="row"><span class="k">開放註冊<small>開啟時，任何人都能用沒被用過的編號自己註冊</small></span>' +
       '<button class="switch" role="switch" id="regSwitch" aria-checked="' + open + '" aria-label="開放註冊"></button></div>' +
@@ -5475,6 +5494,7 @@ function bindMe() {
       else if (a === 'catalog') sheetCatalog();
       else if (a === 'announce') sheetAnnounce();
       else if (a === 'mail') sheetSendMail();
+      else if (a === 'titlesAdmin') sheetTitleAdmin();
       else if (a === 'feedback') sheetFeedback();
       else if (a === 'feedbackMine') sheetFeedbackMine();
       else if (a === 'feedbackAdmin') sheetFeedbackAdmin();

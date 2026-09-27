@@ -2,7 +2,8 @@
 const assert = require('assert');
 const {
   LAUNCH_AT, TITLES, BY_ID, automaticUnlocks, publicTitle,
-  recordTitleProgress, progressMap, completedCategories, benefitsOf, dayOf
+  recordTitleProgress, progressMap, completedCategories, benefitsOf, dayOf,
+  TITLE_RESET_VERSION, clearTitles, unlockAdminCollections
 } = require('./core/titles');
 
 function player(overrides) {
@@ -48,5 +49,29 @@ assert.strictEqual(b.taskBonus, 0.10);
 assert.strictEqual(b.shopDiscount, 0.03);
 assert.deepStrictEqual(benefitsOf(p, LAUNCH_AT - 1), { dailyCash: 0, dailyStars: 0, taskBonus: 0, shopDiscount: 0, interestBonus: 0 });
 assert.strictEqual(benefitsOf(p, at + 86400000).shopDiscount, 0);
+
+const dirty = player({
+  unlocked: { titles: ['L04', 'A01'], dex: ['dex_01'] },
+  equipped: { title: 'L04', dex: ['dex_01'] },
+  titleState: { showcase: ['A01'], daily: { day: dayOf(at), activeId: 'L04' }, adminRevoked: ['A02'] }
+});
+clearTitles(dirty, at);
+assert.deepStrictEqual(dirty.unlocked.titles, []);
+assert.strictEqual(dirty.equipped.title, null);
+assert.deepStrictEqual(dirty.titleState.showcase, []);
+assert.deepStrictEqual(dirty.titleState.adminRevoked, []);
+assert.strictEqual(dirty.titleState.resetVersion, TITLE_RESET_VERSION);
+
+const admin = player({ role: 'admin', unlocked: { titles: [], avatars: ['old'], dex: [] } });
+unlockAdminCollections(admin, {
+  av_1: { type: 'avatar' }, bg_1: { type: 'bg' }, bk_1: { type: 'back' },
+  dex_1: { type: 'dex' }, fx_1: { type: 'effect' }
+});
+assert.strictEqual(admin.unlocked.titles.length, TITLES.length);
+assert.deepStrictEqual(admin.unlocked.avatars, ['old', 'av_1']);
+assert.deepStrictEqual(admin.unlocked.bgs, ['bg_1']);
+assert.deepStrictEqual(admin.unlocked.backs, ['bk_1']);
+assert.deepStrictEqual(admin.unlocked.dex, ['dex_1']);
+assert.strictEqual(admin.unlocked.effects, undefined);
 
 console.log('titles tests ok');

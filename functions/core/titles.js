@@ -4,6 +4,7 @@
    所以玩家無法靠反覆換稱號重複領獎或切換優惠。 */
 
 const { AppError, cleanPid, seasonId, TW_OFFSET } = require('./util');
+const { loadCatalog, SLOT_KEY } = require('./catalog');
 
 const LAUNCH_AT = Date.UTC(2026, 8, 27, 16, 0, 0); // 2026/09/28 00:00 Asia/Taipei
 const FIRST_SEASON_END = LAUNCH_AT + 7 * 86400000;
@@ -62,6 +63,8 @@ const TITLES = [
 ];
 const BY_ID = Object.fromEntries(TITLES.map((x) => [x.id, x]));
 const MANUAL = ['L04', 'L05', 'L06'];
+const TITLE_RESET_VERSION = 2;
+const ADMIN_COLLECTION_TYPES = ['avatar', 'bg', 'back', 'dex'];
 
 function dayOf(ms) {
   const d = new Date(ms + TW_OFFSET);
@@ -216,6 +219,34 @@ function ensureShapes(p) {
   p.equipped = Object.assign({}, p.equipped || {});
   p.titleState = Object.assign({ showcase: [], daily: null }, p.titleState || {});
   if (!Array.isArray(p.titleState.showcase)) p.titleState.showcase = [];
+  if (!Array.isArray(p.titleState.adminRevoked)) p.titleState.adminRevoked = [];
+}
+
+function clearTitles(p, t) {
+  ensureShapes(p);
+  p.unlocked.titles = [];
+  p.equipped.title = null;
+  p.titleState.showcase = [];
+  p.titleState.daily = null;
+  p.titleState.adminRevoked = [];
+  p.titleState.resetVersion = TITLE_RESET_VERSION;
+  p.titleState.resetAt = t;
+}
+
+function unlockAdminCollections(p, items) {
+  ensureShapes(p);
+  const all = items || {};
+  ADMIN_COLLECTION_TYPES.forEach((type) => {
+    const key = SLOT_KEY[type];
+    if (!key) return;
+    const existing = Array.isArray(p.unlocked[key]) ? p.unlocked[key] : [];
+    const ids = Object.keys(all).filter((id) => all[id] && all[id].type === type);
+    p.unlocked[key] = Array.from(new Set(existing.concat(ids)));
+  });
+  p.unlocked.titles = TITLES.map((x) => x.id);
+  p.titleState.adminRevoked = [];
+  p.titleState.resetVersion = TITLE_RESET_VERSION;
+  return p;
 }
 
 function createTitles({ db, now, requireSession, requireAdmin }) {
@@ -226,26 +257,27 @@ function createTitles({ db, now, requireSession, requireAdmin }) {
     const t = now(), day = dayOf(t), launched = t >= LAUNCH_AT;
     return db.runTransaction(async (tx) => {
       const pRef = playerRef(pid), aRef = accRef(pid, t);
-      const [pSnap, aSnap] = await Promise.all([tx.get(pRef), tx.get(aRef)]);
+      const [pSnap, aSnap, catalog] = await Promise.all([tx.get(pRef), tx.get(aRef), loadCatalog(db, tx)]);
       if (!pSnap.exists) throw new AppError('找不到這個編號', 'not-found');
       const p = pSnap.data();
       ensureShapes(p);
       let unlocked = ownedTitles(p);
-      if (pid === '01' && !p.titleState.clearedMistakenLimited20260927) {
-        const limitedIds = new Set(TITLES.filter((x) => x.limited).map((x) => x.id));
-        unlocked = unlocked.filter((id) => !limitedIds.has(id));
-        if (limitedIds.has(p.equipped.title)) p.equipped.title = null;
-        p.titleState.showcase = p.titleState.showcase.filter((id) => !limitedIds.has(id));
-        p.titleState.clearedMistakenLimited20260927 = t;
+      if (p.role === 'admin') {
+        unlockAdminCollections(p, catalog.items);
+        unlocked = ownedTitles(p);
+      } else if (Number(p.titleState.resetVersion || 0) < TITLE_RESET_VERSION) {
+        clearTitles(p, t);
+        unlocked = [];
       }
-      if (!p.titleState.launchPrepared) {
-        unlocked = unlocked.filter((id) => MANUAL.indexOf(id) >= 0);
+      if (p.role !== 'admin' && !p.titleState.launchPrepared) {
+        unlocked = [];
         if (launched) p.titleState.launchPrepared = LAUNCH_AT;
       }
-      if (launched) {
+      if (launched && p.role !== 'admin') {
         ensureTitleProgress(p, t);
+        const revoked = new Set(p.titleState.adminRevoked || []);
         automaticUnlocks(p, t, aSnap.exists ? aSnap.data() : null).forEach((id) => {
-          if (unlocked.indexOf(id) < 0) unlocked.push(id);
+          if (!revoked.has(id) && unlocked.indexOf(id) < 0) unlocked.push(id);
         });
       }
       p.unlocked.titles = unlocked;
@@ -342,7 +374,7 @@ function createTitles({ db, now, requireSession, requireAdmin }) {
 
     async adminGrant(req) {
       const a = await requireAdmin(req), d = req.data || {}, pid = cleanPid(d.pid), id = String(d.id || '');
-      if (MANUAL.indexOf(id) < 0) throw new AppError('只能頒發人工限定稱號', 'bad-title', 'invalid-argument');
+      if (!BY_ID[id]) throw new AppError('找不到這個稱號', 'bad-title', 'invalid-argument');
       const grant = d.grant !== false;
       await db.runTransaction(async (tx) => {
         const ref = playerRef(pid), snap = await tx.get(ref);
@@ -351,6 +383,8 @@ function createTitles({ db, now, requireSession, requireAdmin }) {
         let list = ownedTitles(p);
         if (grant && list.indexOf(id) < 0) list.push(id);
         if (!grant) list = list.filter((x) => x !== id);
+        p.titleState.adminRevoked = (p.titleState.adminRevoked || []).filter((x) => x !== id);
+        if (!grant) p.titleState.adminRevoked.push(id);
         p.unlocked.titles = list;
         if (!grant && p.equipped.title === id) p.equipped.title = null;
         p.titleState.showcase = p.titleState.showcase.filter((x) => list.indexOf(x) >= 0);
@@ -380,7 +414,7 @@ function createTitles({ db, now, requireSession, requireAdmin }) {
 }
 
 module.exports = {
-  LAUNCH_AT, FIRST_SEASON_END, TITLE_PROGRESS_VERSION, CATEGORY, TITLES, BY_ID, MANUAL,
+  LAUNCH_AT, FIRST_SEASON_END, TITLE_PROGRESS_VERSION, TITLE_RESET_VERSION, CATEGORY, TITLES, BY_ID, MANUAL,
   dayOf, blankTitleProgress, ensureTitleProgress, recordTitleProgress, progressMap,
-  automaticUnlocks, publicTitle, completedCategories, benefitsOf, createTitles
+  automaticUnlocks, publicTitle, completedCategories, benefitsOf, clearTitles, unlockAdminCollections, createTitles
 };
