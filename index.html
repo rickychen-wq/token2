@@ -3939,7 +3939,7 @@ function sheetLock() {
 /* =====================================================================
    小遊戲：21 點、射龍門、拉霸機
    ===================================================================== */
-var GAMES_DEF = { mine: { enabled: false, bets: [200, 500, 1000, 2000, 5000], safeMult: 1.2, treasureMult: 1.5, specialMinBet: 2000, safeSpecialChance: 0.05, treasureSpecialChance: 0.10 }, gate: { enabled: true, minBet: 200, maxBet: 5000, edge: 0.05 }, slot: { enabled: true, bets: [100, 200, 500, 1000] },
+var GAMES_DEF = { mine: { enabled: false, bets: [200, 500, 1000, 2000, 5000], safeMult: 1.3, treasureMult: 1.75, specialMinBet: 2000, safeSpecialChance: 0.05, treasureSpecialChance: 0.10 }, gate: { enabled: true, minBet: 200, maxBet: 5000, edge: 0.05 }, slot: { enabled: true, bets: [100, 200, 500, 1000] },
   bj: { enabled: true, minBet: 200, maxBet: 5000, betSec: 30, turnSec: 20, resultSec: 6 },
   big2: { enabled: true, buyIn: 1000, reserve: 2000, readySec: 20, turnSec: 30, resultSec: 20 },
   dice: { enabled: true, minBet: 100, maxTotal: 10000 } };
@@ -4342,10 +4342,10 @@ function renderMine(force) {
         mineDoors(L) +
         '<div class="mine-result ' + L.kind + '"><div class="sigil">' + ({ safe: '◇', treasure: '✦', trap: '×' }[L.kind]) + '</div>' +
         '<h3>' + ({ safe: '找到安全通道', treasure: '發現寶藏密室', trap: '踩中致命陷阱' }[L.kind]) + '</h3>' +
-        (won ? '<div class="mine-value">' + fmt(L.value) + '<small>' + (L.kind === 'safe' ? '本金 × 1.2' : '本金 × 1.5') + '</small></div>' :
+        (won ? '<div class="mine-value">' + fmt(L.value) + '<small>' + (L.kind === 'safe' ? '目前價值 × 1.3' : '目前價值 × 1.75') + '</small></div>' :
           '<div class="mine-value">0<small>本次本金全數失去</small></div>') +
-        (L.specialPreviewHit ? '<div class="mine-special">特殊獎勵測試命中！獎池將在正式開放前公布</div>' :
-          L.specialPending ? '<div class="mine-special">本輪具備 ' + Math.round((L.specialRate || 0) * 100) + '% 特殊獎勵抽取資格・本次未命中</div>' : '') +
+        (L.specialTriggered && L.specialReward ? '<div class="mine-special"><b>特殊獎勵命中</b>・' + esc(L.specialReward.name) + ' 已入帳</div>' :
+          L.specialEligible ? '<div class="mine-special">本輪具備 ' + Math.round((L.specialRate || 0) * 100) + '% 特殊獎勵抽取資格・本次未命中</div>' : '') +
         '<p>' + (won ? '現在可以帶著錢安全離開，也可以繼續打開下一層的三扇門。' : '礦洞不會歸還任何投入；重新選本金後可以再次挑戰。') + '</p>' +
         (won ? '<div class="mine-actions"><button class="btn ghost" type="button" data-mine-cash>帶走 ' + fmt(L.value) + '</button><button class="btn gold" type="button" data-mine-next>繼續深入</button></div>' :
           '<button class="btn ghost" type="button" data-mine-restart>重新探險</button>') + '</div>';
@@ -4360,10 +4360,10 @@ function renderMine(force) {
       h += walletLine() + '<div class="mine-bets">' + bets.map(function (v) {
         return '<button class="mine-bet' + (MN.bet === v ? ' on' : '') + '" type="button" data-mbet="' + v + '">' + fmt(v) +
           (v > c.specialMinBet ? '<small>特殊獎勵資格</small>' : '') + '</button>';
-      }).join('') + '</div><div class="mine-odds"><div class="mine-odd safe"><b>安全門 × 1.2</b>穩定增加</div>' +
-        '<div class="mine-odd treasure"><b>寶藏門 × 1.5</b>高額成長</div><div class="mine-odd trap"><b>陷阱門 × 0</b>全數失去</div></div>' +
+      }).join('') + '</div><div class="mine-odds"><div class="mine-odd safe"><b>安全門 × 1.3</b>穩定增加</div>' +
+        '<div class="mine-odd treasure"><b>寶藏門 × 1.75</b>高額成長</div><div class="mine-odd trap"><b>陷阱門 × 0</b>全數失去</div></div>' +
         '<button class="btn gold" type="button" data-mine-start' + (MN.busy || !S.acc || S.acc.wallet < MN.bet ? ' disabled' : '') + '>投入 ' + fmt(MN.bet) + '・開始探險</button>' +
-        '<p class="mine-sub" style="margin-top:12px">只有投入 5,000 才能觸發特殊獎勵判定：安全門 5%、寶藏門 10%。獎池內容稍後公布。</p>';
+        '<p class="mine-sub" style="margin-top:12px">只有投入 5,000 才能觸發特殊獎勵判定：安全門 5%、寶藏門 10%。命中後會再從完整獎池抽出一份獎勵。</p>';
     }
   }
   h += '</div></div>';
@@ -4657,11 +4657,12 @@ function sheetRules(game) {
   } else if (game === 'mine') {
     h = '<h3>礦洞探險說明</h3><p class="desc">每一層都有三扇外觀相同的門，結果會在選定後由伺服器隨機揭曉。</p>' + ruleRows([
       ['選擇本金', '每次可以投入 200、500、1,000、2,000 或 5,000'],
-      ['安全門', '目前價值乘上 1.2，可以收手或繼續深入'],
-      ['寶藏門', '目前價值乘上 1.5，可以收手或繼續深入'],
+      ['安全門', '目前價值乘上 1.3，可以收手或繼續深入'],
+      ['寶藏門', '目前價值乘上 1.75，可以收手或繼續深入'],
       ['陷阱門', '本次探險目前累積的價值全部歸零，直接結束'],
       ['安全撤離', '成功開門後隨時可以帶走目前價值；重新整理也會保留進度'],
-      ['特殊獎勵', '初始本金必須高於 2,000，所以只有投入 5,000 符合資格。安全門 5%、寶藏門 10%；獎池內容正式開放前公布'],
+      ['特殊判定', '初始本金必須高於 2,000，所以只有投入 5,000 符合資格。安全門 5%、寶藏門 10%'],
+      ['特殊獎池', '3,000 遊戲幣 30%、5,000 遊戲幣 20%、史詩／神話／傳奇寶箱各 10%、傳奇／神話鑰匙各 5%、30 星幣 5%、神秘寶箱／神秘鑰匙各 2.5%'],
       ['公平性', '門後結果不會預先放在前端，只有按下選擇後才由伺服器產生']
     ]);
   } else if (game === 'gate') {
@@ -5148,7 +5149,7 @@ function renderHome(force) {
     '<button class="game mini-g b2-entry" data-b2table="main"><div class="game-suit">2</div><div class="game-txt"><h3>大老二・標準桌</h3><p>底注 1,000・有 2 賠 2,000</p></div></button>' +
     '<button class="game mini-g b2-entry" data-b2table="low"><div class="game-suit">2</div><div class="game-txt"><h3>大老二・輕鬆桌</h3><p>底注 500・有 2 賠 1,000</p></div></button>' +
     '<button class="game mini-g" data-go="bj"><div class="game-suit">21</div><div class="game-txt"><h3>21 點</h3><p>' + (bjLive ? '進行中' : bjSeated ? bjSeated + ' 人在桌上' : 'AI 荷官發牌') + '</p></div></button>' +
-    '<button class="game mini-g" data-go="mine"><div class="game-suit">⛏</div><div class="game-txt"><h3>礦洞探險<span class="tag ' + (gcfg('mine').enabled ? 'live' : 'gold') + '">' + (gcfg('mine').enabled ? '開放中' : '測試中') + '</span></h3><p>三扇門・越深獎金越高</p></div></button>' +
+    '<button class="game mini-g" data-go="mine"><div class="game-suit">⛏</div><div class="game-txt"><h3>礦洞探險</h3><p>三扇門・越深獎金越高</p></div></button>' +
     '<button class="game mini-g" data-go="gate"><div class="game-suit">🐉</div><div class="game-txt"><h3>射龍門</h3><p>射進兩柱中間</p></div></button>' +
     '<button class="game mini-g" data-go="slot"><div class="game-suit">🎰</div><div class="game-txt"><h3>拉霸機</h3><p>拉一把試手氣</p></div></button>' +
     '<button class="game mini-g" data-go="dice"><div class="game-suit">🎲</div><div class="game-txt"><h3>骰寶</h3><p>大小單雙豹子</p></div></button>' +

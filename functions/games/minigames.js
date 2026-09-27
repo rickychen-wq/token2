@@ -13,12 +13,11 @@ const DEFAULTS = {
   mine: {
     enabled: false,
     bets: [200, 500, 1000, 2000, 5000],
-    safeMult: 1.2,
-    treasureMult: 1.5,
+    safeMult: 1.3,
+    treasureMult: 1.75,
     specialMinBet: 2000,
     safeSpecialChance: 0.05,
-    treasureSpecialChance: 0.10,
-    specialEnabled: false
+    treasureSpecialChance: 0.10
   },
   gate: { enabled: true, minBet: 200, maxBet: 5000, edge: 0.05 },
   slot: { enabled: true, bets: [100, 200, 500, 1000] },
@@ -36,7 +35,7 @@ function gamesCfg(raw) {
   const g = (raw && raw.games) || {};
   return {
     mine: Object.assign({}, DEFAULTS.mine, g.mine, {
-      bets: DEFAULTS.mine.bets.slice(), safeMult: 1.2, treasureMult: 1.5,
+      bets: DEFAULTS.mine.bets.slice(), safeMult: 1.3, treasureMult: 1.75,
       specialMinBet: 2000, safeSpecialChance: 0.05, treasureSpecialChance: 0.10
     }),
     gate: Object.assign({}, DEFAULTS.gate, g.gate),
@@ -64,6 +63,42 @@ function mineSpecialRate(cfg, kind, initialBet) {
 }
 function mineCanCashout(run) {
   return !!(run && run.active && Number(run.depth || 1) > 1);
+}
+/* 特殊獎勵第二層抽籤，使用 10,000 格讓 2.5% 也能精確表示。 */
+const MINE_REWARDS = [
+  { until: 3000, kind: 'money', amount: 3000, name: '遊戲幣 3,000' },
+  { until: 5000, kind: 'money', amount: 5000, name: '遊戲幣 5,000' },
+  { until: 6000, kind: 'item', itemId: 'chest_3', qty: 1, name: '史詩寶箱 × 1' },
+  { until: 7000, kind: 'item', itemId: 'chest_4', qty: 1, name: '神話寶箱 × 1' },
+  { until: 8000, kind: 'item', itemId: 'chest_5', qty: 1, name: '傳奇寶箱 × 1' },
+  { until: 8500, kind: 'item', itemId: 'key_5', qty: 1, name: '傳奇鑰匙 × 1' },
+  { until: 9000, kind: 'item', itemId: 'key_4', qty: 1, name: '神話鑰匙 × 1' },
+  { until: 9500, kind: 'stars', amount: 30, name: '星幣 30' },
+  { until: 9750, kind: 'item', itemId: 'chest_6', qty: 1, name: '神秘寶箱 × 1' },
+  { until: 10000, kind: 'item', itemId: 'key_6', qty: 1, name: '神秘鑰匙 × 1' }
+];
+function mineRewardForRoll(roll) {
+  const n = Number(roll);
+  if (!Number.isInteger(n) || n < 0 || n >= 10000) return null;
+  const reward = MINE_REWARDS.find((x) => n < x.until);
+  if (!reward) return null;
+  const out = Object.assign({}, reward);
+  delete out.until;
+  return out;
+}
+function applyMineReward(acc, pl, reward) {
+  if (!reward) return {};
+  if (reward.kind === 'money') {
+    acc.wallet += reward.amount;
+    return { ledger: [{ type: 'game', amount: reward.amount, wallet: acc.wallet, bank: acc.bank.balance, loans: acc.loans, note: '礦洞探險・特殊獎勵・' + reward.name }] };
+  }
+  if (reward.kind === 'stars') {
+    pl.stars = Number(pl.stars || 0) + reward.amount;
+    return { player: { stars: pl.stars } };
+  }
+  pl.items = Object.assign({}, pl.items || {});
+  pl.items[reward.itemId] = Number(pl.items[reward.itemId] || 0) + Number(reward.qty || 1);
+  return { player: { items: pl.items } };
 }
 
 /* ---------- 射龍門 ----------
@@ -217,7 +252,7 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
         const kind = MINE_OUTCOMES[crypto.randomInt(MINE_OUTCOMES.length)];
         const specialRate = mineSpecialRate(M, kind, run.bet);
         const specialHit = specialRate > 0 && crypto.randomInt(10000) < Math.round(specialRate * 10000);
-        const specialTriggered = !!M.specialEnabled && specialHit;
+        const specialReward = specialHit ? mineRewardForRoll(crypto.randomInt(10000)) : null;
         if (kind === 'trap') {
           const bet = Number(run.bet || 0), depth = Number(run.depth || 1);
           delete acc.mine;
@@ -227,15 +262,16 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
           out = { door, kind, before, value: 0, depth, ended: true, profit: -bet, specialEligible: false, specialTriggered: false };
           return [{ type: 'game', amount: 0, wallet: acc.wallet, bank: acc.bank.balance, loans: acc.loans, note: '礦洞探險・陷阱吞沒本金' }];
         }
+        const rewardResult = applyMineReward(acc, pl, specialReward);
+        if (rewardResult.player) setPlayer(rewardResult.player);
         const value = mineNextValue(before, kind, M);
         acc.mine = Object.assign({}, run, { value, depth: Number(run.depth || 1) + 1, lastDoor: door, lastKind: kind, lastAt: t });
         out = {
           door, kind, before, value, depth: acc.mine.depth, ended: false,
-          specialEligible: specialRate > 0, specialRate, specialTriggered,
-          specialPreviewHit: specialHit && !M.specialEnabled,
-          specialPending: specialRate > 0 && !M.specialEnabled, session: acc.mine
+          specialEligible: specialRate > 0, specialRate, specialTriggered: specialHit,
+          specialReward, session: acc.mine
         };
-        return [];
+        return rewardResult.ledger || [];
       });
       out.wallet = r.account.wallet;
       return out;
@@ -460,5 +496,6 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
 
 module.exports = {
   createMini, gateOdds, slotPayout, slotRTP, gamesCfg, SYMBOLS, PAY3, diceOdds, DICE_KEYS, newDeck,
-  MINE_OUTCOMES, mineCanPlay, mineNextValue, mineSpecialRate, mineCanCashout
+  MINE_OUTCOMES, MINE_REWARDS, mineCanPlay, mineNextValue, mineSpecialRate, mineCanCashout,
+  mineRewardForRoll, applyMineReward
 };

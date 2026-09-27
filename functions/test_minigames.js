@@ -2,7 +2,8 @@
 
 const assert = require('assert');
 const {
-  createMini, gamesCfg, mineCanPlay, mineNextValue, mineSpecialRate, mineCanCashout, MINE_OUTCOMES
+  createMini, gamesCfg, mineCanPlay, mineNextValue, mineSpecialRate, mineCanCashout, MINE_OUTCOMES,
+  MINE_REWARDS, mineRewardForRoll, applyMineReward
 } = require('./games/minigames');
 
 const base = gamesCfg({}).mine;
@@ -15,15 +16,36 @@ assert.deepStrictEqual(MINE_OUTCOMES, ['safe', 'treasure', 'trap']);
 assert.strictEqual(mineCanCashout({ active: true, depth: 1 }), false);
 assert.strictEqual(mineCanCashout({ active: true, depth: 2 }), true);
 
-assert.strictEqual(mineNextValue(200, 'safe', base), 240);
-assert.strictEqual(mineNextValue(200, 'treasure', base), 300);
-assert.strictEqual(mineNextValue(288, 'safe', base), 345);
+assert.strictEqual(mineNextValue(200, 'safe', base), 260);
+assert.strictEqual(mineNextValue(200, 'treasure', base), 350);
+assert.strictEqual(mineNextValue(288, 'safe', base), 374);
 assert.strictEqual(mineNextValue(5000, 'trap', base), 0);
 
 assert.strictEqual(mineSpecialRate(base, 'safe', 2000), 0);
 assert.strictEqual(mineSpecialRate(base, 'safe', 5000), 0.05);
 assert.strictEqual(mineSpecialRate(base, 'treasure', 5000), 0.10);
 assert.strictEqual(mineSpecialRate(base, 'trap', 5000), 0);
+assert.deepStrictEqual(MINE_REWARDS.map((x) => x.until), [3000, 5000, 6000, 7000, 8000, 8500, 9000, 9500, 9750, 10000]);
+assert.deepStrictEqual(MINE_REWARDS.map((x, i, a) => (x.until - (i ? a[i - 1].until : 0)) / 100), [30, 20, 10, 10, 10, 5, 5, 5, 2.5, 2.5]);
+assert.deepStrictEqual(mineRewardForRoll(0), { kind: 'money', amount: 3000, name: '遊戲幣 3,000' });
+assert.strictEqual(mineRewardForRoll(2999).amount, 3000);
+assert.strictEqual(mineRewardForRoll(3000).amount, 5000);
+assert.strictEqual(mineRewardForRoll(4999).amount, 5000);
+assert.strictEqual(mineRewardForRoll(5000).itemId, 'chest_3');
+assert.strictEqual(mineRewardForRoll(7999).itemId, 'chest_5');
+assert.strictEqual(mineRewardForRoll(8000).itemId, 'key_5');
+assert.strictEqual(mineRewardForRoll(8999).itemId, 'key_4');
+assert.strictEqual(mineRewardForRoll(9000).kind, 'stars');
+assert.strictEqual(mineRewardForRoll(9499).amount, 30);
+assert.strictEqual(mineRewardForRoll(9500).itemId, 'chest_6');
+assert.strictEqual(mineRewardForRoll(9750).itemId, 'key_6');
+assert.strictEqual(mineRewardForRoll(9999).itemId, 'key_6');
+assert.strictEqual(mineRewardForRoll(10000), null);
+const rewardAcc = { wallet: 100, bank: { balance: 0 }, loans: [] }, rewardPlayer = {};
+assert.strictEqual(applyMineReward(rewardAcc, rewardPlayer, mineRewardForRoll(0)).ledger[0].amount, 3000);
+assert.strictEqual(rewardAcc.wallet, 3100);
+assert.strictEqual(applyMineReward(rewardAcc, rewardPlayer, mineRewardForRoll(9000)).player.stars, 30);
+assert.strictEqual(applyMineReward(rewardAcc, rewardPlayer, mineRewardForRoll(5000)).player.items.chest_3, 1);
 
 const guarded = gamesCfg({ games: { mine: {
   enabled: true, bets: [1], safeMult: 99, treasureMult: 99,
@@ -31,8 +53,8 @@ const guarded = gamesCfg({ games: { mine: {
 } } }).mine;
 assert.strictEqual(guarded.enabled, true);
 assert.deepStrictEqual(guarded.bets, [200, 500, 1000, 2000, 5000]);
-assert.strictEqual(guarded.safeMult, 1.2);
-assert.strictEqual(guarded.treasureMult, 1.5);
+assert.strictEqual(guarded.safeMult, 1.3);
+assert.strictEqual(guarded.treasureMult, 1.75);
 assert.strictEqual(guarded.specialMinBet, 2000);
 assert.strictEqual(guarded.safeSpecialChance, 0.05);
 assert.strictEqual(guarded.treasureSpecialChance, 0.10);
