@@ -824,6 +824,25 @@ button.game:active{transform:scale(.99)}
 .mine-value{margin:12px 0;color:#f4deb0;font:800 28px/1 var(--ui)}.mine-value small{display:block;margin-top:7px;color:#6f7d8b;font-size:10px;letter-spacing:.1em}
 .mine-special{margin:11px 0 0;padding:9px;border:1px solid rgba(164,102,255,.3);border-radius:9px;background:rgba(133,68,227,.1);color:#c8a8ff;font-size:11px}
 .mine-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}
+.mine-drop-overlay{--drop:#ffd775;position:fixed;inset:0;z-index:120;display:grid;place-items:center;overflow:hidden;padding:24px;background:radial-gradient(circle at 50% 46%,color-mix(in srgb,var(--drop) 22%,transparent),rgba(1,3,8,.96) 48%,#010207 100%);backdrop-filter:blur(14px);animation:mineDropCurtain .35s ease-out both}
+.mine-drop-overlay:before{content:"";position:absolute;inset:-40%;background:repeating-conic-gradient(from 0deg,transparent 0 9deg,color-mix(in srgb,var(--drop) 13%,transparent) 10deg 11deg,transparent 12deg 23deg);animation:mineDropRay 12s linear infinite}
+.mine-drop-overlay:after{content:"";position:absolute;left:50%;top:48%;width:min(72vw,430px);aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,#fff 0 1%,var(--drop) 2%,color-mix(in srgb,var(--drop) 28%,transparent) 13%,transparent 60%);filter:blur(3px);animation:mineDropCore 1.15s cubic-bezier(.15,.82,.18,1) both}
+.mine-drop-stage{position:relative;z-index:3;width:min(100%,390px);padding:34px 22px 23px;border:1px solid color-mix(in srgb,var(--drop) 58%,transparent);border-radius:26px;text-align:center;background:linear-gradient(155deg,rgba(19,22,35,.92),rgba(3,5,11,.96));box-shadow:0 0 0 1px rgba(255,255,255,.04) inset,0 0 48px color-mix(in srgb,var(--drop) 28%,transparent),0 30px 90px rgba(0,0,0,.72);animation:mineDropStage 1s .18s cubic-bezier(.12,1.2,.22,1) both}
+.mine-drop-kicker{color:var(--drop);font:800 10px/1 var(--ui);letter-spacing:.4em;text-indent:.4em;text-shadow:0 0 14px var(--drop)}
+.mine-drop-title{margin:12px 0 3px;color:#f7fbff;font:900 29px/1.15 var(--ui);letter-spacing:.12em;text-indent:.12em;text-shadow:0 0 8px #fff,0 0 24px var(--drop)}
+.mine-drop-sub{color:#74808e;font-size:10px;letter-spacing:.14em}
+.mine-drop-altar{position:relative;width:190px;height:190px;margin:18px auto 12px;display:grid;place-items:center}
+.mine-drop-ring{position:absolute;inset:4px;border-radius:50%;border:1px solid color-mix(in srgb,var(--drop) 75%,transparent);box-shadow:0 0 24px color-mix(in srgb,var(--drop) 32%,transparent),inset 0 0 24px color-mix(in srgb,var(--drop) 18%,transparent);background:repeating-conic-gradient(from 0deg,var(--drop) 0 1deg,transparent 1.5deg 18deg);mask:radial-gradient(circle,transparent 0 44%,#000 45% 48%,transparent 49%);animation:mineDropSpin 7s linear infinite}
+.mine-drop-ring.r2{inset:25px;animation-direction:reverse;animation-duration:4s;opacity:.72}.mine-drop-ring.r3{inset:44px;animation-duration:2.8s;opacity:.55}
+.mine-drop-art{position:relative;z-index:3;display:grid;place-items:center;width:118px;height:118px;border-radius:24px;background:radial-gradient(circle,color-mix(in srgb,var(--drop) 22%,#10131e),#05070c 72%);border:1px solid color-mix(in srgb,var(--drop) 62%,transparent);box-shadow:0 0 22px color-mix(in srgb,var(--drop) 36%,transparent);animation:mineDropArt 1.3s .32s cubic-bezier(.14,1.35,.25,1) both}
+.mine-drop-art .thumb{width:100px!important;height:100px!important;border-color:var(--drop)!important;box-shadow:0 0 24px color-mix(in srgb,var(--drop) 38%,transparent)}
+.mine-drop-symbol{font:900 52px/1 var(--ui);color:#fff5cf;text-shadow:0 0 8px #fff,0 0 28px var(--drop)}.mine-drop-symbol.star{color:#e9d7ff}
+.mine-drop-shard{position:absolute;left:50%;top:50%;z-index:2;width:8px;height:36px;clip-path:polygon(50% 0,100% 68%,55% 100%,0 68%);background:linear-gradient(90deg,transparent,var(--drop),#fff);filter:drop-shadow(0 0 8px var(--drop));transform:translate(-50%,-50%) rotate(var(--a)) translateY(-92px);animation:mineDropShard 1.4s var(--d) ease-out both}
+.mine-drop-name{color:#fff2cf;font:800 20px/1.35 var(--ui);letter-spacing:.05em;text-shadow:0 0 15px color-mix(in srgb,var(--drop) 60%,transparent)}
+.mine-drop-note{margin:8px 0 18px;color:#8996a5;font-size:11px}.mine-drop-note b{color:var(--drop)}
+.mine-drop-ok{opacity:0;animation:mineDropButton .35s 1.35s ease-out forwards}
+@keyframes mineDropCurtain{from{opacity:0}to{opacity:1}}@keyframes mineDropRay{to{transform:rotate(360deg)}}@keyframes mineDropCore{0%{opacity:0;transform:translate(-50%,-50%) scale(.06)}45%{opacity:1}100%{opacity:.55;transform:translate(-50%,-50%) scale(1.6)}}@keyframes mineDropStage{0%{opacity:0;transform:scale(.5) translateY(65px);filter:brightness(2.5)}100%{opacity:1;transform:none;filter:none}}@keyframes mineDropSpin{to{transform:rotate(360deg)}}@keyframes mineDropArt{0%{opacity:0;transform:scale(.05) rotate(-35deg)}65%{opacity:1;transform:scale(1.12) rotate(3deg)}100%{transform:none}}@keyframes mineDropShard{0%{opacity:0;transform:translate(-50%,-50%) rotate(var(--a)) translateY(-15px) scale(.1)}45%{opacity:1}100%{opacity:.15;transform:translate(-50%,-50%) rotate(var(--a)) translateY(-112px) scale(.8)}}@keyframes mineDropButton{to{opacity:1}}
+@media(prefers-reduced-motion:reduce){.mine-drop-overlay *,.mine-drop-overlay:before,.mine-drop-overlay:after{animation-duration:.01ms!important;animation-delay:0s!important}}
 @media(max-width:520px){.mine-shell{min-height:510px;padding:18px 12px}.mine-title{font-size:24px}.mine-bets{grid-template-columns:repeat(3,1fr)}.mine-doors{gap:7px}.mine-door{height:190px}.mine-door-no{font-size:24px}.mine-stats{gap:5px}.mine-stat b{font-size:14px}}
 .pc.hole{background:repeating-linear-gradient(45deg,#1B3A60 0 4px,#0B1B30 4px 8px);border:1px solid rgba(120,220,255,.5);box-shadow:0 3px 10px rgba(0,0,0,.5)}
 .pc.big{width:64px;height:90px;border-radius:8px}
@@ -3939,7 +3958,7 @@ function sheetLock() {
 /* =====================================================================
    小遊戲：21 點、射龍門、拉霸機
    ===================================================================== */
-var GAMES_DEF = { mine: { enabled: false, bets: [200, 500, 1000, 2000, 5000], safeMult: 1.3, treasureMult: 1.75, specialMinBet: 2000, safeSpecialChance: 0.05, treasureSpecialChance: 0.10 }, gate: { enabled: true, minBet: 200, maxBet: 5000, edge: 0.05 }, slot: { enabled: true, bets: [100, 200, 500, 1000] },
+var GAMES_DEF = { mine: { enabled: false, bets: [200, 500, 1000, 2000, 5000], safeMult: 1.25, treasureMult: 1.55, specialMinBet: 2000, safeSpecialChance: 0.05, treasureSpecialChance: 0.10 }, gate: { enabled: true, minBet: 200, maxBet: 5000, edge: 0.05 }, slot: { enabled: true, bets: [100, 200, 500, 1000] },
   bj: { enabled: true, minBet: 200, maxBet: 5000, betSec: 30, turnSec: 20, resultSec: 6 },
   big2: { enabled: true, buyIn: 1000, reserve: 2000, readySec: 20, turnSec: 30, resultSec: 20 },
   dice: { enabled: true, minBet: 100, maxTotal: 10000 } };
@@ -4307,7 +4326,21 @@ function big2Heartbeat() {
 }
 
 /* ---------- 礦洞探險 ---------- */
-var MN = { bet: 200, busy: false, last: null, picking: -1 };
+var MN = { bet: 200, busy: false, last: null, picking: -1, rewardReveal: null };
+function mineRewardReveal(reward) {
+  var it = reward && reward.itemId ? ITEM[reward.itemId] : null;
+  var rarity = it && it.rarity ? it.rarity : reward.kind === 'stars' ? 6 : 5;
+  var color = (typeof RARITY_COLOR !== 'undefined' && RARITY_COLOR[rarity]) || (reward.kind === 'stars' ? '#b889ff' : '#ffd36d');
+  var art = it ? itemThumb(it, 100) : '<div class="mine-drop-symbol' + (reward.kind === 'stars' ? ' star' : '') + '">' + (reward.kind === 'stars' ? '★' : '$') + '</div>';
+  var shards = '';
+  for (var i = 0; i < 12; i++) shards += '<i class="mine-drop-shard" style="--a:' + (i * 30) + 'deg;--d:' + ((i % 4) * .07) + 's"></i>';
+  return '<div class="mine-drop-overlay" role="dialog" aria-modal="true" aria-label="特殊獎勵" style="--drop:' + color + '">' +
+    '<div class="mine-drop-stage"><div class="mine-drop-kicker">SPECIAL DROP</div><div class="mine-drop-title">特殊獎勵降臨</div>' +
+    '<div class="mine-drop-sub">THE DEEP MINE HAS CHOSEN YOU</div><div class="mine-drop-altar"><i class="mine-drop-ring"></i><i class="mine-drop-ring r2"></i><i class="mine-drop-ring r3"></i>' +
+    shards + '<div class="mine-drop-art">' + art + '</div></div><div class="mine-drop-name">' + esc(reward.name) + '</div>' +
+    '<div class="mine-drop-note">獎勵已安全送入你的<b>' + (reward.kind === 'item' ? '背包' : reward.kind === 'stars' ? '星幣帳戶' : '錢包') + '</b></div>' +
+    '<button class="btn gold mine-drop-ok" type="button" data-mine-reward-ok>收下獎勵</button></div></div>';
+}
 function mineDoors(last) {
   var nums = ['I', 'II', 'III'];
   return '<div class="mine-doors' + (MN.busy ? ' choosing' : '') + '">' + nums.map(function (n, i) {
@@ -4342,7 +4375,7 @@ function renderMine(force) {
         mineDoors(L) +
         '<div class="mine-result ' + L.kind + '"><div class="sigil">' + ({ safe: '◇', treasure: '✦', trap: '×' }[L.kind]) + '</div>' +
         '<h3>' + ({ safe: '找到安全通道', treasure: '發現寶藏密室', trap: '踩中致命陷阱' }[L.kind]) + '</h3>' +
-        (won ? '<div class="mine-value">' + fmt(L.value) + '<small>' + (L.kind === 'safe' ? '目前價值 × 1.3' : '目前價值 × 1.75') + '</small></div>' :
+        (won ? '<div class="mine-value">' + fmt(L.value) + '<small>' + (L.kind === 'safe' ? '目前價值 × 1.25' : '目前價值 × 1.55') + '</small></div>' :
           '<div class="mine-value">0<small>本次本金全數失去</small></div>') +
         (L.specialTriggered && L.specialReward ? '<div class="mine-special"><b>特殊獎勵命中</b>・' + esc(L.specialReward.name) + ' 已入帳</div>' :
           L.specialEligible ? '<div class="mine-special">本輪具備 ' + Math.round((L.specialRate || 0) * 100) + '% 特殊獎勵抽取資格・本次未命中</div>' : '') +
@@ -4360,13 +4393,14 @@ function renderMine(force) {
       h += walletLine() + '<div class="mine-bets">' + bets.map(function (v) {
         return '<button class="mine-bet' + (MN.bet === v ? ' on' : '') + '" type="button" data-mbet="' + v + '">' + fmt(v) +
           (v > c.specialMinBet ? '<small>特殊獎勵資格</small>' : '') + '</button>';
-      }).join('') + '</div><div class="mine-odds"><div class="mine-odd safe"><b>安全門 × 1.3</b>穩定增加</div>' +
-        '<div class="mine-odd treasure"><b>寶藏門 × 1.75</b>高額成長</div><div class="mine-odd trap"><b>陷阱門 × 0</b>全數失去</div></div>' +
+      }).join('') + '</div><div class="mine-odds"><div class="mine-odd safe"><b>安全門 × 1.25</b>穩定增加</div>' +
+        '<div class="mine-odd treasure"><b>寶藏門 × 1.55</b>高額成長</div><div class="mine-odd trap"><b>陷阱門 × 0</b>全數失去</div></div>' +
         '<button class="btn gold" type="button" data-mine-start' + (MN.busy || !S.acc || S.acc.wallet < MN.bet ? ' disabled' : '') + '>投入 ' + fmt(MN.bet) + '・開始探險</button>' +
         '<p class="mine-sub" style="margin-top:12px">只有投入 5,000 才能觸發特殊獎勵判定：安全門 5%、寶藏門 10%。命中後會再從完整獎池抽出一份獎勵。</p>';
     }
   }
   h += '</div></div>';
+  if (MN.rewardReveal) h += mineRewardReveal(MN.rewardReveal);
   if (put('vMine', h, force)) {
     var root = $('vMine'); bindBack(root);
     root.querySelectorAll('[data-mbet]').forEach(function (b) { b.onclick = function () { MN.bet = +b.getAttribute('data-mbet'); MN.last = null; renderMine(true); }; });
@@ -4383,7 +4417,9 @@ function renderMine(force) {
       MN.busy = true; MN.picking = +b.getAttribute('data-mdoor'); renderMine(true);
       call('mineChoose', { door: MN.picking }).then(function (r) {
         if (S.acc) { S.acc.wallet = r.wallet; if (r.ended) delete S.acc.mine; else S.acc.mine = r.session; }
-        MN.busy = false; MN.picking = -1; MN.last = r; renderMine(true);
+        MN.busy = false; MN.picking = -1; MN.last = r;
+        MN.rewardReveal = r.specialTriggered && r.specialReward ? r.specialReward : null;
+        renderMine(true);
       }).catch(function (e) { MN.busy = false; MN.picking = -1; toast(e.message, 'bad'); renderMine(true); });
     }; });
     var cash = root.querySelector('[data-mine-cash]');
@@ -4399,6 +4435,8 @@ function renderMine(force) {
     if (next) next.onclick = function () { MN.last = null; renderMine(true); };
     var again = root.querySelector('[data-mine-restart]');
     if (again) again.onclick = function () { MN.last = null; renderMine(true); };
+    var rewardOk = root.querySelector('[data-mine-reward-ok]');
+    if (rewardOk) rewardOk.onclick = function () { MN.rewardReveal = null; renderMine(true); };
   }
 }
 
@@ -4657,8 +4695,8 @@ function sheetRules(game) {
   } else if (game === 'mine') {
     h = '<h3>礦洞探險說明</h3><p class="desc">每一層都有三扇外觀相同的門，結果會在選定後由伺服器隨機揭曉。</p>' + ruleRows([
       ['選擇本金', '每次可以投入 200、500、1,000、2,000 或 5,000'],
-      ['安全門', '目前價值乘上 1.3，可以收手或繼續深入'],
-      ['寶藏門', '目前價值乘上 1.75，可以收手或繼續深入'],
+      ['安全門', '目前價值乘上 1.25，可以收手或繼續深入'],
+      ['寶藏門', '目前價值乘上 1.55，可以收手或繼續深入'],
       ['陷阱門', '本次探險目前累積的價值全部歸零，直接結束'],
       ['安全撤離', '成功開門後隨時可以帶走目前價值；重新整理也會保留進度'],
       ['特殊判定', '初始本金必須高於 2,000，所以只有投入 5,000 符合資格。安全門 5%、寶藏門 10%'],
@@ -5015,7 +5053,7 @@ function endSession() {
   MAIL.list = []; MAIL.broadcast = []; MAIL.personal = []; MAIL.claimed = {}; HIGHLIGHTS = []; $('announce').hidden = true;
   MKUI.state = null; MKUI.selected = 'TKN'; MKUI.loading = false; MKUI.error = null; MKUI.open = null; MKUI.phase = null;
   TITLEUI.state = null; TITLEUI.loading = false; TITLEUI.error = null; TITLEUI.cat = 'A';
-  MN.bet = 200; MN.busy = false; MN.last = null; MN.picking = -1;
+  MN.bet = 200; MN.busy = false; MN.last = null; MN.picking = -1; MN.rewardReveal = null;
   _last = {};
   closeSheet();
   showGate();

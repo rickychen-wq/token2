@@ -16,9 +16,9 @@ assert.deepStrictEqual(MINE_OUTCOMES, ['safe', 'treasure', 'trap']);
 assert.strictEqual(mineCanCashout({ active: true, depth: 1 }), false);
 assert.strictEqual(mineCanCashout({ active: true, depth: 2 }), true);
 
-assert.strictEqual(mineNextValue(200, 'safe', base), 260);
-assert.strictEqual(mineNextValue(200, 'treasure', base), 350);
-assert.strictEqual(mineNextValue(288, 'safe', base), 374);
+assert.strictEqual(mineNextValue(200, 'safe', base), 250);
+assert.strictEqual(mineNextValue(200, 'treasure', base), 310);
+assert.strictEqual(mineNextValue(288, 'safe', base), 360);
 assert.strictEqual(mineNextValue(5000, 'trap', base), 0);
 
 assert.strictEqual(mineSpecialRate(base, 'safe', 2000), 0);
@@ -53,8 +53,8 @@ const guarded = gamesCfg({ games: { mine: {
 } } }).mine;
 assert.strictEqual(guarded.enabled, true);
 assert.deepStrictEqual(guarded.bets, [200, 500, 1000, 2000, 5000]);
-assert.strictEqual(guarded.safeMult, 1.3);
-assert.strictEqual(guarded.treasureMult, 1.75);
+assert.strictEqual(guarded.safeMult, 1.25);
+assert.strictEqual(guarded.treasureMult, 1.55);
 assert.strictEqual(guarded.specialMinBet, 2000);
 assert.strictEqual(guarded.safeSpecialChance, 0.05);
 assert.strictEqual(guarded.treasureSpecialChance, 0.10);

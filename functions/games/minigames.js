@@ -13,8 +13,8 @@ const DEFAULTS = {
   mine: {
     enabled: false,
     bets: [200, 500, 1000, 2000, 5000],
-    safeMult: 1.3,
-    treasureMult: 1.75,
+    safeMult: 1.25,
+    treasureMult: 1.55,
     specialMinBet: 2000,
     safeSpecialChance: 0.05,
     treasureSpecialChance: 0.10
@@ -35,7 +35,7 @@ function gamesCfg(raw) {
   const g = (raw && raw.games) || {};
   return {
     mine: Object.assign({}, DEFAULTS.mine, g.mine, {
-      bets: DEFAULTS.mine.bets.slice(), safeMult: 1.3, treasureMult: 1.75,
+      bets: DEFAULTS.mine.bets.slice(), safeMult: 1.25, treasureMult: 1.55,
       specialMinBet: 2000, safeSpecialChance: 0.05, treasureSpecialChance: 0.10
     }),
     gate: Object.assign({}, DEFAULTS.gate, g.gate),
