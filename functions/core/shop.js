@@ -4,6 +4,7 @@
 const { AppError, cleanPid, cleanName } = require('./util');
 const { SLOT_KEY, STACKABLE, EDITABLE, RARITY, DEX_FULL_STARS, DEX_MAX_EQUIPPED, dexInterest, loadCatalog } = require('./catalog');
 const T = require('./tasks');
+const { benefitsOf } = require('./titles');
 
 function inv(p) {
   const u = Object.assign({}, p.unlocked || {});
@@ -69,7 +70,7 @@ function pickNewDex(cat, p) {
 }
 
 function playerPatch(p) {
-  return { stars: p.stars || 0, items: p.items || {}, unlocked: inv(p), bought: p.bought || {}, temp: p.temp || {}, tasks: p.tasks || {} };
+  return { stars: p.stars || 0, items: p.items || {}, unlocked: inv(p), bought: p.bought || {}, temp: p.temp || {}, tasks: p.tasks || {}, titleStats: p.titleStats || {} };
 }
 
 /* ---------- v11b 頂級的乾洗髮：暫時解鎖頭像 ---------- */
@@ -139,7 +140,8 @@ function createShop({ db, now, requireSession, requireAdmin }) {
         const bought = Object.assign({}, p.bought || {});
         if (item.perUser != null && (bought[item.id] || 0) + qty > item.perUser) throw new AppError('每人限購 ' + item.perUser + ' 個', 'limit');
         if (!STACKABLE[item.type] && inv(p)[SLOT_KEY[item.type]].indexOf(item.id) >= 0) throw new AppError('你已經有這個了', 'owned');
-        const cost = item.price * qty, stars = p.stars || 0;
+        const discount = Number(benefitsOf(p, t).shopDiscount || 0);
+        const cost = Math.max(0, Math.floor(item.price * qty * (1 - discount))), stars = p.stars || 0;
         if (stars < cost) throw new AppError('星幣不夠，還差 ' + (cost - stars), 'poor');
         p.stars = stars - cost;
         grant(p, item, qty);
@@ -152,8 +154,8 @@ function createShop({ db, now, requireSession, requireAdmin }) {
           const soldMap = Object.assign({}, cat.sold, { [item.id]: sold + qty });
           if (cat.raw) tx.update(catRef(), { sold: soldMap }); else tx.set(catRef(), { items: {}, sold: soldMap });
         }
-        tx.set(playerRef(s.pid).collection('logs').doc(), { kind: 'buy', itemId: item.id, qty, cost, at: t });
-        return { stars: p.stars };
+        tx.set(playerRef(s.pid).collection('logs').doc(), { kind: 'buy', itemId: item.id, qty, cost, discount, at: t });
+        return { stars: p.stars, cost, discount };
       });
     },
 
@@ -318,6 +320,8 @@ function createShop({ db, now, requireSession, requireAdmin }) {
 
         const fused = fuseBowls(p, now());
         if (got.some((x) => x.tag === 'item')) T.bump(p, now(), 'firstItem');
+        p.titleStats = Object.assign({}, p.titleStats || {});
+        p.titleStats.maxChestRarity = Math.max(Number(p.titleStats.maxChestRarity || 0), cr);
         const result = { chest: cr, key: kr, stars, items: got, fused, dexFull };
         tx.update(playerRef(s.pid), playerPatch(p));
         tx.set(playerRef(s.pid).collection('logs').doc(), Object.assign({ kind: 'open', at: now() }, result));

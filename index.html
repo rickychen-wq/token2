@@ -1035,7 +1035,25 @@ button.game:active{transform:scale(.99)}
   .sheet-grip{display:none}
 }
 @media (prefers-reduced-motion:reduce){*:not(.profile-domain):not(.profile-domain *),*:not(.profile-domain):not(.profile-domain *)::before,*:not(.profile-domain):not(.profile-domain *)::after{animation:none!important;transition:none!important}}
+/* ---------- 成就與稱號 ---------- */
+.title-gate,.title-hero{position:relative;overflow:hidden;border:1px solid rgba(138,217,255,.24);border-radius:14px;background:radial-gradient(circle at 85% 10%,rgba(126,82,255,.25),transparent 42%),linear-gradient(145deg,rgba(12,31,53,.96),rgba(5,13,27,.96));padding:22px;margin-bottom:14px}
+.title-gate:before,.title-hero:before{content:'';position:absolute;inset:0;background:linear-gradient(110deg,transparent 25%,rgba(113,219,255,.07) 45%,transparent 65%);transform:translateX(-100%);animation:titleSweep 5s linear infinite;pointer-events:none}
+@keyframes titleSweep{to{transform:translateX(100%)}}
+.title-eyebrow{font:700 11px var(--ui);letter-spacing:.22em;color:var(--cy);text-transform:uppercase}.title-gate h2,.title-hero h2{margin:8px 0 7px;font-size:25px;letter-spacing:.08em}.title-gate p,.title-hero p{margin:0;color:var(--dim);font-size:13px;line-height:1.75}
+.title-count{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:18px}.title-count span{display:flex;flex-direction:column;align-items:center;border:1px solid var(--edge-soft);border-radius:9px;padding:9px 3px;background:rgba(3,8,18,.5);font:700 19px var(--ui);color:#eafaff}.title-count small{font:500 10px var(--ui);color:var(--faint);margin-top:3px;letter-spacing:.12em}
+.title-preview{margin:0 0 12px;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,211,122,.28);background:rgba(255,211,122,.08);color:var(--gold);font-size:12px;line-height:1.55}
+.title-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:16px}.title-stat{border-radius:9px;padding:10px;background:rgba(3,8,18,.5);border:1px solid var(--edge-soft)}.title-stat small{display:block;color:var(--faint);font-size:10px}.title-stat b{display:block;margin-top:4px;color:var(--fg);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.title-cat{display:flex;gap:7px;overflow:auto;padding:2px 0 10px;scrollbar-width:none}.title-cat::-webkit-scrollbar{display:none}.title-cat button{flex:0 0 auto;border:1px solid var(--edge-soft);border-radius:18px;padding:7px 12px;color:var(--faint);font-size:12px;background:rgba(3,8,18,.5)}.title-cat button.on{color:#04121c;background:var(--cy);border-color:var(--cy);font-weight:700}
+.title-set{margin:3px 0 10px;padding:10px 12px;border-radius:9px;border:1px solid var(--edge-soft);background:linear-gradient(90deg,rgba(63,199,255,.07),rgba(160,99,255,.06));font-size:12px;color:var(--dim)}.title-set b{color:var(--fg)}
+.title-list{display:grid;gap:9px}.title-card{position:relative;padding:14px;border-radius:11px;border:1px solid var(--edge-soft);background:linear-gradient(155deg,rgba(16,35,57,.88),rgba(5,14,28,.9));overflow:hidden}.title-card.locked{opacity:.62;filter:saturate(.72)}.title-card.equipped{border-color:rgba(100,222,255,.65);box-shadow:0 0 22px rgba(63,199,255,.11)}.title-card.hidden-title{background:radial-gradient(circle at 100% 0,rgba(255,68,177,.14),transparent 45%),linear-gradient(155deg,rgba(26,21,50,.9),rgba(7,11,25,.94))}.title-card.limited-title{background:radial-gradient(circle at 100% 0,rgba(255,154,75,.14),transparent 45%),linear-gradient(155deg,rgba(42,28,26,.9),rgba(8,12,23,.94))}
+.title-top{display:flex;align-items:flex-start;gap:10px}.title-code{flex:0 0 auto;border-radius:6px;padding:4px 6px;font:700 10px var(--ui);letter-spacing:.08em;color:var(--cy);border:1px solid currentColor}.title-main{flex:1;min-width:0}.title-ach{font-size:12px;color:var(--faint)}.title-name{margin-top:2px;font-size:18px;font-weight:700;letter-spacing:.06em}.title-badges{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}.title-badge{padding:3px 6px;border-radius:5px;background:rgba(255,255,255,.06);font-size:10px;color:var(--dim)}.title-badge.live{background:rgba(81,234,160,.12);color:#7cf2b4}.title-badge.display{background:rgba(63,199,255,.12);color:var(--cy)}.title-badge.show{background:rgba(202,145,255,.13);color:#d7b3ff}
+.title-detail{display:grid;gap:7px;margin-top:12px;padding-top:11px;border-top:1px solid var(--edge-soft)}.title-detail div{display:grid;grid-template-columns:54px 1fr;gap:8px;font-size:12px;line-height:1.55}.title-detail label{color:var(--faint)}.title-detail span{color:var(--dim)}.title-actions{display:flex;gap:7px;margin-top:11px}.title-actions button{flex:1;height:34px;border-radius:7px;border:1px solid var(--edge);color:var(--cy);font-size:12px}.title-actions button.primary{border:0;background:linear-gradient(135deg,var(--cy-hi),var(--cy));color:#04121c;font-weight:700}.title-actions button:disabled{opacity:.35}
+.title-admin{margin-top:16px;border:1px solid rgba(255,211,122,.25);border-radius:11px;padding:14px;background:rgba(255,211,122,.045)}.title-admin h3{margin:0 0 9px;font-size:15px;color:var(--gold)}.title-admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.title-admin .sel{height:40px}.title-admin-actions{display:flex;gap:8px;margin-top:8px}.title-admin-actions .btn{height:38px}
+@media(max-width:390px){.title-stats{grid-template-columns:1fr}.title-admin-grid{grid-template-columns:1fr}.title-count span{font-size:16px}.title-gate,.title-hero{padding:18px}}
 </style>
+<style>.seg button{min-width:0}@media(max-width:420px){.seg button{font-size:11px;letter-spacing:0;padding-left:1px;padding-right:1px}}</style>
+<style>.seg{min-width:0}.seg button{overflow:hidden;white-space:nowrap}.me-sub{min-width:0;overflow-x:hidden}.title-count{grid-template-columns:repeat(4,minmax(0,1fr))}</style>
+<style>.prof-title{margin:10px 16px 0;padding:10px 12px;text-align:center;border-radius:9px;border:1px solid rgba(99,218,255,.3);background:linear-gradient(90deg,rgba(63,199,255,.08),rgba(166,104,255,.08));color:var(--cy-hi);font-size:13px;font-weight:700}.prof-showcase{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:7px 16px 0}.prof-showcase div{min-width:0;padding:8px 5px;border-radius:7px;text-align:center;background:rgba(3,8,18,.55);border:1px solid var(--edge-soft)}.prof-showcase small,.prof-showcase b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.prof-showcase small{font-size:9px;color:var(--faint)}.prof-showcase b{margin-top:3px;font-size:11px;color:var(--dim)}</style>
 </head>
 <body class="gate-mode">
 
@@ -1297,6 +1315,7 @@ var S = {
 };
 
 var MKUI = { state: null, selected: 'TKN', loading: false, error: null, open: null, phase: null };
+var TITLEUI = { state: null, loading: false, error: null, cat: 'A' };
 
 /* =====================================================================
    啟動
@@ -1788,13 +1807,28 @@ function showProfile(pid) {
   var board = rankRows(S.accounts.map(function (x) { return { pid: x.pid, net: x.net, hands: x.handsPlayed || 0 }; }),
     function (x) { return x.net; }, function (x) { return x.hands >= c.rankMinHands; });
   var mine = board.filter(function (x) { return x.pid === pid; })[0];
+  var titleReady = TITLEUI.state && !TITLEUI.state.locked;
+  var profileTitle = titleReady ? titleById((p.equipped || {}).title) : null;
+  var profileShowcase = titleReady ? ((((p.titleState || {}).showcase) || []).map(titleById).filter(Boolean).slice(0, 3)) : [];
   var av = ITEM[eqOf(p).avatar];
 
   var h = bannerHTML(p, 88) +
     '<div class="prof-id"><div class="prof-name">' + esc(p.name) + '</div>' +
     '<div class="prof-meta"><span class="id-no' + (p.vanity ? ' vanity' : '') + '">#' + esc(idOf(p)) + '</span>' +
     (p.role === 'admin' ? '<span class="tag gold">管理員</span>' : '') +
+  /* profile title block is appended after the identity markup below.
+  if (profileTitle) h += '<div class="prof-title">稱號・' + esc(profileTitle.name) + '</div>';
+  if (profileShowcase.length) h += '<div class="prof-showcase">' + profileShowcase.map(function (x) {
+    return '<div><small>' + esc(x.id) + '</small><b>' + esc(x.achievement) + '</b></div>';
+  }).join('') + '</div>';
+
+  */
     (av ? '<span class="tag cy">' + (TIER_TXT[av.tier] || '') + '・' + esc(av.name) + '</span>' : '') + '</div></div>';
+  if (profileTitle) h += '<div class="prof-title">稱號・' + esc(profileTitle.name) + '</div>';
+  if (profileShowcase.length) h += '<div class="prof-showcase">' + profileShowcase.map(function (x) {
+    return '<div><small>' + esc(x.id) + '</small><b>' + esc(x.achievement) + '</b></div>';
+  }).join('') + '</div>';
+
 
   h += '<div class="stat-h">本季</div><div class="stat-grid">' +
     stat('資產', ac ? fmt(ac.net) : '—', 'gold') +
@@ -2185,9 +2219,16 @@ function starsChip() {
 
 var SHOP = { cat: 'avatar', sub: 'all' };
 
+function titleShopDiscount() {
+  return Number((TITLEUI.state && TITLEUI.state.benefits && TITLEUI.state.benefits.shopDiscount) || 0);
+}
+function titleShopPrice(price, qty) {
+  return Math.max(0, Math.floor(Number(price || 0) * Number(qty || 1) * (1 - titleShopDiscount())));
+}
+
 function shopCard(it) {
   var p = S.player || {}, state = saleState(it), have = owns(p, it), n = countOf(p, it.id);
-  var price = state === 'soldout' ? '已售完' : state === 'ended' ? '已下架' : state === 'soon' ? '即將開賣' : '★ ' + fmt(it.price);
+  var discounted = titleShopPrice(it.price, 1), price = state === 'soldout' ? '已售完' : state === 'ended' ? '已下架' : state === 'soon' ? '即將開賣' : '★ ' + fmt(discounted) + (discounted < it.price ? ' <small>原價 ' + fmt(it.price) + '</small>' : '');
   var tags = [];
   if (it.stock != null && state === 'on') tags.push('剩 ' + (it.stock - (SOLD[it.id] || 0)));
   if (it.endAt && state === 'on') tags.push('限時');
@@ -2311,12 +2352,12 @@ function sheetBuy(it) {
   formSheet(esc(it.name), '', body, '購買', '', function () {
     var q = stack ? readAmount('sQty') : 1;
     if (!(q >= 1)) { toast('數量至少 1', 'bad'); return null; }
-    if (stars < it.price * q) { toast('星幣不夠', 'bad'); return null; }
+    if (stars < titleShopPrice(it.price, q)) { toast('星幣不夠', 'bad'); return null; }
     return call('shopBuy', { itemId: it.id, qty: q }).then(function () { return '已購買「' + it.name + '」' + (q > 1 ? ' × ' + q : ''); });
   });
   function total() {
-    var q = stack ? (readAmount('sQty') || 0) : 1, cost = it.price * q;
-    $('buyTotal').innerHTML = '共 ★ ' + fmt(cost) + '　目前 ★ ' + fmt(stars) + (stars < cost ? '　<span class="dn">還差 ' + fmt(cost - stars) + '</span>' : '');
+    var q = stack ? (readAmount('sQty') || 0) : 1, cost = titleShopPrice(it.price, q), regular = it.price * q;
+    $('buyTotal').innerHTML = '共 ★ ' + fmt(cost) + (cost < regular ? '　<span class="up">稱號省下 ' + fmt(regular - cost) + '</span>' : '') + '　目前 ★ ' + fmt(stars) + (stars < cost ? '　<span class="dn">還差 ' + fmt(cost - stars) + '</span>' : '');
   }
   if (stack) { bindAmount('sQty'); $('sQty').value = 1; $('sQty').addEventListener('input', total); $('sheet').querySelectorAll('[data-q]').forEach(function (b) { b.addEventListener('click', total); }); }
   total();
@@ -4747,6 +4788,7 @@ function enterApp(profile) {
     if (++beat % 2) return;
     if (S.tab === 'home') paintSeason();
     else if (S.tab === 'bank') paintVaultClock();
+    else if (S.tab === 'me' && S.meTab === 'titles') paintTitleCountdown();
   }, 500);
   switchTab(S.tab || 'home');
 }
@@ -4768,6 +4810,7 @@ function openSeason() {
   call('econAccount').then(function (r) {
     if (S.sid !== sid || !S.me) return;
     if (!S.acc && r && r.account) { S.acc = r.account; render(); }
+    return loadTitles(true);
   }).catch(function (e) { if (S.me) toast(e.message, 'bad'); });
 
   S.season = null;
@@ -4804,6 +4847,7 @@ function endSession() {
   BJ.st = null; B2.tableId = 'main'; B2.st = null; B2.hand = null; B2.selected = {}; S.playersAt = 0; S.accountsAt = 0; closeRaise();
   MAIL.list = []; MAIL.broadcast = []; MAIL.personal = []; MAIL.claimed = {}; HIGHLIGHTS = []; $('announce').hidden = true;
   MKUI.state = null; MKUI.selected = 'TKN'; MKUI.loading = false; MKUI.error = null; MKUI.open = null; MKUI.phase = null;
+  TITLEUI.state = null; TITLEUI.loading = false; TITLEUI.error = null; TITLEUI.cat = 'A';
   _last = {};
   closeSheet();
   showGate();
@@ -5236,6 +5280,87 @@ function paintVaultClock() {
   if (el.innerHTML !== html) el.innerHTML = html;
 }
 
+/* ---------- 成就與稱號 ---------- */
+function titleById(id) {
+  var list = (TITLEUI.state && TITLEUI.state.titles) || [];
+  for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
+  return null;
+}
+function loadTitles(force) {
+  if (!S.me || TITLEUI.loading) return Promise.resolve(TITLEUI.state);
+  if (TITLEUI.state && !force) return Promise.resolve(TITLEUI.state);
+  TITLEUI.loading = true; TITLEUI.error = null;
+  if (S.tab === 'me' && S.meTab === 'titles') renderMe(true);
+  return call('titleState').then(function (r) {
+    TITLEUI.state = r; TITLEUI.loading = false;
+    if (S.tab === 'me' && S.meTab === 'titles') renderMe(true);
+    return r;
+  }).catch(function (e) {
+    TITLEUI.loading = false; TITLEUI.error = e.message;
+    if (S.tab === 'me' && S.meTab === 'titles') renderMe(true);
+    return null;
+  });
+}
+function titleCountdownParts() {
+  var launch = (TITLEUI.state && TITLEUI.state.launchAt) || Date.UTC(2026, 8, 27, 16, 0, 0);
+  var left = Math.max(0, launch - Date.now()), s = Math.floor(left / 1000);
+  return [Math.floor(s / 86400), Math.floor(s % 86400 / 3600), Math.floor(s % 3600 / 60), s % 60];
+}
+function paintTitleCountdown() {
+  var el = $('titleCountdown'); if (!el) return;
+  var p = titleCountdownParts(), labs = ['天', '時', '分', '秒'];
+  el.innerHTML = p.map(function (n, i) { return '<span>' + String(n).padStart(2, '0') + '<small>' + labs[i] + '</small></span>'; }).join('');
+  if (!p.some(function (n) { return n > 0; })) loadTitles(true);
+}
+function renderTitles() {
+  if (TITLEUI.loading && !TITLEUI.state) return '<div class="loading"><i></i><span>讀取稱號資料</span></div>';
+  if (TITLEUI.error) return '<div class="empty">' + esc(TITLEUI.error) + '<br><button class="btn ghost" data-title-retry style="margin-top:12px">再試一次</button></div>';
+  var st = TITLEUI.state;
+  if (!st) { setTimeout(function () { loadTitles(false); }, 0); return '<div class="loading"><i></i><span>準備稱號介面</span></div>'; }
+  if (st.locked) {
+    return '<div class="title-gate"><div class="title-eyebrow">NEXT SEASON</div><h2>稱號系統・下一賽季開啟</h2>' +
+      '<p>成就、稱號效果與三格展示欄將在新賽季同步開放。現在先保留一點神秘感。</p><div class="title-count" id="titleCountdown"></div></div>';
+  }
+  var list = st.titles || [], unlocked = list.filter(function (x) { return x.unlocked; }).length;
+  var eq = titleById(st.equippedId), active = titleById(st.activeId);
+  var h = st.adminPreview ? '<div class="title-preview">管理員預覽模式：玩家端目前只會看到「下一賽季開啟」，正式開放前不會啟用效果或發放獎勵。</div>' : '';
+  h += '<div class="title-hero"><div class="title-eyebrow">ACHIEVEMENT ARCHIVE</div><h2>成就檔案庫</h2><p>完成條件會解鎖稱號。你可以展示三項成就，但每天只有一個稱號能力生效。</p>' +
+    '<div class="title-stats"><div class="title-stat"><small>已解鎖</small><b>' + unlocked + ' / ' + list.length + '</b></div>' +
+    '<div class="title-stat"><small>目前展示</small><b>' + esc(eq ? eq.name : '未裝備') + '</b></div>' +
+    '<div class="title-stat"><small>今日生效</small><b>' + esc(active ? active.name : (st.adminPreview ? '預覽不生效' : '未啟用')) + '</b></div></div></div>';
+  if (!st.adminPreview && st.equippedId !== st.activeId) h += '<div class="title-preview">目前展示與今日生效不同；新裝備的能力會在明天 00:00 起生效，今天不會重複領取效果。</div>';
+  var cats = st.categories || {}, order = ['A','B','P','C','H','L'];
+  h += '<div class="title-cat">' + order.map(function (k) { return '<button data-title-cat="' + k + '" class="' + (TITLEUI.cat === k ? 'on' : '') + '">' + esc((cats[k] || {}).name || k) + '</button>'; }).join('') + '</div>';
+  var cat = TITLEUI.cat, rows = list.filter(function (x) { return x.category === cat; });
+  var done = rows.filter(function (x) { return x.unlocked; }).length, completed = (st.completedCategories || []).indexOf(cat) >= 0;
+  h += '<div class="title-set"><b>' + esc((cats[cat] || {}).name || cat) + '系列 ' + done + ' / ' + rows.length + '</b>・' + esc((cats[cat] || {}).completeEffect || '') + (completed ? '　<span class="tag gold">已集齊</span>' : '') + '</div><div class="title-list">';
+  rows.forEach(function (x) {
+    var isEq = x.id === st.equippedId, isLive = x.id === st.activeId, isShow = (st.showcase || []).indexOf(x.id) >= 0;
+    h += '<article class="title-card' + (!x.unlocked ? ' locked' : '') + (isEq ? ' equipped' : '') + (x.hidden ? ' hidden-title' : '') + (x.limited ? ' limited-title' : '') + '">' +
+      '<div class="title-top"><span class="title-code">' + esc(x.id) + '</span><div class="title-main"><div class="title-ach">成就・' + esc(x.achievement) + '</div><div class="title-name">' + esc(x.name) + '</div>' +
+      '<div class="title-badges">' + (x.hidden ? '<span class="title-badge">隱藏</span>' : '') + (x.limited ? '<span class="title-badge">限定</span>' : '') + (isLive ? '<span class="title-badge live">今日生效</span>' : '') + (isEq ? '<span class="title-badge display">展示中</span>' : '') + (isShow ? '<span class="title-badge show">展示欄</span>' : '') + '</div></div></div>' +
+      '<div class="title-detail"><div><label>條件</label><span>' + esc(x.condition) + '</span></div><div><label>效果</label><span>' + esc(x.effect) + '</span></div></div>' +
+      '<div class="title-actions"><button data-title-equip="' + esc(x.id) + '" class="' + (x.unlocked && !isEq ? 'primary' : '') + '"' + (!x.unlocked || isEq ? ' disabled' : '') + '>' + (isEq ? '已裝備' : x.unlocked ? '裝備稱號' : '尚未解鎖') + '</button>' +
+      '<button data-title-show="' + esc(x.id) + '"' + (!x.unlocked ? ' disabled' : '') + '>' + (isShow ? '移出展示' : '加入展示') + '</button></div></article>';
+  });
+  h += '</div>';
+  if (S.me.role === 'admin') {
+    var manual = list.filter(function (x) { return ['L04','L05','L06'].indexOf(x.id) >= 0; });
+    h += '<div class="title-admin"><h3>限定稱號頒發</h3><div class="title-admin-grid"><select class="sel" id="titleAdminPid">' + S.roster.map(function (p) { return '<option value="' + esc(p.pid) + '">#' + esc(p.pid) + ' ' + esc(p.name) + '</option>'; }).join('') + '</select>' +
+      '<select class="sel" id="titleAdminId">' + manual.map(function (x) { return '<option value="' + x.id + '">' + x.id + '・' + esc(x.name) + '</option>'; }).join('') + '</select></div>' +
+      '<div class="title-admin-actions"><button class="btn" data-title-grant="1">頒發</button><button class="btn ghost" data-title-grant="0">收回</button></div></div>';
+  }
+  return h;
+}
+function bindTitles() {
+  var root = $('vMe'); paintTitleCountdown();
+  var retry = root.querySelector('[data-title-retry]'); if (retry) retry.onclick = function () { TITLEUI.state = null; loadTitles(true); };
+  root.querySelectorAll('[data-title-cat]').forEach(function (b) { b.onclick = function () { TITLEUI.cat = b.getAttribute('data-title-cat'); renderMe(true); }; });
+  root.querySelectorAll('[data-title-equip]').forEach(function (b) { b.onclick = function () { busy(b, true); call('titleEquip', { id: b.getAttribute('data-title-equip') }).then(function (r) { TITLEUI.state = r; toast('稱號已裝備，能力依每日快照生效', 'good'); renderMe(true); }).catch(function (e) { toast(e.message, 'bad'); busy(b, false); }); }; });
+  root.querySelectorAll('[data-title-show]').forEach(function (b) { b.onclick = function () { var id = b.getAttribute('data-title-show'), ids = (TITLEUI.state.showcase || []).slice(), at = ids.indexOf(id); if (at >= 0) ids.splice(at, 1); else { if (ids.length >= 3) return toast('展示欄最多三個，請先移除一個', 'bad'); ids.push(id); } busy(b, true); call('titleShowcase', { ids: ids }).then(function (r) { TITLEUI.state = r; renderMe(true); }).catch(function (e) { toast(e.message, 'bad'); busy(b, false); }); }; });
+  root.querySelectorAll('[data-title-grant]').forEach(function (b) { b.onclick = function () { var pid = $('titleAdminPid').value, id = $('titleAdminId').value, grant = b.getAttribute('data-title-grant') === '1'; busy(b, true); call('adminTitleGrant', { pid: pid, id: id, grant: grant }).then(function () { toast(grant ? '限定稱號已頒發' : '限定稱號已收回', 'good'); if (pid === S.me.pid) return loadTitles(true); }).catch(function (e) { toast(e.message, 'bad'); }).then(function () { busy(b, false); }); }; });
+}
+
 /* ---------- 我的 ---------- */
 function accOf(pid) {
   for (var i = 0; i < S.accounts.length; i++) if (S.accounts[i].pid === pid) return S.accounts[i];
@@ -5246,12 +5371,12 @@ function renderMe(force) {
   var me = S.me, h = '';
   var isAdmin = me.role === 'admin';
   var mt = S.meTab || 'acct';
-  h += '<div class="seg" role="tablist">' + [['acct', '帳號'], ['shop', '商店'], ['bag', '包包'], ['closet', '衣櫃'], ['dex', '圖鑑']].map(function (x) {
+  h += '<div class="seg" role="tablist">' + [['acct', '帳號'], ['titles', '稱號'], ['shop', '商店'], ['bag', '包包'], ['closet', '衣櫃'], ['dex', '圖鑑']].map(function (x) {
     return '<button role="tab" data-mt="' + x[0] + '" class="' + (mt === x[0] ? 'on' : '') + '">' + x[1] + '</button>';
   }).join('') + '</div>';
   if (mt !== 'acct') {
-    h += '<div class="me-sub">' + (mt === 'shop' ? renderShop() : mt === 'bag' ? renderBag() : mt === 'dex' ? renderDex() : renderCloset()) + '</div>';
-    if (put('vMe', h, force)) { bindMeTabs(); if (mt === 'dex') bindDex(); else bindShopCloset(); }
+    h += '<div class="me-sub">' + (mt === 'titles' ? renderTitles() : mt === 'shop' ? renderShop() : mt === 'bag' ? renderBag() : mt === 'dex' ? renderDex() : renderCloset()) + '</div>';
+    if (put('vMe', h, force)) { bindMeTabs(); if (mt === 'titles') bindTitles(); else if (mt === 'dex') bindDex(); else bindShopCloset(); }
     return;
   }
 
@@ -5309,7 +5434,7 @@ function renderMe(force) {
 
 function bindMeTabs() {
   $('vMe').querySelectorAll('[data-mt]').forEach(function (b) {
-    b.onclick = function () { S.meTab = b.getAttribute('data-mt'); window.scrollTo(0, 0); renderMe(true); };
+    b.onclick = function () { S.meTab = b.getAttribute('data-mt'); window.scrollTo(0, 0); if (S.meTab === 'titles') loadTitles(true); renderMe(true); };
   });
 }
 

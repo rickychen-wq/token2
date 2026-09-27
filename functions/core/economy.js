@@ -7,6 +7,7 @@ const E = require('./econ');
 const { expireTemp, grant } = require('./shop');
 const { merge, dexInterest } = require('./catalog');
 const T = require('./tasks');
+const { benefitsOf } = require('./titles');
 const catalogById = merge(null);
 
 function createEconomy({ db, now, requireSession, requireAdmin }) {
@@ -122,12 +123,17 @@ function createEconomy({ db, now, requireSession, requireAdmin }) {
       let tasks = null;
       const r = await mutate(s.pid, (acc, cfg, t, raw, pl, setPlayer) => {
         const out = T.claim(pl, acc, t, id, raw, req.data && req.data.choice);
+        const titleBonus = Math.floor(Number(out.task.money || 0) * Number(benefitsOf(pl, t).taskBonus || 0));
+        if (titleBonus > 0) {
+          acc.wallet += titleBonus;
+          out.entries.push({ type: 'title-task-bonus', amount: titleBonus, note: out.task.name + '・稱號加成' });
+        }
         if (out.task.itemId) {
           const item = catalogById[out.task.itemId];
           if (!item) throw new AppError('任務獎勵不存在', 'bad-reward');
           grant(pl, item, out.task.qty || 1);
         }
-        got = out.task;
+        got = Object.assign({}, out.task, { titleBonus });
         tasks = T.progress(pl, acc, t, raw);
         setPlayer({ tasks: pl.tasks, stars: pl.stars || 0, items: pl.items || {}, unlocked: pl.unlocked || {} });
         return out.entries;
@@ -227,7 +233,8 @@ function createEconomy({ db, now, requireSession, requireAdmin }) {
       activeAccounts.forEach((acc) => {
         const r = rates[acc.pid];
         const doodle = dexInterest(players[acc.pid], catalogById);
-        const rate = r.rate + doodle.total;
+        const title = benefitsOf(players[acc.pid], t);
+        const rate = (r.rate + doodle.total) * (1 + Number(title.interestBonus || 0));
         // 00:00 計息屬於新一天的第一筆系統操作；先保存昨天結束瞬間的淨資產，
         // 才不會讓這筆利息倒回去改寫昨天的每日排行。
         E.rollDaily(acc, t, cfg);
@@ -240,6 +247,7 @@ function createEconomy({ db, now, requireSession, requireAdmin }) {
         tx.set(ref.collection('ledger').doc(), {
           type: 'interest', amount: gain, wallet: acc.wallet, bank: acc.bank.balance, loans: acc.loans,
           rate, baseRate: r.rate, doodleBonus: doodle.equipmentBonus,
+          titleInterestBonus: Number(title.interestBonus || 0),
           doodleCollectionBonus: doodle.collectionBonus, rank: r.rank, at: t, by: 'system', note: null
         });
         const p = players[acc.pid];

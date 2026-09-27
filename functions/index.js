@@ -23,6 +23,7 @@ const { createBig2 } = require('./games/big2');
 const { createRewards } = require('./core/rewards');
 const { createFeedback } = require('./core/feedback');
 const { createMarket } = require('./core/market');
+const { createTitles } = require('./core/titles');
 
 const db = admin.firestore();
 const now = () => Date.now();
@@ -39,6 +40,7 @@ const SE = createSeason({ db, now, requireAdmin: A.requireAdmin, runInterest: EC
   closeTables: async (sid) => { const r = await PK.closeSeason(sid); await BJ.closeSeason(sid); await B2.closeSeason(sid); return r; } });
 const RW = createRewards({ db, now, requireAdmin: A.requireAdmin });
 const FB = createFeedback({ db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin });
+const TI = createTitles({ db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin });
 const MK = createMarket({
   db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin,
   mutate: EC.mutate, FieldValue: admin.firestore.FieldValue
@@ -84,6 +86,12 @@ exports.adminAdjust = wrap(EC.adminAdjust);
 exports.adminSetEcon = wrap(EC.adminSetEcon);
 exports.adminLedger = wrap(EC.adminLedger);
 exports.adminRunInterest = wrap(EC.adminRunInterest);
+
+/* ---------- 成就與稱號 ---------- */
+exports.titleState = wrap(TI.state);
+exports.titleEquip = wrap(TI.equip);
+exports.titleShowcase = wrap(TI.showcase);
+exports.adminTitleGrant = wrap(TI.adminGrant);
 
 /* ---------- 星界交易所 ---------- */
 exports.marketState = wrap(MK.state);
