@@ -844,6 +844,29 @@ button.game:active{transform:scale(.99)}
 @keyframes mineDropCurtain{from{opacity:0}to{opacity:1}}@keyframes mineDropRay{to{transform:rotate(360deg)}}@keyframes mineDropCore{0%{opacity:0;transform:translate(-50%,-50%) scale(.06)}45%{opacity:1}100%{opacity:.55;transform:translate(-50%,-50%) scale(1.6)}}@keyframes mineDropStage{0%{opacity:0;transform:scale(.5) translateY(65px);filter:brightness(2.5)}100%{opacity:1;transform:none;filter:none}}@keyframes mineDropSpin{to{transform:rotate(360deg)}}@keyframes mineDropArt{0%{opacity:0;transform:scale(.05) rotate(-35deg)}65%{opacity:1;transform:scale(1.12) rotate(3deg)}100%{transform:none}}@keyframes mineDropShard{0%{opacity:0;transform:translate(-50%,-50%) rotate(var(--a)) translateY(-15px) scale(.1)}45%{opacity:1}100%{opacity:.15;transform:translate(-50%,-50%) rotate(var(--a)) translateY(-112px) scale(.8)}}@keyframes mineDropButton{to{opacity:1}}
 @media(prefers-reduced-motion:reduce){.mine-drop-overlay *,.mine-drop-overlay:before,.mine-drop-overlay:after{animation-duration:.01ms!important;animation-delay:0s!important}}
 @media(max-width:520px){.mine-shell{min-height:510px;padding:18px 12px}.mine-title{font-size:24px}.mine-bets{grid-template-columns:repeat(3,1fr)}.mine-doors{gap:7px}.mine-door{height:190px}.mine-door-no{font-size:24px}.mine-stats{gap:5px}.mine-stat b{font-size:14px}}
+.cipher-shell{position:relative;overflow:hidden;min-height:560px;padding:22px;border:1px solid rgba(91,211,255,.27);border-radius:22px;background:radial-gradient(circle at 50% -5%,rgba(99,83,255,.22),transparent 34%),radial-gradient(circle at 8% 72%,rgba(0,225,255,.11),transparent 31%),linear-gradient(155deg,#071526,#070a18 52%,#100923);box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 18px 48px rgba(0,0,0,.32)}
+.cipher-shell:before{content:"";position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(83,210,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(83,210,255,.04) 1px,transparent 1px);background-size:28px 28px;mask-image:radial-gradient(circle at 50% 25%,#000,transparent 73%)}
+.cipher-shell:after{content:"";position:absolute;left:50%;top:95px;width:410px;height:410px;transform:translateX(-50%);border:1px solid rgba(131,112,255,.09);border-radius:50%;box-shadow:0 0 80px rgba(69,201,255,.06);pointer-events:none}
+.cipher-inner{position:relative;z-index:1}.cipher-kicker{text-align:center;color:#64dcff;font:800 10px/1 var(--ui);letter-spacing:.32em;text-indent:.32em;text-shadow:0 0 16px rgba(73,213,255,.55)}
+.cipher-title{text-align:center;margin:13px 0 6px;color:#f2f7ff;font:900 29px/1.15 var(--ui);letter-spacing:.12em;text-indent:.12em;text-shadow:0 0 25px rgba(98,172,255,.28)}
+.cipher-sub{max-width:500px;margin:0 auto 18px;text-align:center;color:#7e8ca8;font-size:12px;line-height:1.8}
+.cipher-lock{display:grid;place-items:center;min-height:375px;text-align:center}.cipher-lock h3{margin-top:24px;color:#d9edff;font-size:21px;letter-spacing:.08em}.cipher-lock p{max-width:380px;margin:9px auto 0;color:#77859f;font-size:13px;line-height:1.8}
+.cipher-lock-core,.cipher-reactor{position:relative;width:132px;height:132px;margin:auto;border-radius:50%;background:radial-gradient(circle,#ecfbff 0 2%,#4be1ff 3% 6%,#4c49e9 7% 14%,rgba(48,42,140,.44) 15% 29%,#080b1c 30% 45%,rgba(63,211,255,.18) 46% 48%,transparent 49%);box-shadow:0 0 24px rgba(70,220,255,.28),inset 0 0 25px rgba(119,79,255,.28)}
+.cipher-lock-core:before,.cipher-lock-core:after,.cipher-reactor:before,.cipher-reactor:after{content:"";position:absolute;border-radius:50%;border:1px solid rgba(104,223,255,.38)}
+.cipher-lock-core:before,.cipher-reactor:before{inset:-12px;border-style:dashed;animation:cipherSpin 12s linear infinite}.cipher-lock-core:after,.cipher-reactor:after{inset:13px;border-color:rgba(170,116,255,.48);border-left-color:transparent;animation:cipherSpin 5s linear infinite reverse}
+@keyframes cipherSpin{to{transform:rotate(360deg)}}
+.cipher-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0}.cipher-stat{padding:12px 8px;border:1px solid rgba(91,211,255,.14);border-radius:12px;background:rgba(3,9,24,.64);text-align:center}.cipher-stat span{display:block;color:#71809c;font-size:9px;letter-spacing:.1em}.cipher-stat b{display:block;margin-top:6px;color:#cdeeff;font:800 16px/1 var(--ui)}
+.cipher-bets{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin:18px 0}.cipher-bet{padding:13px 5px;border:1px solid rgba(95,205,255,.16);border-radius:11px;background:rgba(4,10,27,.66);color:#76849d;font:800 13px/1 var(--ui)}.cipher-bet.on{border-color:#58d6ff;color:#dff8ff;background:linear-gradient(145deg,rgba(61,210,255,.2),rgba(103,65,231,.18));box-shadow:0 0 22px rgba(62,198,255,.12)}
+.cipher-payouts{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:15px 0 20px}.cipher-pay{padding:10px 4px;border-radius:9px;background:rgba(255,255,255,.025);text-align:center}.cipher-pay small{display:block;color:#687792;font-size:9px}.cipher-pay b{display:block;margin-top:4px;color:#a9b9d4;font:800 13px/1 var(--ui)}.cipher-pay.hot{background:rgba(75,220,255,.09)}.cipher-pay.hot b{color:#79e9ff}
+.cipher-console{margin:16px 0;padding:16px;border:1px solid rgba(88,213,255,.15);border-radius:17px;background:linear-gradient(145deg,rgba(3,12,30,.82),rgba(10,7,28,.83));box-shadow:inset 0 0 30px rgba(71,78,213,.05)}
+.cipher-slots{display:grid;grid-template-columns:repeat(4,58px);justify-content:center;gap:10px;margin:12px 0 16px}.cipher-slot{display:grid;place-items:center;width:58px;height:64px;border:1px solid rgba(95,213,255,.24);border-radius:14px;background:rgba(1,7,18,.76);box-shadow:inset 0 0 18px rgba(84,123,255,.08)}.cipher-slot.empty{color:#37445e;font:800 20px/1 var(--ui);border-style:dashed}
+.cipher-gem{--gem:#67ddff;display:inline-grid;place-items:center;width:42px;height:42px;border:1px solid color-mix(in srgb,var(--gem) 72%,transparent);transform:rotate(45deg);border-radius:10px;background:radial-gradient(circle at 32% 25%,#fff 0 3%,var(--gem) 5%,color-mix(in srgb,var(--gem) 36%,#070a1a) 42%,#070815 75%);box-shadow:0 0 15px color-mix(in srgb,var(--gem) 34%,transparent),inset 0 0 10px rgba(255,255,255,.16)}.cipher-gem i{transform:rotate(-45deg);color:#fff;font:900 18px/1 var(--ui);font-style:normal;text-shadow:0 0 8px #fff}.cipher-gem.sm{width:24px;height:24px;border-radius:6px}.cipher-gem.sm i{font-size:11px}
+.cipher-symbols{display:grid;grid-template-columns:repeat(8,1fr);gap:7px;max-width:510px;margin:0 auto 15px}.cipher-symbol{display:grid;place-items:center;padding:9px 2px;border:1px solid rgba(94,205,255,.12);border-radius:11px;background:rgba(255,255,255,.025);cursor:pointer}.cipher-symbol.on{border-color:rgba(104,229,255,.72);background:rgba(76,187,255,.12);box-shadow:0 0 18px rgba(63,199,255,.12)}.cipher-symbol:disabled{opacity:.3;cursor:default}
+.cipher-history{display:flex;flex-direction:column;gap:7px;margin:15px 0}.cipher-hrow{display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:8px;padding:9px 10px;border:1px solid rgba(91,201,255,.1);border-radius:11px;background:rgba(1,7,19,.54)}.cipher-hrow.latest{border-color:rgba(100,219,255,.3);background:rgba(35,89,150,.12)}.cipher-hno{color:#62718c;font:800 10px/1 var(--ui)}.cipher-hcode{display:flex;gap:7px}.cipher-hints{display:flex;gap:5px;align-items:center}.cipher-hint{display:flex;align-items:center;gap:3px;color:#7d8ca6;font:700 10px/1 var(--ui)}.cipher-dot{width:8px;height:8px;border-radius:50%;background:#43e5ff;box-shadow:0 0 8px #43e5ff}.cipher-dot.mis{background:#a673ff;box-shadow:0 0 8px #a673ff}.cipher-empty-history{padding:18px;text-align:center;color:#65738c;font-size:11px;border:1px dashed rgba(93,202,255,.13);border-radius:11px}
+.cipher-legend{display:flex;justify-content:center;gap:16px;margin:10px 0 15px;color:#72819c;font-size:10px}.cipher-legend span{display:flex;align-items:center;gap:6px}.cipher-actions{display:grid;grid-template-columns:1fr auto;gap:8px}.cipher-clear{min-width:84px}
+.cipher-result{position:relative;overflow:hidden;margin:18px auto;max-width:500px;padding:25px 19px;border:1px solid rgba(90,220,255,.3);border-radius:20px;text-align:center;background:radial-gradient(circle at 50% 0,rgba(65,217,255,.18),transparent 40%),rgba(2,8,22,.83);box-shadow:0 0 34px rgba(54,203,255,.1)}.cipher-result.fail{border-color:rgba(255,84,132,.28);background:radial-gradient(circle at 50% 0,rgba(255,62,112,.14),transparent 42%),rgba(9,5,18,.86)}.cipher-result .cipher-reactor{width:92px;height:92px;margin:4px auto 19px}.cipher-result h3{font-size:22px;color:#dff8ff;letter-spacing:.1em}.cipher-result.fail h3{color:#ff9ab7}.cipher-result p{margin:8px auto;color:#7887a1;font-size:12px;line-height:1.7}.cipher-answer{display:flex;justify-content:center;gap:9px;margin:17px 0}.cipher-prize{margin:12px 0 18px;color:#91ecff;font:900 30px/1 var(--ui);text-shadow:0 0 18px rgba(74,220,255,.36)}.cipher-prize small{display:block;margin-top:8px;color:#7786a0;font-size:10px;letter-spacing:.08em;text-shadow:none}
+@media(prefers-reduced-motion:reduce){.cipher-shell *{animation-duration:.01ms!important}}
+@media(max-width:520px){.cipher-shell{min-height:530px;padding:18px 11px}.cipher-title{font-size:24px}.cipher-bets{grid-template-columns:repeat(3,1fr)}.cipher-payouts{grid-template-columns:repeat(3,1fr)}.cipher-console{padding:13px 9px}.cipher-slots{grid-template-columns:repeat(4,52px);gap:7px}.cipher-slot{width:52px;height:58px}.cipher-symbols{grid-template-columns:repeat(4,1fr)}.cipher-hrow{grid-template-columns:26px 1fr auto;padding:8px 7px}.cipher-hcode{gap:4px}.cipher-legend{gap:10px}.cipher-actions{grid-template-columns:1fr}.cipher-clear{order:2}}
 .pc.hole{background:repeating-linear-gradient(45deg,#1B3A60 0 4px,#0B1B30 4px 8px);border:1px solid rgba(120,220,255,.5);box-shadow:0 3px 10px rgba(0,0,0,.5)}
 .pc.big{width:64px;height:90px;border-radius:8px}
 .pc.big b{font-size:28px}.pc.big i{font-size:22px}
@@ -1209,6 +1232,7 @@ button.game:active{transform:scale(.99)}
     <section id="vBj" class="view game-view" hidden></section>
     <section id="vBig2" class="view game-view" hidden></section>
     <section id="vMine" class="view game-view" hidden></section>
+    <section id="vCipher" class="view game-view" hidden></section>
     <section id="vGate" class="view game-view" hidden></section>
     <section id="vSlot" class="view game-view" hidden></section>
     <section id="vDice" class="view game-view" hidden></section>
@@ -3958,7 +3982,7 @@ function sheetLock() {
 /* =====================================================================
    小遊戲：21 點、射龍門、拉霸機
    ===================================================================== */
-var GAMES_DEF = { mine: { enabled: false, bets: [200, 500, 1000, 2000, 5000], safeMult: 1.25, treasureMult: 1.55, specialMinBet: 2000, safeSpecialChance: 0.05, treasureSpecialChance: 0.10 }, gate: { enabled: true, minBet: 200, maxBet: 5000, edge: 0.05 }, slot: { enabled: true, bets: [100, 200, 500, 1000] },
+var GAMES_DEF = { mine: { enabled: false, bets: [200, 500, 1000, 2000, 5000], safeMult: 1.25, treasureMult: 1.55, specialMinBet: 2000, safeSpecialChance: 0.05, treasureSpecialChance: 0.10 }, cipher: { enabled: false, bets: [200, 500, 1000, 2000, 5000], maxAttempts: 6, payouts: [2.2, 2.2, 1.65, 1.3, 1.05, 0.75] }, gate: { enabled: true, minBet: 200, maxBet: 5000, edge: 0.05 }, slot: { enabled: true, bets: [100, 200, 500, 1000] },
   bj: { enabled: true, minBet: 200, maxBet: 5000, betSec: 30, turnSec: 20, resultSec: 6 },
   big2: { enabled: true, buyIn: 1000, reserve: 2000, readySec: 20, turnSec: 30, resultSec: 20 },
   dice: { enabled: true, minBet: 100, maxTotal: 10000 } };
@@ -4440,6 +4464,106 @@ function renderMine(force) {
   }
 }
 
+/* ---------- 星核解碼 ---------- */
+var CIPHER_META = {
+  nova: { glyph: '✦', color: '#62e7ff' }, prism: { glyph: '◆', color: '#a77bff' },
+  orbit: { glyph: '●', color: '#5b8dff' }, flare: { glyph: '▲', color: '#ff708f' },
+  void: { glyph: '✕', color: '#8793b5' }, pulse: { glyph: '＋', color: '#4df0b0' },
+  crown: { glyph: '♜', color: '#ffd36f' }, rune: { glyph: '◇', color: '#ff86dc' }
+};
+var CIPHER_IDS = Object.keys(CIPHER_META);
+var CP = { bet: 200, pick: [], busy: false, last: null };
+function cipherGem(id, small) {
+  var m = CIPHER_META[id] || { glyph: '?', color: '#71809c' };
+  return '<span class="cipher-gem' + (small ? ' sm' : '') + '" style="--gem:' + m.color + '"><i>' + m.glyph + '</i></span>';
+}
+function cipherCode(code, small) {
+  return (code || []).map(function (id) { return cipherGem(id, small); }).join('');
+}
+function cipherHistory(rows) {
+  if (!rows || !rows.length) return '<div class="cipher-empty-history">尚未送出任何排列。先觀察提示，再一步一步縮小答案。</div>';
+  return '<div class="cipher-history">' + rows.map(function (r, i) {
+    return '<div class="cipher-hrow' + (i === rows.length - 1 ? ' latest' : '') + '"><span class="cipher-hno">#0' + (i + 1) + '</span>' +
+      '<div class="cipher-hcode">' + cipherCode(r.guess, true) + '</div><div class="cipher-hints">' +
+      '<span class="cipher-hint"><i class="cipher-dot"></i>' + Number(r.exact || 0) + '</span>' +
+      '<span class="cipher-hint"><i class="cipher-dot mis"></i>' + Number(r.misplaced || 0) + '</span></div></div>';
+  }).join('') + '</div>';
+}
+function renderCipher(force) {
+  var c = gcfg('cipher'), admin = S.me.role === 'admin';
+  var run = S.acc && S.acc.cipher && S.acc.cipher.active ? S.acc.cipher : null;
+  var access = c.enabled || admin || !!run;
+  var h = gameHead('星核解碼', rulesBtn('cipher'));
+  h += '<div class="cipher-shell"><div class="cipher-inner"><div class="cipher-kicker">STELLAR VAULT // CIPHER-04</div>' +
+    '<div class="cipher-title">星核解碼</div><p class="cipher-sub">八枚星核中藏著四格不重複的密碼。每次輸入只會回傳精準與移位數量，真正的答案必須靠推理逼近。</p>';
+  if (!access) {
+    h += '<div class="cipher-lock"><div><div class="cipher-lock-core"></div><h3>請等待管理員開放</h3>' +
+      '<p>星核金庫已經出現在大廳，目前仍由管理員校準解碼系統。正式開放後，所有玩家都能進入挑戰。</p></div></div>';
+  } else if (CP.last && CP.last.ended) {
+    var won = CP.last.won;
+    h += '<div class="cipher-result' + (won ? '' : ' fail') + '"><div class="cipher-reactor"></div><h3>' + (won ? '金庫解除封鎖' : '星核防線鎖死') + '</h3>' +
+      '<p>' + (won ? '你的推理吻合全部四個位置，金庫已經完成派彩。' : '六次解碼機會已耗盡，正確的星核序列在最後一刻顯現。') + '</p>' +
+      '<div class="cipher-answer">' + cipherCode(CP.last.answer, false) + '</div>' +
+      '<div class="cipher-prize">' + (won ? fmt(CP.last.payout) : '0') + '<small>' + (won ? '已放入錢包・本次淨利 ' + (CP.last.profit >= 0 ? '+' : '') + fmt(CP.last.profit) : '本次本金全數失去') + '</small></div>' +
+      '<button class="btn gold" type="button" data-cipher-restart>再次解碼</button></div>';
+  } else if (run) {
+    var attempts = Array.isArray(run.attempts) ? run.attempts : [];
+    var nextNo = attempts.length + 1, mult = (c.payouts || [])[nextNo - 1] || 0;
+    h += '<div class="cipher-stats"><div class="cipher-stat"><span>破解進度</span><b>' + attempts.length + ' / ' + c.maxAttempts + '</b></div>' +
+      '<div class="cipher-stat"><span>投入本金</span><b>' + fmt(run.bet) + '</b></div><div class="cipher-stat"><span>本次破解派彩</span><b>× ' + mult + '</b></div></div>' +
+      cipherHistory(attempts) + '<div class="cipher-legend"><span><i class="cipher-dot"></i>符號與位置正確</span><span><i class="cipher-dot mis"></i>符號正確、位置錯誤</span></div>' +
+      '<div class="cipher-console"><div class="cipher-slots">' + [0, 1, 2, 3].map(function (i) {
+        return CP.pick[i] ? '<button class="cipher-slot" type="button" data-cslot="' + i + '">' + cipherGem(CP.pick[i], false) + '</button>' : '<span class="cipher-slot empty">0' + (i + 1) + '</span>';
+      }).join('') + '</div><div class="cipher-symbols">' + CIPHER_IDS.map(function (id) {
+        var selected = CP.pick.indexOf(id) >= 0, full = CP.pick.length >= 4;
+        return '<button class="cipher-symbol' + (selected ? ' on' : '') + '" type="button" data-csymbol="' + id + '"' + (!selected && full ? ' disabled' : '') + '>' + cipherGem(id, true) + '</button>';
+      }).join('') + '</div><div class="cipher-actions"><button class="btn" type="button" data-cipher-guess' + (CP.busy || CP.pick.length !== 4 ? ' disabled' : '') + '>' + (CP.busy ? '星核比對中…' : '送出第 ' + nextNo + ' 次解碼') + '</button>' +
+      '<button class="btn ghost cipher-clear" type="button" data-cipher-clear' + (!CP.pick.length || CP.busy ? ' disabled' : '') + '>清除</button></div></div>';
+  } else {
+    var bets = c.bets || [200, 500, 1000, 2000, 5000], payouts = c.payouts || [2.2, 2.2, 1.65, 1.3, 1.05, 0.75];
+    if (bets.indexOf(CP.bet) < 0) CP.bet = bets[0];
+    h += walletLine() + '<div class="cipher-reactor"></div><div class="cipher-bets">' + bets.map(function (v) {
+      return '<button class="cipher-bet' + (CP.bet === v ? ' on' : '') + '" type="button" data-cbet="' + v + '">' + fmt(v) + '</button>';
+    }).join('') + '</div><div class="cipher-payouts">' + payouts.map(function (v, i) {
+      return '<div class="cipher-pay' + (i < 2 ? ' hot' : '') + '"><small>第 ' + (i + 1) + ' 次</small><b>× ' + v + '</b></div>';
+    }).join('') + '</div><button class="btn" type="button" data-cipher-start' + (CP.busy || !S.acc || S.acc.wallet < CP.bet ? ' disabled' : '') + '>投入 ' + fmt(CP.bet) + '・啟動破解器</button>' +
+      '<p class="cipher-sub" style="margin-top:12px">越早破解派彩越高；第六次雖然成功仍只返還 0.75 倍。本輪開始後會保存進度，重新整理不會遺失。</p>';
+  }
+  h += '</div></div>';
+  if (put('vCipher', h, force)) {
+    var root = $('vCipher'); bindBack(root);
+    root.querySelectorAll('[data-cbet]').forEach(function (b) { b.onclick = function () { CP.bet = +b.getAttribute('data-cbet'); CP.last = null; renderCipher(true); }; });
+    var start = root.querySelector('[data-cipher-start]');
+    if (start) start.onclick = function () {
+      CP.busy = true; renderCipher(true);
+      call('cipherStart', { bet: CP.bet }).then(function (r) {
+        if (S.acc) { S.acc.wallet = r.wallet; S.acc.cipher = r.session; }
+        CP.busy = false; CP.pick = []; CP.last = null; renderCipher(true);
+      }).catch(function (e) { CP.busy = false; toast(e.message, 'bad'); renderCipher(true); });
+    };
+    root.querySelectorAll('[data-csymbol]').forEach(function (b) { b.onclick = function () {
+      if (CP.busy) return;
+      var id = b.getAttribute('data-csymbol'), at = CP.pick.indexOf(id);
+      if (at >= 0) CP.pick.splice(at, 1); else if (CP.pick.length < 4) CP.pick.push(id);
+      renderCipher(true);
+    }; });
+    root.querySelectorAll('[data-cslot]').forEach(function (b) { b.onclick = function () { if (!CP.busy) { CP.pick.splice(+b.getAttribute('data-cslot'), 1); renderCipher(true); } }; });
+    var clear = root.querySelector('[data-cipher-clear]');
+    if (clear) clear.onclick = function () { CP.pick = []; renderCipher(true); };
+    var guess = root.querySelector('[data-cipher-guess]');
+    if (guess) guess.onclick = function () {
+      if (CP.busy || CP.pick.length !== 4) return;
+      CP.busy = true; var sent = CP.pick.slice(); renderCipher(true);
+      call('cipherGuess', { guess: sent }).then(function (r) {
+        if (S.acc) { S.acc.wallet = r.wallet; if (r.ended) delete S.acc.cipher; else S.acc.cipher = r.session; }
+        CP.busy = false; CP.pick = []; CP.last = r; renderCipher(true);
+      }).catch(function (e) { CP.busy = false; CP.pick = sent; toast(e.message, 'bad'); renderCipher(true); });
+    };
+    var again = root.querySelector('[data-cipher-restart]');
+    if (again) again.onclick = function () { CP.last = null; CP.pick = []; renderCipher(true); };
+  }
+}
+
 /* ---------- 射龍門 ---------- */
 var GT = { posts: null, last: null, bet: null, busy: false };
 function gRank(c) { return ((c / 4) | 0) + 2; }
@@ -4596,11 +4720,12 @@ function spinSlot(bet) {
 }
 
 function sheetGames() {
-  var mn = gcfg('mine'), bj = gcfg('bj'), gt = gcfg('gate'), sl = gcfg('slot'), b2 = gcfg('big2');
+  var mn = gcfg('mine'), cp = gcfg('cipher'), bj = gcfg('bj'), gt = gcfg('gate'), sl = gcfg('slot'), b2 = gcfg('big2');
   function sel(id, on) { return '<select id="' + id + '" class="sel"><option value="1"' + (on ? ' selected' : '') + '>開放</option><option value="0"' + (on ? '' : ' selected') + '>關閉</option></select>'; }
   function f(id, label, v) { return '<div class="fld"><label for="' + id + '">' + label + '</label><input id="' + id + '" inputmode="decimal" value="' + v + '"></div>'; }
   formSheet('小遊戲設定', '改完立刻生效。',
     '<div class="stat-h">礦洞探險</div><p class="note-s">關閉時只有管理員能完整測試；一般玩家看得到入口，但進入後只會看到「請等待管理員開放」。</p><div class="fld-grid"><div class="fld"><label for="mnOn">公開狀態</label>' + sel('mnOn', mn.enabled) + '</div><div></div></div>' +
+    '<div class="stat-h">星核解碼</div><p class="note-s">關閉時只有管理員能完整測試；一般玩家看得到入口，但進入後只會看到「請等待管理員開放」。</p><div class="fld-grid"><div class="fld"><label for="cpOn">公開狀態</label>' + sel('cpOn', cp.enabled) + '</div><div></div></div>' +
     '<div class="stat-h">21 點</div><div class="fld-grid"><div class="fld"><label for="bjOn">狀態</label>' + sel('bjOn', bj.enabled) + '</div><div></div>' +
       f('bjMin', '最低下注', bj.minBet) + f('bjMax', '最高下注', bj.maxBet) + f('bjBet', '下注倒數秒數', bj.betSec) + f('bjTurn', '思考秒數', bj.turnSec) + '</div>' +
     '<div class="stat-h">射龍門</div><div class="fld-grid"><div class="fld"><label for="gtOn">狀態</label>' + sel('gtOn', gt.enabled) + '</div>' + f('gtEdge', '莊家優勢 %', Math.round(gt.edge * 1000) / 10) +
@@ -4613,6 +4738,7 @@ function sheetGames() {
       var bets = $('slBets').value.split(/[,，\s]+/).filter(Boolean).map(Number);
       return call('adminGames', {
         mine: { enabled: $('mnOn').value === '1' },
+        cipher: { enabled: $('cpOn').value === '1' },
         bj: { enabled: $('bjOn').value === '1', minBet: n('bjMin'), maxBet: n('bjMax'), betSec: n('bjBet'), turnSec: n('bjTurn') },
         gate: { enabled: $('gtOn').value === '1', minBet: n('gtMin'), maxBet: n('gtMax'), edge: n('gtEdge') / 100 },
         slot: { enabled: $('slOn').value === '1', bets: bets },
@@ -4702,6 +4828,17 @@ function sheetRules(game) {
       ['特殊判定', '初始本金必須高於 2,000，所以只有投入 5,000 符合資格。安全門 5%、寶藏門 10%'],
       ['特殊獎池', '3,000 遊戲幣 30%、5,000 遊戲幣 20%、史詩／神話／傳奇寶箱各 10%、傳奇／神話鑰匙各 5%、30 星幣 5%、神秘寶箱／神秘鑰匙各 2.5%'],
       ['公平性', '門後結果不會預先放在前端，只有按下選擇後才由伺服器產生']
+    ]);
+  } else if (game === 'cipher') {
+    h = '<h3>星核解碼說明</h3><p class="desc">八枚星核中會選出四枚不重複的符號並排列成密碼。你有六次機會靠提示找出正確順序。</p>' + ruleRows([
+      ['選擇本金', '每次可以投入 200、500、1,000、2,000 或 5,000'],
+      ['輸入方式', '每次必須選四個不重複的符號；已經送過的相同排列不能重複送出'],
+      ['藍色提示', '代表符號正確，而且所在位置也完全正確'],
+      ['紫色提示', '代表符號有出現在密碼中，但目前放錯位置'],
+      ['派彩', '第 1～2 次 2.2 倍、第 3 次 1.65 倍、第 4 次 1.3 倍、第 5 次 1.05 倍、第 6 次 0.75 倍'],
+      ['失敗', '六次都沒有完全破解，本次本金全數失去'],
+      ['進度', '遊戲中重新整理不會遺失猜測紀錄，可以繼續完成同一組密碼'],
+      ['公平性', '真正答案只保存在伺服器端，不會寫入玩家能讀取的帳戶或前端畫面']
     ]);
   } else if (game === 'gate') {
     var g = gcfg('gate');
@@ -5054,6 +5191,7 @@ function endSession() {
   MKUI.state = null; MKUI.selected = 'TKN'; MKUI.loading = false; MKUI.error = null; MKUI.open = null; MKUI.phase = null;
   TITLEUI.state = null; TITLEUI.loading = false; TITLEUI.error = null; TITLEUI.cat = 'A';
   MN.bet = 200; MN.busy = false; MN.last = null; MN.picking = -1; MN.rewardReveal = null;
+  CP.bet = 200; CP.pick = []; CP.busy = false; CP.last = null;
   _last = {};
   closeSheet();
   showGate();
@@ -5070,11 +5208,12 @@ document.querySelectorAll('.tab').forEach(function (b) {
 
 function switchTab(t) {
   S.tab = t;
-  var tabKey = ['bj', 'big2', 'mine', 'gate', 'slot', 'dice', 'market'].indexOf(t) >= 0 ? 'home' : t;
+  var tabKey = ['bj', 'big2', 'mine', 'cipher', 'gate', 'slot', 'dice', 'market'].indexOf(t) >= 0 ? 'home' : t;
   document.querySelectorAll('.tab').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === tabKey); });
   $('vBj').hidden = t !== 'bj';
   $('vBig2').hidden = t !== 'big2';
   $('vMine').hidden = t !== 'mine';
+  $('vCipher').hidden = t !== 'cipher';
   $('vGate').hidden = t !== 'gate';
   $('vSlot').hidden = t !== 'slot';
   $('vDice').hidden = t !== 'dice';
@@ -5101,6 +5240,7 @@ function render(force) {
   else if (S.tab === 'bj') renderBj(force);
   else if (S.tab === 'big2') renderBig2(force);
   else if (S.tab === 'mine') renderMine(force);
+  else if (S.tab === 'cipher') renderCipher(force);
   else if (S.tab === 'gate') renderGate(force);
   else if (S.tab === 'slot') renderSlot(force);
   else if (S.tab === 'dice') renderDice(force);
@@ -5188,6 +5328,7 @@ function renderHome(force) {
     '<button class="game mini-g b2-entry" data-b2table="low"><div class="game-suit">2</div><div class="game-txt"><h3>大老二・輕鬆桌</h3><p>底注 500・有 2 賠 1,000</p></div></button>' +
     '<button class="game mini-g" data-go="bj"><div class="game-suit">21</div><div class="game-txt"><h3>21 點</h3><p>' + (bjLive ? '進行中' : bjSeated ? bjSeated + ' 人在桌上' : 'AI 荷官發牌') + '</p></div></button>' +
     '<button class="game mini-g" data-go="mine"><div class="game-suit">⛏</div><div class="game-txt"><h3>礦洞探險</h3><p>三扇門・越深獎金越高</p></div></button>' +
+    '<button class="game mini-g" data-go="cipher"><div class="game-suit">◆</div><div class="game-txt"><h3>星核解碼</h3><p>四格密碼・用線索破解金庫</p></div></button>' +
     '<button class="game mini-g" data-go="gate"><div class="game-suit">🐉</div><div class="game-txt"><h3>射龍門</h3><p>射進兩柱中間</p></div></button>' +
     '<button class="game mini-g" data-go="slot"><div class="game-suit">🎰</div><div class="game-txt"><h3>拉霸機</h3><p>拉一把試手氣</p></div></button>' +
     '<button class="game mini-g" data-go="dice"><div class="game-suit">🎲</div><div class="game-txt"><h3>骰寶</h3><p>大小單雙豹子</p></div></button>' +

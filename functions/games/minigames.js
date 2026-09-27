@@ -1,5 +1,5 @@
 'use strict';
-/* games/minigames.js — 單人小遊戲：礦洞探險、射龍門、拉霸機、骰寶
+/* games/minigames.js — 單人小遊戲：礦洞探險、星核解碼、射龍門、拉霸機、骰寶
    都用經濟系統的 mutate()：一次 transaction 裡扣注、開獎、派彩、寫流水帳。 */
 
 const crypto = require('crypto');
@@ -18,6 +18,12 @@ const DEFAULTS = {
     specialMinBet: 2000,
     safeSpecialChance: 0.05,
     treasureSpecialChance: 0.10
+  },
+  cipher: {
+    enabled: false,
+    bets: [200, 500, 1000, 2000, 5000],
+    maxAttempts: 6,
+    payouts: [2.2, 2.2, 1.65, 1.3, 1.05, 0.75]
   },
   gate: { enabled: true, minBet: 200, maxBet: 5000, edge: 0.05 },
   slot: { enabled: true, bets: [100, 200, 500, 1000] },
@@ -38,12 +44,50 @@ function gamesCfg(raw) {
       bets: DEFAULTS.mine.bets.slice(), safeMult: 1.25, treasureMult: 1.55,
       specialMinBet: 2000, safeSpecialChance: 0.05, treasureSpecialChance: 0.10
     }),
+    cipher: Object.assign({}, DEFAULTS.cipher, g.cipher, {
+      bets: DEFAULTS.cipher.bets.slice(), maxAttempts: 6, payouts: DEFAULTS.cipher.payouts.slice()
+    }),
     gate: Object.assign({}, DEFAULTS.gate, g.gate),
     slot: Object.assign({}, DEFAULTS.slot, g.slot),
     dice: Object.assign({}, DEFAULTS.dice, g.dice),
     bj: Object.assign({}, g.bj),
     big2: Object.assign({}, DEFAULTS.big2, g.big2, { buyIn: 1000, reserve: 2000 })
   };
+}
+
+/* ---------- 星核解碼 ----------
+   四個不重複符號、八選四、最多六次。真正答案只存放在伺服器端的
+   seasons/{sid}/cipherRuns/{pid}，帳戶只保存玩家看得到的猜測與提示。 */
+const CIPHER_SYMBOLS = ['nova', 'prism', 'orbit', 'flare', 'void', 'pulse', 'crown', 'rune'];
+function cipherCanPlay(cfg, role) { return !!(cfg && cfg.enabled) || role === 'admin'; }
+function cipherCreateCode(randomInt) {
+  const pick = typeof randomInt === 'function' ? randomInt : crypto.randomInt;
+  const pool = CIPHER_SYMBOLS.slice();
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = pick(i + 1);
+    const x = pool[i]; pool[i] = pool[j]; pool[j] = x;
+  }
+  return pool.slice(0, 4);
+}
+function cipherCleanGuess(value) {
+  const guess = Array.isArray(value) ? value.map(String) : [];
+  if (guess.length !== 4 || new Set(guess).size !== 4 || guess.some((x) => CIPHER_SYMBOLS.indexOf(x) < 0)) {
+    throw new AppError('請選擇四個不重複的星核符號', 'bad-cipher-guess', 'invalid-argument');
+  }
+  return guess;
+}
+function cipherScore(code, guess) {
+  let exact = 0, shared = 0;
+  for (let i = 0; i < 4; i++) {
+    if (code[i] === guess[i]) exact++;
+    if (code.indexOf(guess[i]) >= 0) shared++;
+  }
+  return { exact, misplaced: shared - exact };
+}
+function cipherMultiplier(attempt, cfg) {
+  const a = Number(attempt);
+  const payouts = (cfg && cfg.payouts) || DEFAULTS.cipher.payouts;
+  return Number.isInteger(a) && a >= 1 && a <= payouts.length ? Number(payouts[a - 1]) : 0;
 }
 
 /* ---------- 礦洞探險 ----------
@@ -216,6 +260,16 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
     if (!Number.isInteger(n) || n < lo || n > hi) throw new AppError('下注金額要在 ' + lo + ' 到 ' + hi + ' 之間', 'bad-bet', 'invalid-argument');
     return n;
   }
+  function cipherMeta(write) {
+    return {
+      load: async (tx, ctx) => {
+        const ref = db.collection('seasons').doc(ctx.sid).collection('cipherRuns').doc(ctx.pid);
+        const snap = await tx.get(ref);
+        return { ref, data: snap.exists ? snap.data() : null };
+      },
+      write
+    };
+  }
 
   return {
     gateOdds, slotPayout, slotRTP, gamesCfg,
@@ -294,6 +348,81 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
         out = { payout, bet, profit: payout - bet, depth: Number(run.depth || 1), ended: true };
         return [{ type: 'game', amount: payout, wallet: acc.wallet, bank: acc.bank.balance, loans: acc.loans, note: '礦洞探險・安全帶走' }];
       });
+      out.wallet = r.account.wallet;
+      return out;
+    },
+
+    async cipherStart(req) {
+      const s = await requireSession(req);
+      const requested = Number(req.data && req.data.bet);
+      const code = cipherCreateCode();
+      let out;
+      const r = await mutate(s.pid, (acc, cfg, t, raw) => {
+        const C = gamesCfg(raw).cipher;
+        if (!cipherCanPlay(C, s.player.role)) throw new AppError('星核解碼尚未開放，請等待管理員開放', 'disabled');
+        if (C.bets.indexOf(requested) < 0) throw new AppError('解碼本金不正確', 'bad-bet', 'invalid-argument');
+        if (acc.cipher && acc.cipher.active) throw new AppError('你還有一組星核密碼尚未破解', 'cipher-active');
+        if (acc.wallet < requested) throw new AppError('錢包不夠', 'poor');
+        acc.wallet -= requested;
+        acc.cipher = { active: true, bet: requested, attempts: [], startedAt: t };
+        out = { session: acc.cipher, preview: !C.enabled && s.player.role === 'admin' };
+        return [{ type: 'game', amount: -requested, wallet: acc.wallet, bank: acc.bank.balance, loans: acc.loans, note: '星核解碼・啟動破解器' }];
+      }, cipherMeta(async (tx, extra, ctx) => {
+        tx.set(extra.ref, { code, startedAt: ctx.t });
+      }));
+      out.wallet = r.account.wallet;
+      return out;
+    },
+
+    async cipherGuess(req) {
+      const s = await requireSession(req);
+      const guess = cipherCleanGuess(req.data && req.data.guess);
+      let out, ended = false;
+      const r = await mutate(s.pid, (acc, cfg, t, raw, pl, setPlayer, extra) => {
+        const C = gamesCfg(raw).cipher;
+        const run = acc.cipher;
+        const secret = extra && extra.data;
+        if (!run || !run.active) throw new AppError('目前沒有進行中的星核解碼', 'no-cipher');
+        if (!secret || !Array.isArray(secret.code) || secret.code.length !== 4 || Number(secret.startedAt) !== Number(run.startedAt)) {
+          throw new AppError('這組星核資料已失效，請通知管理員處理', 'stale-cipher');
+        }
+        const history = Array.isArray(run.attempts) ? run.attempts.slice() : [];
+        if (history.length >= C.maxAttempts) throw new AppError('這組星核已經鎖死', 'cipher-ended');
+        if (history.some((x) => Array.isArray(x.guess) && x.guess.join('|') === guess.join('|'))) {
+          throw new AppError('這個排列已經猜過了', 'duplicate-cipher-guess', 'already-exists');
+        }
+        const score = cipherScore(secret.code, guess);
+        const attempt = history.length + 1;
+        history.push({ guess, exact: score.exact, misplaced: score.misplaced });
+        const won = score.exact === 4;
+        ended = won || attempt >= C.maxAttempts;
+        let payout = 0;
+        if (won) {
+          payout = Math.floor(Number(run.bet || 0) * cipherMultiplier(attempt, C));
+          acc.wallet += payout;
+        }
+        if (ended) {
+          delete acc.cipher;
+          if (E.recordPlay(acc, t, 'cipher', playCap(raw))) {
+            if (TK.bump(pl, t, 'play', 1, raw)) setPlayer({ tasks: pl.tasks });
+          }
+        } else {
+          acc.cipher = Object.assign({}, run, { attempts: history });
+        }
+        out = {
+          won, ended, attempt, exact: score.exact, misplaced: score.misplaced,
+          payout, profit: payout - Number(run.bet || 0),
+          answer: ended ? secret.code : null,
+          session: ended ? null : acc.cipher
+        };
+        if (!ended) return [];
+        return [{
+          type: 'game', amount: payout, wallet: acc.wallet, bank: acc.bank.balance, loans: acc.loans,
+          note: won ? '星核解碼・第 ' + attempt + ' 次破解' : '星核解碼・防線鎖死'
+        }];
+      }, cipherMeta(async (tx, extra) => {
+        if (ended) tx.delete(extra.ref);
+      }));
       out.wallet = r.account.wallet;
       return out;
     },
@@ -440,7 +569,7 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
       const d = req.data || {};
       const snap = await cfgRef().get();
       const cur = gamesCfg(snap.exists ? snap.data() : null);
-      const next = { mine: cur.mine, gate: cur.gate, slot: cur.slot, bj: cur.bj, dice: cur.dice, big2: cur.big2 };
+      const next = { mine: cur.mine, cipher: cur.cipher, gate: cur.gate, slot: cur.slot, bj: cur.bj, dice: cur.dice, big2: cur.big2 };
       const int = (v, lo, hi, name) => { const n = Number(v); if (!Number.isInteger(n) || n < lo || n > hi) throw new AppError(name + '數值不合理', 'bad-config', 'invalid-argument'); return n; };
       if (d.gate) {
         if (d.gate.enabled !== undefined) next.gate.enabled = !!d.gate.enabled;
@@ -453,6 +582,11 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
         const mine = Object.assign({}, next.mine || DEFAULTS.mine);
         if (d.mine.enabled !== undefined) mine.enabled = !!d.mine.enabled;
         next.mine = mine;
+      }
+      if (d.cipher) {
+        const cipher = Object.assign({}, next.cipher || DEFAULTS.cipher);
+        if (d.cipher.enabled !== undefined) cipher.enabled = !!d.cipher.enabled;
+        next.cipher = cipher;
       }
       if (d.slot) {
         if (d.slot.enabled !== undefined) next.slot.enabled = !!d.slot.enabled;
@@ -497,5 +631,6 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
 module.exports = {
   createMini, gateOdds, slotPayout, slotRTP, gamesCfg, SYMBOLS, PAY3, diceOdds, DICE_KEYS, newDeck,
   MINE_OUTCOMES, MINE_REWARDS, mineCanPlay, mineNextValue, mineSpecialRate, mineCanCashout,
-  mineRewardForRoll, applyMineReward
+  mineRewardForRoll, applyMineReward,
+  CIPHER_SYMBOLS, cipherCanPlay, cipherCreateCode, cipherCleanGuess, cipherScore, cipherMultiplier
 };
