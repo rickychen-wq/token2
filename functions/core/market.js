@@ -14,6 +14,9 @@ const MAX_LEVERAGE_MARGIN = 100000;
 const MAX_LEVERAGE_POSITIONS = 3;
 const SHOCK_MIN_PER_DAY = 3;
 const SHOCK_MAX_PER_DAY = 5;
+const FORCED_SHOCKS = [
+  { id: '20260928-1510-bnk-up-3', day: '20260928', slot: 98, symbol: 'BNK', direction: 'up', factor: 3 }
+];
 
 const STOCKS = [
   { symbol: 'TKN', name: 'TOKEN 科技', tag: '核心平台', color: '#62e7ff', price: 128 },
@@ -262,7 +265,7 @@ function buildShockPlan(t, random) {
     const hi = first + Math.floor(width * (i + 1) / count) - 1;
     slots.push({ slot: lo + Math.floor(rnd() * (hi - lo + 1)), symbol: symbols[i], appliedAt: 0 });
   }
-  return { day: shockDayKey(t), count, slots, createdAt: Number(t) };
+  return { day: shockDayKey(t), count, slots, forcedApplied: {}, createdAt: Number(t) };
 }
 
 function normalizeShockPlan(raw, t, random) {
@@ -277,16 +280,17 @@ function normalizeShockPlan(raw, t, random) {
     direction: row && row.direction === 'down' ? 'down' : (row && row.direction === 'up' ? 'up' : null),
     factor: [2, 3].includes(Number(row && row.factor)) ? Number(row.factor) : null
   })).sort((a, b) => a.slot - b.slot);
-  return { day, count: slots.length, slots, createdAt: Number(raw.createdAt) || Number(t) };
+  const forcedApplied = raw.forcedApplied && typeof raw.forcedApplied === 'object' ? raw.forcedApplied : {};
+  return { day, count: slots.length, slots, forcedApplied, createdAt: Number(raw.createdAt) || Number(t) };
 }
 
-function applyMarketShock(state, t, random, targetSymbol) {
+function applyMarketShock(state, t, random, targetSymbol, forcedDirection, forcedFactor) {
   const rnd = typeof random === 'function' ? random : Math.random;
   const def = STOCKS.find((stock) => stock.symbol === targetSymbol)
     || STOCKS[Math.min(STOCKS.length - 1, Math.floor(rnd() * STOCKS.length))];
   const stock = state.stocks[def.symbol];
-  const direction = rnd() < 0.5 ? 'up' : 'down';
-  const factor = rnd() < 0.5 ? 2 : 3;
+  const direction = forcedDirection === 'up' || forcedDirection === 'down' ? forcedDirection : (rnd() < 0.5 ? 'up' : 'down');
+  const factor = [2, 3].includes(Number(forcedFactor)) ? Number(forcedFactor) : (rnd() < 0.5 ? 2 : 3);
   const old = stock.price;
   const price = Math.max(5, Math.round(direction === 'up' ? old * factor : old / factor));
   const percent = round2((price - old) / old * 100);
@@ -754,8 +758,12 @@ function createMarket({ db, now, requireSession, requireAdmin, mutate }) {
       result = tickState(snap.exists ? snap.data() : null, at);
       const plan = normalizeShockPlan(shockSnap.exists ? shockSnap.data() : null, at);
       const currentSlot = shockSlot(at);
-      const due = plan.slots.find((row) => !row.appliedAt && row.slot <= currentSlot);
-      if (due) {
+      const forced = FORCED_SHOCKS.find((row) => row.day === plan.day && row.slot <= currentSlot && !plan.forcedApplied[row.id]);
+      const due = forced ? null : plan.slots.find((row) => !row.appliedAt && row.slot <= currentSlot);
+      if (forced) {
+        shock = applyMarketShock(result, at, null, forced.symbol, forced.direction, forced.factor);
+        plan.forcedApplied[forced.id] = at;
+      } else if (due) {
         shock = applyMarketShock(result, at, null, due.symbol);
         due.appliedAt = at;
         due.symbol = shock.symbol;
@@ -778,5 +786,5 @@ module.exports = {
   isMarketOpen, tickState, shockDayKey, shockSlot, buildShockPlan, normalizeShockPlan, applyMarketShock,
   makeIntel, makeIntelBatch, intelSlotKey, STOCKS,
   TOTAL_SHARES, PLAYER_SHARE_RATE, HISTORY_LIMIT, MAINTENANCE_MARGIN_RATE,
-  MAX_LEVERAGE_MARGIN, MAX_LEVERAGE_POSITIONS, SHOCK_MIN_PER_DAY, SHOCK_MAX_PER_DAY
+  MAX_LEVERAGE_MARGIN, MAX_LEVERAGE_POSITIONS, SHOCK_MIN_PER_DAY, SHOCK_MAX_PER_DAY, FORCED_SHOCKS
 };

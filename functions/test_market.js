@@ -121,4 +121,12 @@ for (const leverage of [2, 3, 5]) {
   assert.ok(positionEquity(short, downState) > short.margin, leverage + '× 做空遇到暴跌必須獲利');
 }
 
+const forcedState = freshState(t);
+forcedState.stocks.BNK.price = 100;
+const forcedShock = applyMarketShock(forcedState, t, () => { throw new Error('強制事件不應使用隨機方向或倍率'); }, 'BNK', 'up', 3);
+assert.strictEqual(forcedShock.symbol, 'BNK');
+assert.strictEqual(forcedShock.direction, 'up');
+assert.strictEqual(forcedShock.factor, 3);
+assert.strictEqual(forcedShock.price, 300);
+
 console.log('market tests passed');
