@@ -9,6 +9,9 @@ const E = require('./econ');
 const TOTAL_SHARES = 100000;
 const PLAYER_SHARE_RATE = 0.3;
 const HISTORY_LIMIT = 750;
+const MAINTENANCE_MARGIN_RATE = 0.6;
+const MAX_LEVERAGE_MARGIN = 25000;
+const MAX_LEVERAGE_POSITIONS = 2;
 
 const STOCKS = [
   { symbol: 'TKN', name: 'TOKEN 科技', tag: '核心平台', color: '#62e7ff', price: 128 },
@@ -127,16 +130,32 @@ function normalizePortfolio(acc) {
   return acc.market;
 }
 
-function positionEquity(position, state) {
+function positionRawEquity(position, state) {
   const stock = state.stocks[position.symbol];
   if (!stock || !position.entryPrice) return 0;
   const change = (stock.price - position.entryPrice) / position.entryPrice;
   const signed = position.side === 'long' ? change : -change;
-  return Math.max(0, Math.round(position.margin + position.notional * signed));
+  return Math.round(position.margin + position.notional * signed);
+}
+
+function positionEquity(position, state) {
+  return Math.max(0, positionRawEquity(position, state));
+}
+
+function maintenanceMargin(position) {
+  return Math.max(1, Math.ceil(position.margin * MAINTENANCE_MARGIN_RATE));
+}
+
+function shouldLiquidate(position, state) {
+  return positionRawEquity(position, state) <= maintenanceMargin(position);
+}
+
+function leverageCloseFee(position, state) {
+  return Math.max(1, Math.ceil(position.notional * state.feeRate));
 }
 
 function liquidationPrice(position) {
-  const move = 1 / position.leverage;
+  const move = (1 - MAINTENANCE_MARGIN_RATE) / position.leverage;
   return Math.max(1, Math.round(position.entryPrice * (position.side === 'long' ? 1 - move : 1 + move)));
 }
 
@@ -161,7 +180,7 @@ function settlePortfolio(acc, state, cfg, t) {
     E.refresh(acc, cfg, t);
     return { changed: false, credited: 0, stockValue: 0, leverageEquity: 0, pnl: 0, repayEntries: [] };
   }
-  let stockValue = 0, stockCost = 0, leverageEquity = 0, leverageMargin = 0;
+  let stockValue = 0, stockCost = 0, leverageEquity = 0, leverageMargin = 0, leverageFees = 0;
   holdingSymbols.forEach((symbol) => {
     const holding = market.holdings[symbol], stock = state.stocks[symbol];
     if (!stock) return;
@@ -170,20 +189,25 @@ function settlePortfolio(acc, state, cfg, t) {
   });
   positionSymbols.forEach((symbol) => {
     const position = market.positions[symbol];
-    leverageEquity += positionEquity(position, state);
     leverageMargin += position.margin;
+    if (shouldLiquidate(position, state)) return;
+    const grossEquity = positionEquity(position, state);
+    const fee = Math.min(grossEquity, leverageCloseFee(position, state));
+    leverageFees += fee;
+    leverageEquity += Math.max(0, grossEquity - fee);
   });
   const credited = Math.max(0, Math.round(stockValue + leverageEquity));
   const pnl = Math.round((stockValue - stockCost) + (leverageEquity - leverageMargin));
   acc.wallet += credited;
   market.realized += pnl;
+  market.fees += leverageFees;
   market.holdings = {};
   market.positions = {};
   market.value = 0;
   const closeWallet = acc.wallet;
   const repayEntries = E.autoRepay(acc, cfg, t);
   E.refresh(acc, cfg, t);
-  return { changed: true, credited, stockValue, leverageEquity, pnl, closeWallet, repayEntries };
+  return { changed: true, credited, stockValue, leverageEquity, leverageFees, pnl, closeWallet, repayEntries };
 }
 
 function tickState(raw, t, random) {
@@ -261,7 +285,7 @@ function makeIntelBatch(state, t, random) {
   return symbols.map((symbol, index) => makeIntel(state, t, rnd, index, symbol));
 }
 
-function createMarket({ db, now, requireSession, requireAdmin, mutate, FieldValue }) {
+function createMarket({ db, now, requireSession, requireAdmin, mutate }) {
   const ref = () => db.collection('market').doc('main');
   const signalsRef = () => db.collection('marketAdmin').doc('signals');
 
@@ -334,20 +358,21 @@ function createMarket({ db, now, requireSession, requireAdmin, mutate, FieldValu
       const liquidated = [];
       Object.keys(market.positions).forEach((symbol) => {
         const position = market.positions[symbol];
-        if (positionEquity(position, state) > 0) return;
+        if (!shouldLiquidate(position, state)) return;
+        const triggerEquity = positionEquity(position, state);
         market.realized -= position.margin;
-        liquidated.push(position);
+        liquidated.push({ position, triggerEquity });
         delete market.positions[symbol];
       });
       market.value = portfolioValue(market, state);
       E.refresh(acc, cfg, t);
       batch.update(doc.ref, { market, net: acc.net, peakNet: acc.peakNet, updatedAt: t });
       pending++; count++;
-      liquidated.forEach((position) => {
+      liquidated.forEach(({ position, triggerEquity }) => {
         batch.set(doc.ref.collection('ledger').doc(), {
           type: 'market_liquidation', amount: -position.margin,
           wallet: acc.wallet, bank: acc.bank.balance, loans: acc.loans,
-          at: t, by: 'system', note: position.symbol + ' ' + position.leverage + '× ' + (position.side === 'long' ? '做多' : '做空') + ' 已爆倉'
+          at: t, by: 'system', note: position.symbol + ' ' + position.leverage + '× ' + (position.side === 'long' ? '做多' : '做空') + ' 已爆倉；觸發權益 ' + triggerEquity + '，整筆保證金歸零'
         });
         pending++;
       });
@@ -367,8 +392,21 @@ function createMarket({ db, now, requireSession, requireAdmin, mutate, FieldValu
     const marketState = await getState();
     const result = await mutate(session.pid, (acc) => {
       const market = normalizePortfolio(acc);
+      const entries = [];
+      Object.keys(market.positions).forEach((symbol) => {
+        const position = market.positions[symbol];
+        if (!shouldLiquidate(position, marketState)) return;
+        const triggerEquity = positionEquity(position, marketState);
+        market.realized -= position.margin;
+        delete market.positions[symbol];
+        entries.push({
+          type: 'market_liquidation', amount: -position.margin,
+          wallet: acc.wallet, bank: acc.bank.balance, loans: acc.loans,
+          note: symbol + ' ' + position.leverage + '× 已爆倉；觸發權益 ' + triggerEquity + '，整筆保證金歸零'
+        });
+      });
       market.value = portfolioValue(market, marketState);
-      return [];
+      return entries;
     });
     return { market: marketState, marketOpen: isMarketOpen(now()), account: result.account };
   }
@@ -438,30 +476,29 @@ function createMarket({ db, now, requireSession, requireAdmin, mutate, FieldValu
     if (!STOCKS.some((s) => s.symbol === symbol)) throw new AppError('找不到這支股票', 'bad-stock', 'invalid-argument');
     if (side !== 'long' && side !== 'short') throw new AppError('請選擇做多或做空', 'bad-side', 'invalid-argument');
     if (![2, 3, 5].includes(leverage)) throw new AppError('槓桿只開放 2×、3×、5×', 'bad-leverage', 'invalid-argument');
-    if (!Number.isFinite(margin) || margin < 100 || margin > 100000) throw new AppError('保證金要在 100 到 100,000 之間', 'bad-margin', 'invalid-argument');
-    const marketState = await getState();
-    const stock = marketState.stocks[symbol];
-    const notional = margin * leverage;
-    const fee = Math.max(1, Math.ceil(notional * marketState.feeRate));
-    const result = await mutate(session.pid, (acc, cfg, t) => {
+    if (!Number.isFinite(margin) || margin < 100 || margin > MAX_LEVERAGE_MARGIN) throw new AppError('保證金要在 100 到 ' + MAX_LEVERAGE_MARGIN.toLocaleString('en-US') + ' 之間', 'bad-margin', 'invalid-argument');
+    let opened = null;
+    const result = await mutate(session.pid, (acc, cfg, t, rawCfg, pl, setPlayer, extra) => {
+      const marketState = extra.market;
+      const stock = marketState.stocks[symbol];
+      const notional = margin * leverage;
+      const fee = Math.max(1, Math.ceil(notional * marketState.feeRate));
       const market = normalizePortfolio(acc);
       if (market.positions[symbol]) throw new AppError('這支股票已經有槓桿倉位，請先平倉', 'position-exists');
-      if (Object.keys(market.positions).length >= 3) throw new AppError('同時最多持有 3 個槓桿倉位', 'position-limit');
+      if (Object.keys(market.positions).length >= MAX_LEVERAGE_POSITIONS) throw new AppError('同時最多持有 ' + MAX_LEVERAGE_POSITIONS + ' 個槓桿倉位', 'position-limit');
       if (acc.wallet < margin + fee) throw new AppError('錢包不足以支付保證金和手續費', 'no-money');
       acc.wallet -= margin + fee;
       market.fees += fee;
       market.positions[symbol] = { symbol, side, leverage, margin, notional, entryPrice: stock.price, openedAt: t };
       market.value = portfolioValue(market, marketState);
+      opened = { notional, fee };
       return [{
         type: 'market_leverage_open', amount: -(margin + fee),
         wallet: acc.wallet, bank: acc.bank.balance, loans: acc.loans,
         note: symbol + ' ' + leverage + '× ' + (side === 'long' ? '做多' : '做空') + ' @ ' + stock.price
       }];
-    });
-    const shares = Math.max(1, Math.round(notional / stock.price));
-    const field = side === 'long' ? 'stocks.' + symbol + '.buyVolume' : 'stocks.' + symbol + '.sellVolume';
-    await ref().update({ [field]: FieldValue.increment(shares) }).catch(() => {});
-    return { ok: true, symbol, side, leverage, margin, notional, fee, liquidationPrice: liquidationPrice(result.account.market.positions[symbol]), market: marketState, account: result.account };
+    }, marketTxnMeta());
+    return { ok: true, symbol, side, leverage, margin, notional: opened.notional, fee: opened.fee, liquidationPrice: liquidationPrice(result.account.market.positions[symbol]), market: result.extra.market, account: result.account };
   }
 
   async function leverageClose(req) {
@@ -469,26 +506,32 @@ function createMarket({ db, now, requireSession, requireAdmin, mutate, FieldValu
     if (!isMarketOpen(now())) throw new AppError('目前已收盤，交易時間是週一到週五 07:00–17:30（17:00 後為盤後交易）', 'market-closed');
     const symbol = String((req.data && req.data.symbol) || '').toUpperCase();
     if (!STOCKS.some((s) => s.symbol === symbol)) throw new AppError('找不到這支股票', 'bad-stock', 'invalid-argument');
-    const marketState = await getState();
     let closed = null;
-    const result = await mutate(session.pid, (acc) => {
+    const result = await mutate(session.pid, (acc, cfg, t, rawCfg, pl, setPlayer, extra) => {
+      const marketState = extra.market;
       const market = normalizePortfolio(acc);
       const position = market.positions[symbol];
       if (!position) throw new AppError('找不到這個槓桿倉位', 'no-position');
-      const equity = positionEquity(position, marketState);
-      const pnl = equity - position.margin;
+      const grossEquity = positionEquity(position, marketState);
+      const liquidated = shouldLiquidate(position, marketState);
+      const fee = liquidated ? 0 : Math.min(grossEquity, leverageCloseFee(position, marketState));
+      const equity = liquidated ? 0 : Math.max(0, grossEquity - fee);
+      const pnl = liquidated ? -position.margin : equity - position.margin;
       acc.wallet += equity;
       market.realized += pnl;
+      market.fees += fee;
       delete market.positions[symbol];
       market.value = portfolioValue(market, marketState);
-      closed = { equity, pnl, position };
+      closed = { equity, grossEquity, fee, pnl, liquidated, position };
       return [{
-        type: equity > 0 ? 'market_leverage_close' : 'market_liquidation', amount: equity,
+        type: liquidated ? 'market_liquidation' : 'market_leverage_close', amount: liquidated ? -position.margin : equity,
         wallet: acc.wallet, bank: acc.bank.balance, loans: acc.loans,
-        note: symbol + ' ' + position.leverage + '× 平倉，損益 ' + (pnl >= 0 ? '+' : '') + pnl
+        note: liquidated
+          ? symbol + ' ' + position.leverage + '× 已爆倉；觸發權益 ' + grossEquity + '，整筆保證金歸零'
+          : symbol + ' ' + position.leverage + '× 平倉，手續費 ' + fee + '，損益 ' + (pnl >= 0 ? '+' : '') + pnl
       }];
-    });
-    return { ok: true, symbol, equity: closed.equity, pnl: closed.pnl, market: marketState, account: result.account };
+    }, marketTxnMeta());
+    return { ok: true, symbol, equity: closed.equity, grossEquity: closed.grossEquity, fee: closed.fee, pnl: closed.pnl, liquidated: closed.liquidated, market: result.extra.market, account: result.account };
   }
 
   async function adminMove(req) {
@@ -580,7 +623,7 @@ function createMarket({ db, now, requireSession, requireAdmin, mutate, FieldValu
           type: 'market_weekly_close', amount: settled.credited,
           wallet: settled.closeWallet, bank: acc.bank.balance, loans: acc.loans,
           at, by: 'system',
-          note: '星期五收盤自動結算：股票 ' + settled.stockValue + '、槓桿權益 ' + settled.leverageEquity + '、損益 ' + (settled.pnl >= 0 ? '+' : '') + settled.pnl
+          note: '星期五收盤自動結算：股票 ' + settled.stockValue + '、槓桿淨權益 ' + settled.leverageEquity + '、槓桿平倉費 ' + settled.leverageFees + '、損益 ' + (settled.pnl >= 0 ? '+' : '') + settled.pnl
         });
         settled.repayEntries.forEach((entry) => {
           tx.set(accountDoc.ref.collection('ledger').doc(), Object.assign({}, entry, { at, by: 'system', note: '收盤結算後自動還款' }));
@@ -644,4 +687,10 @@ function createMarket({ db, now, requireSession, requireAdmin, mutate, FieldValu
   return { state, trade, leverageOpen, leverageClose, adminMove, adminSignals, publishIntel, tick, closeWeek, syncSupply, getState, refreshPortfolios };
 }
 
-module.exports = { createMarket, freshState, normalizeState, normalizePortfolio, portfolioValue, settlePortfolio, positionEquity, liquidationPrice, isMarketOpen, tickState, makeIntel, makeIntelBatch, intelSlotKey, STOCKS, TOTAL_SHARES, PLAYER_SHARE_RATE, HISTORY_LIMIT };
+module.exports = {
+  createMarket, freshState, normalizeState, normalizePortfolio, portfolioValue, settlePortfolio,
+  positionRawEquity, positionEquity, maintenanceMargin, shouldLiquidate, leverageCloseFee, liquidationPrice,
+  isMarketOpen, tickState, makeIntel, makeIntelBatch, intelSlotKey, STOCKS,
+  TOTAL_SHARES, PLAYER_SHARE_RATE, HISTORY_LIMIT, MAINTENANCE_MARGIN_RATE,
+  MAX_LEVERAGE_MARGIN, MAX_LEVERAGE_POSITIONS
+};

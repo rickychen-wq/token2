@@ -43,7 +43,7 @@ const FB = createFeedback({ db, now, requireSession: A.requireSession, requireAd
 const TI = createTitles({ db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin });
 const MK = createMarket({
   db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin,
-  mutate: EC.mutate, FieldValue: admin.firestore.FieldValue
+  mutate: EC.mutate
 });
 
 /* 把自訂錯誤轉成前端讀得到的 HttpsError，其他錯誤不外洩細節 */

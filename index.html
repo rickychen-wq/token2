@@ -5420,7 +5420,8 @@ function marketPositionEquity(position, state) {
 }
 
 function marketLiquidationPrice(position) {
-  return Math.max(1, Math.round(position.entryPrice * (position.side === 'long' ? 1 - 1 / position.leverage : 1 + 1 / position.leverage)));
+  var move = .4 / position.leverage;
+  return Math.max(1, Math.round(position.entryPrice * (position.side === 'long' ? 1 - move : 1 + move)));
 }
 
 function marketSpark(history, color) {
@@ -5515,7 +5516,7 @@ function renderMarket(force) {
   h += '</div>';
 
   var positionSymbols = Object.keys(positions);
-  h += '<div class="market-section"><div class="market-section-title"><h2>槓桿倉位</h2><span>' + positionSymbols.length + ' / 3</span></div>';
+  h += '<div class="market-section"><div class="market-section-title"><h2>槓桿倉位</h2><span>' + positionSymbols.length + ' / 2</span></div>';
   if (!positionSymbols.length) h += '<div class="empty">沒有槓桿倉位。槓桿會放大獲利，也會放大虧損。</div>';
   positionSymbols.forEach(function (symbol) {
     var position = positions[symbol], stock = state.stocks[symbol];
@@ -6259,10 +6260,10 @@ function sheetMarketHelp() {
       '<div class="market-rule"><b>情報網</b><p>每天 08、10、12、14、16 點各發布 5 則特殊公司事件。一般價格波動不會列入情報；首頁顯示最新一批，另外保留最近 20 則。</p></div>' +
       '<div class="market-rule"><b>一般股票</b><p>買進後會成為持股，賣出時依目前價格結算。每筆成交收取 1% 手續費；平日收盤後持股會保留到下一個交易日。</p></div>' +
       '<div class="market-rule"><b>系統持股 70%</b><p>每支股票固定 100,000 股，全部玩家合計最多持有 30,000 股；系統永遠保留至少 70%。</p></div>' +
-      '<div class="market-rule"><b>星期五週結算</b><p>星期五 17:30 會按最後價格自動賣出全部一般持股，並平掉所有槓桿，權益回到錢包後再參與本週結算。股價與歷史走勢不重置，下週接著走。</p></div>' +
+      '<div class="market-rule"><b>星期五週結算</b><p>星期五 17:30 會按最後價格自動賣出全部一般持股，並平掉所有槓桿；槓桿會先判斷是否爆倉，再扣平倉手續費，剩餘權益才回到錢包。本週結算後股價與歷史走勢不重置。</p></div>' +
       '<div class="market-rule"><b>槓桿與做多／做空</b><p>做多是押上漲，做空是押下跌。2×、3×、5× 會把漲跌損益放大相同倍數，只需要投入保證金。</p></div>' +
-      '<div class="market-rule"><b>爆倉</b><p>當反向波動吃完全部保證金，倉位會自動清算，保證金歸零。5× 大約反向 20% 就會爆倉，風險最高。</p></div>' +
-    '</div><div class="leverage-warning">槓桿不會讓錢包變成負數，但可能一次損失整筆保證金。同時最多持有 3 個槓桿倉位，同一支股票只能有 1 個。</div>' +
+      '<div class="market-rule"><b>爆倉</b><p>權益降到原保證金的 60% 時立即爆倉，整筆保證金歸零，不退回殘餘權益。2× 約反向 20%、3× 約 13.3%、5× 約 8% 就會爆倉。</p></div>' +
+    '</div><div class="leverage-warning">槓桿不會讓錢包變成負數，但爆倉會確實吃掉整筆保證金。開倉、平倉各收一次合約手續費；單筆保證金上限 25,000，同時最多 2 個倉位，同一支股票只能有 1 個。</div>' +
     '<div class="acts"><button class="btn" type="button" data-close>知道了</button></div>', function (sh) { sh.querySelector('[data-close]').onclick = closeSheet; });
 }
 
@@ -6283,13 +6284,13 @@ function sheetLeverageOpen(symbol, side) {
   var state = MKUI.state, stock = state && state.stocks && state.stocks[symbol];
   if (!stock || !S.acc) { toast('行情還沒準備好', 'bad'); return; }
   var fields = '<div class="fld"><label for="mlLev">槓桿倍數</label><select class="sel" id="mlLev"><option value="2">2×</option><option value="3">3×</option><option value="5">5×</option></select></div>' +
-    '<div class="fld"><label for="mlMargin">投入保證金</label><input id="mlMargin" inputmode="numeric" autocomplete="off" value="500" placeholder="100 - 100000"></div>' +
+    '<div class="fld"><label for="mlMargin">投入保證金</label><input id="mlMargin" inputmode="numeric" autocomplete="off" value="500" placeholder="100 - 25000"></div>' +
     '<div class="quick"><button type="button" data-lmargin="500">500</button><button type="button" data-lmargin="1000">1,000</button><button type="button" data-lmargin="5000">5,000</button></div>' +
     '<div class="market-preview"><div><span>合約價值</span><b id="mlNotional">—</b></div><div><span>預估爆倉價</span><b id="mlLiquid">—</b></div><div><span>手續費</span><b id="mlFee">—</b></div><div><span>錢包共扣</span><b id="mlTotal">—</b></div></div>' +
-    '<div class="leverage-warning">' + (side === 'long' ? '做多遇到下跌會虧損。' : '做空遇到上漲會虧損。') + '權益歸零時會立即爆倉。</div>';
+    '<div class="leverage-warning">' + (side === 'long' ? '做多遇到下跌會虧損。' : '做空遇到上漲會虧損。') + '權益降到保證金 60% 時立即爆倉，整筆保證金歸零；平倉另收一次合約手續費。</div>';
   formSheet((side === 'long' ? '做多 ' : '做空 ') + stock.name, '目前價格 ' + fmt(stock.price) + '・錢包 ' + fmt(S.acc.wallet), fields, '確認開倉', side === 'short' ? 'danger' : '', function () {
     var leverage = parseInt($('mlLev').value, 10), margin = parseInt($('mlMargin').value, 10);
-    if (!(margin >= 100 && margin <= 100000)) { toast('保證金要在 100 到 100,000 之間', 'bad'); return null; }
+    if (!(margin >= 100 && margin <= 25000)) { toast('保證金要在 100 到 25,000 之間', 'bad'); return null; }
     return call('marketLeverageOpen', { symbol: symbol, side: side, leverage: leverage, margin: margin }).then(function (r) {
       if (r.account) S.acc = r.account;
       if (r.market) MKUI.state = r.market;
@@ -6300,7 +6301,7 @@ function sheetLeverageOpen(symbol, side) {
   function preview() {
     var leverage = parseInt($('mlLev').value, 10) || 2, margin = Math.max(0, parseInt($('mlMargin').value, 10) || 0);
     var notional = leverage * margin, fee = margin ? Math.max(1, Math.ceil(notional * (state.feeRate || .01))) : 0;
-    var liquid = Math.max(1, Math.round(stock.price * (side === 'long' ? 1 - 1 / leverage : 1 + 1 / leverage)));
+    var liquid = Math.max(1, Math.round(stock.price * (side === 'long' ? 1 - .4 / leverage : 1 + .4 / leverage)));
     $('mlNotional').textContent = fmt(notional); $('mlLiquid').textContent = fmt(liquid); $('mlFee').textContent = fmt(fee); $('mlTotal').textContent = fmt(margin + fee);
   }
   $('mlLev').onchange = preview; $('mlMargin').oninput = preview;
@@ -6313,13 +6314,16 @@ function sheetLeverageClose(symbol) {
   var market = S.acc && S.acc.market, position = market && market.positions && market.positions[symbol];
   var stock = MKUI.state && MKUI.state.stocks && MKUI.state.stocks[symbol];
   if (!position || !stock) { toast('找不到這個倉位', 'bad'); return; }
-  var equity = marketPositionEquity(position, MKUI.state), pnl = equity - position.margin;
-  formSheet('平倉 ' + stock.name + '？', position.leverage + '× ' + (position.side === 'long' ? '做多' : '做空') + '・目前權益 ' + fmt(equity) + '・損益 ' + (pnl >= 0 ? '+' : '') + fmt(pnl) + '。平倉後權益會回到錢包。', '', '確認平倉', pnl < 0 ? 'danger' : '', function () {
+  var grossEquity = marketPositionEquity(position, MKUI.state);
+  var closeFee = Math.min(grossEquity, Math.max(1, Math.ceil(position.notional * ((MKUI.state && MKUI.state.feeRate) || .01))));
+  var liquidated = grossEquity <= Math.ceil(position.margin * .6);
+  var equity = liquidated ? 0 : Math.max(0, grossEquity - closeFee), pnl = liquidated ? -position.margin : equity - position.margin;
+  formSheet('平倉 ' + stock.name + '？', position.leverage + '× ' + (position.side === 'long' ? '做多' : '做空') + '・目前權益 ' + fmt(grossEquity) + (liquidated ? '・已達爆倉線，保證金將歸零。' : '・平倉費 ' + fmt(closeFee) + '・預計入帳 ' + fmt(equity) + '・損益 ' + (pnl >= 0 ? '+' : '') + fmt(pnl) + '。'), '', '確認平倉', pnl < 0 ? 'danger' : '', function () {
     return call('marketLeverageClose', { symbol: symbol }).then(function (r) {
       if (r.account) S.acc = r.account;
       if (r.market) MKUI.state = r.market;
       if (S.tab === 'market') renderMarket(true);
-      return '已平倉，損益 ' + (r.pnl >= 0 ? '+' : '') + fmt(r.pnl);
+      return r.liquidated ? '已爆倉，整筆保證金歸零' : '已平倉，扣除手續費 ' + fmt(r.fee || 0) + '，損益 ' + (r.pnl >= 0 ? '+' : '') + fmt(r.pnl);
     });
   });
 }
