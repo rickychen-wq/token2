@@ -5,6 +5,7 @@ const E = require('./core/econ');
 const {
   freshState, positionRawEquity, positionEquity, maintenanceMargin,
   shouldLiquidate, leverageCloseFee, liquidationPrice, settlePortfolio,
+  tickState, buildShockPlan, applyMarketShock,
   MAINTENANCE_MARGIN_RATE, MAX_LEVERAGE_MARGIN, MAX_LEVERAGE_POSITIONS
 } = require('./core/market');
 
@@ -18,8 +19,8 @@ function position(side, leverage) {
 }
 
 assert.strictEqual(MAINTENANCE_MARGIN_RATE, 0.6);
-assert.strictEqual(MAX_LEVERAGE_MARGIN, 25000);
-assert.strictEqual(MAX_LEVERAGE_POSITIONS, 2);
+assert.strictEqual(MAX_LEVERAGE_MARGIN, 100000);
+assert.strictEqual(MAX_LEVERAGE_POSITIONS, 3);
 
 const long5 = position('long', 5);
 assert.strictEqual(maintenanceMargin(long5), 600);
@@ -69,5 +70,55 @@ assert.strictEqual(bustResult.credited, 0);
 assert.strictEqual(bustResult.pnl, -1000);
 assert.strictEqual(busted.wallet, 0);
 assert.deepStrictEqual(busted.market.positions, {});
+
+const threeEventPlan = buildShockPlan(t, () => 0);
+assert.strictEqual(threeEventPlan.count, 3);
+assert.strictEqual(threeEventPlan.slots.length, 3);
+assert.strictEqual(new Set(threeEventPlan.slots.map((row) => row.slot)).size, 3);
+assert.strictEqual(new Set(threeEventPlan.slots.map((row) => row.symbol)).size, 3);
+assert.ok(threeEventPlan.slots.every((row) => row.slot >= 6 && row.slot <= 119));
+const fiveEventPlan = buildShockPlan(t, () => 0.999999);
+assert.strictEqual(fiveEventPlan.count, 5);
+assert.strictEqual(new Set(fiveEventPlan.slots.map((row) => row.slot)).size, 5);
+assert.strictEqual(buildShockPlan(t, () => 0.5).count, 4);
+
+const normalUp = tickState(freshState(t - 300000), t, () => 0.999999);
+const normalDown = tickState(freshState(t - 300000), t, () => 0);
+assert.ok(normalUp.stocks.TKN.price > normalUp.stocks.TKN.previous);
+assert.ok(normalDown.stocks.TKN.price < normalDown.stocks.TKN.previous);
+
+const upState = freshState(t);
+upState.stocks.TKN.price = 100;
+upState.stocks.TKN.history = [{ t: t - 1, p: 100 }];
+const upValues = [0, 0.99];
+const upShock = applyMarketShock(upState, t, () => upValues.shift(), 'TKN');
+assert.strictEqual(upShock.symbol, 'TKN');
+assert.strictEqual(upShock.direction, 'up');
+assert.strictEqual(upShock.factor, 3);
+assert.strictEqual(upShock.price, 300);
+assert.strictEqual(positionEquity(long5, upState), 11000);
+assert.strictEqual(shouldLiquidate(short5, upState), true);
+for (const leverage of [2, 3, 5]) {
+  const long = position('long', leverage), short = position('short', leverage);
+  assert.ok(positionEquity(long, upState) > long.margin, leverage + '× 做多遇到暴漲必須獲利');
+  assert.strictEqual(shouldLiquidate(short, upState), true, leverage + '× 做空遇到暴漲必須爆倉');
+}
+
+const downState = freshState(t);
+downState.stocks.TKN.price = 100;
+downState.stocks.TKN.history = [{ t: t - 1, p: 100 }];
+const downValues = [0.99, 0.99];
+const downShock = applyMarketShock(downState, t, () => downValues.shift(), 'TKN');
+assert.strictEqual(downShock.symbol, 'TKN');
+assert.strictEqual(downShock.direction, 'down');
+assert.strictEqual(downShock.factor, 3);
+assert.strictEqual(downShock.price, 33);
+assert.strictEqual(shouldLiquidate(long5, downState), true);
+assert.ok(positionEquity(short5, downState) > short5.margin);
+for (const leverage of [2, 3, 5]) {
+  const long = position('long', leverage), short = position('short', leverage);
+  assert.strictEqual(shouldLiquidate(long, downState), true, leverage + '× 做多遇到暴跌必須爆倉');
+  assert.ok(positionEquity(short, downState) > short.margin, leverage + '× 做空遇到暴跌必須獲利');
+}
 
 console.log('market tests passed');

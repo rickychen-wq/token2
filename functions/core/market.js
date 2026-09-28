@@ -10,8 +10,10 @@ const TOTAL_SHARES = 100000;
 const PLAYER_SHARE_RATE = 0.3;
 const HISTORY_LIMIT = 750;
 const MAINTENANCE_MARGIN_RATE = 0.6;
-const MAX_LEVERAGE_MARGIN = 25000;
-const MAX_LEVERAGE_POSITIONS = 2;
+const MAX_LEVERAGE_MARGIN = 100000;
+const MAX_LEVERAGE_POSITIONS = 3;
+const SHOCK_MIN_PER_DAY = 3;
+const SHOCK_MAX_PER_DAY = 5;
 
 const STOCKS = [
   { symbol: 'TKN', name: 'TOKEN 科技', tag: '核心平台', color: '#62e7ff', price: 128 },
@@ -217,10 +219,10 @@ function tickState(raw, t, random) {
     const s = state.stocks[symbol];
     const old = s.price;
     const volume = s.buyVolume + s.sellVolume;
-    const pressure = volume ? clamp((s.buyVolume - s.sellVolume) / volume, -1, 1) * 0.025 : 0;
-    const randomMove = (rnd() * 0.06) - 0.03;
+    const pressure = volume ? clamp((s.buyVolume - s.sellVolume) / volume, -1, 1) * 0.035 : 0;
+    const randomMove = (rnd() * 0.1) - 0.05;
     const reversion = clamp((s.base - old) / s.base, -0.4, 0.4) * 0.018;
-    const pct = clamp(randomMove + pressure + reversion, -0.08, 0.08);
+    const pct = clamp(randomMove + pressure + reversion, -0.12, 0.12);
     s.previous = old;
     s.price = Math.max(5, Math.round(old * (1 + pct)));
     s.buyVolume = round2(s.buyVolume * 0.2);
@@ -231,6 +233,77 @@ function tickState(raw, t, random) {
   state.updatedAt = t;
   state.nextAt = t + 5 * 60000;
   return state;
+}
+
+function shockDayKey(t) {
+  const d = new Date(Number(t) + TW_OFFSET);
+  return d.getUTCFullYear() + String(d.getUTCMonth() + 1).padStart(2, '0') + String(d.getUTCDate()).padStart(2, '0');
+}
+
+function shockSlot(t) {
+  const d = new Date(Number(t) + TW_OFFSET);
+  return Math.floor((d.getUTCHours() * 60 + d.getUTCMinutes() - 7 * 60) / 5);
+}
+
+function buildShockPlan(t, random) {
+  const rnd = typeof random === 'function' ? random : Math.random;
+  const count = SHOCK_MIN_PER_DAY + Math.floor(rnd() * (SHOCK_MAX_PER_DAY - SHOCK_MIN_PER_DAY + 1));
+  const first = 6; // 07:30，避免剛開盤就直接撞大事件
+  const last = 119; // 16:55，盤後交易不再生成突發事件
+  const width = last - first + 1;
+  const slots = [];
+  const symbols = STOCKS.map((stock) => stock.symbol);
+  for (let i = symbols.length - 1; i > 0; i--) {
+    const j = Math.min(i, Math.floor(rnd() * (i + 1)));
+    const tmp = symbols[i]; symbols[i] = symbols[j]; symbols[j] = tmp;
+  }
+  for (let i = 0; i < count; i++) {
+    const lo = first + Math.floor(width * i / count);
+    const hi = first + Math.floor(width * (i + 1) / count) - 1;
+    slots.push({ slot: lo + Math.floor(rnd() * (hi - lo + 1)), symbol: symbols[i], appliedAt: 0 });
+  }
+  return { day: shockDayKey(t), count, slots, createdAt: Number(t) };
+}
+
+function normalizeShockPlan(raw, t, random) {
+  const day = shockDayKey(t);
+  if (!raw || raw.day !== day || !Array.isArray(raw.slots) || raw.slots.length < SHOCK_MIN_PER_DAY || raw.slots.length > SHOCK_MAX_PER_DAY) {
+    return buildShockPlan(t, random);
+  }
+  const slots = raw.slots.map((row) => ({
+    slot: clamp(Math.floor(Number(row && row.slot) || 0), 6, 119),
+    appliedAt: Math.max(0, Number(row && row.appliedAt) || 0),
+    symbol: row && row.symbol ? String(row.symbol).slice(0, 5) : null,
+    direction: row && row.direction === 'down' ? 'down' : (row && row.direction === 'up' ? 'up' : null),
+    factor: [2, 3].includes(Number(row && row.factor)) ? Number(row.factor) : null
+  })).sort((a, b) => a.slot - b.slot);
+  return { day, count: slots.length, slots, createdAt: Number(raw.createdAt) || Number(t) };
+}
+
+function applyMarketShock(state, t, random, targetSymbol) {
+  const rnd = typeof random === 'function' ? random : Math.random;
+  const def = STOCKS.find((stock) => stock.symbol === targetSymbol)
+    || STOCKS[Math.min(STOCKS.length - 1, Math.floor(rnd() * STOCKS.length))];
+  const stock = state.stocks[def.symbol];
+  const direction = rnd() < 0.5 ? 'up' : 'down';
+  const factor = rnd() < 0.5 ? 2 : 3;
+  const old = stock.price;
+  const price = Math.max(5, Math.round(direction === 'up' ? old * factor : old / factor));
+  const percent = round2((price - old) / old * 100);
+  stock.previous = old;
+  stock.price = price;
+  const history = stock.history || [];
+  if (history.length && history[history.length - 1].t === t) history[history.length - 1] = { t, p: price };
+  else stock.history = history.concat([{ t, p: price }]).slice(-HISTORY_LIMIT);
+  const news = {
+    t,
+    title: '【突發大事件】' + stock.name + (direction === 'up' ? ' 爆發性上漲' : ' 市場閃崩'),
+    body: stock.name + ' 由 ' + old + ' ' + (direction === 'up' ? '暴漲' : '暴跌') + '至 ' + price + '，單次波動 ' + (percent >= 0 ? '+' : '') + percent + '%。所有槓桿倉位已按新價格重新計算。',
+    kind: 'market', batch: 'shock-' + shockDayKey(t)
+  };
+  state.news = [news].concat(state.news || []).slice(0, 150);
+  state.updatedAt = t;
+  return { symbol: stock.symbol, direction, factor, oldPrice: old, price, percent, news };
 }
 
 const INTEL_EVENTS = [
@@ -288,6 +361,7 @@ function makeIntelBatch(state, t, random) {
 function createMarket({ db, now, requireSession, requireAdmin, mutate }) {
   const ref = () => db.collection('market').doc('main');
   const signalsRef = () => db.collection('marketAdmin').doc('signals');
+  const shocksRef = () => db.collection('marketAdmin').doc('shockSchedule');
 
   function marketTxnMeta() {
     return {
@@ -674,14 +748,25 @@ function createMarket({ db, now, requireSession, requireAdmin, mutate }) {
   async function tick(t) {
     const at = Number(t) || now();
     if (!isMarketOpen(at)) return { ok: true, skipped: true, reason: 'market-closed', updatedAt: at };
-    let result;
+    let result, shock = null;
     await db.runTransaction(async (tx) => {
-      const snap = await tx.get(ref());
+      const [snap, shockSnap] = await Promise.all([tx.get(ref()), tx.get(shocksRef())]);
       result = tickState(snap.exists ? snap.data() : null, at);
+      const plan = normalizeShockPlan(shockSnap.exists ? shockSnap.data() : null, at);
+      const currentSlot = shockSlot(at);
+      const due = plan.slots.find((row) => !row.appliedAt && row.slot <= currentSlot);
+      if (due) {
+        shock = applyMarketShock(result, at, null, due.symbol);
+        due.appliedAt = at;
+        due.symbol = shock.symbol;
+        due.direction = shock.direction;
+        due.factor = shock.factor;
+      }
       tx.set(ref(), result);
+      tx.set(shocksRef(), plan);
     });
     const refreshed = await refreshPortfolios(result);
-    return { ok: true, refreshed, updatedAt: result.updatedAt };
+    return { ok: true, refreshed, shock, updatedAt: result.updatedAt };
   }
 
   return { state, trade, leverageOpen, leverageClose, adminMove, adminSignals, publishIntel, tick, closeWeek, syncSupply, getState, refreshPortfolios };
@@ -690,7 +775,8 @@ function createMarket({ db, now, requireSession, requireAdmin, mutate }) {
 module.exports = {
   createMarket, freshState, normalizeState, normalizePortfolio, portfolioValue, settlePortfolio,
   positionRawEquity, positionEquity, maintenanceMargin, shouldLiquidate, leverageCloseFee, liquidationPrice,
-  isMarketOpen, tickState, makeIntel, makeIntelBatch, intelSlotKey, STOCKS,
+  isMarketOpen, tickState, shockDayKey, shockSlot, buildShockPlan, normalizeShockPlan, applyMarketShock,
+  makeIntel, makeIntelBatch, intelSlotKey, STOCKS,
   TOTAL_SHARES, PLAYER_SHARE_RATE, HISTORY_LIMIT, MAINTENANCE_MARGIN_RATE,
-  MAX_LEVERAGE_MARGIN, MAX_LEVERAGE_POSITIONS
+  MAX_LEVERAGE_MARGIN, MAX_LEVERAGE_POSITIONS, SHOCK_MIN_PER_DAY, SHOCK_MAX_PER_DAY
 };
