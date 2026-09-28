@@ -1063,10 +1063,30 @@ button.game:active{transform:scale(.99)}
 .market-preview{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 2px;padding:12px;border-radius:12px;background:rgba(63,199,255,.06);border:1px solid var(--edge-soft)}.market-preview span{font-size:10px;color:var(--faint)}.market-preview b{display:block;margin-top:3px;font:800 16px var(--ui)}.market-admin-list{margin:8px 0 14px}.market-admin-list .row b{font-family:var(--ui)}
 .intel-tag{display:inline-block;margin-right:6px;padding:2px 5px;border-radius:6px;background:rgba(178,140,255,.14);border:1px solid rgba(178,140,255,.3);color:#c9aaff;font:800 8px var(--ui);letter-spacing:.08em;vertical-align:1px}.intel-tag.shock{background:rgba(255,82,116,.14);border-color:rgba(255,82,116,.38);color:#ff9db0;box-shadow:0 0 12px rgba(255,82,116,.12)}.intel-panel{margin:10px 0 16px;padding:13px;border-radius:13px;background:linear-gradient(145deg,rgba(80,52,139,.19),rgba(5,13,26,.75));border:1px solid rgba(178,140,255,.25)}.intel-panel-head{display:flex;justify-content:space-between;gap:10px;margin-bottom:9px}.intel-panel-head b{font:800 13px var(--ui);color:#d3baff}.intel-panel-head span{font-size:9px;color:var(--faint)}.intel-signal{display:block;width:100%;margin-top:7px;padding:11px 12px;border-radius:10px;text-align:left;color:var(--fg);background:rgba(4,10,23,.68);border:1px solid var(--edge-soft)}.intel-signal.on{border-color:#b28cff;box-shadow:0 0 0 2px rgba(178,140,255,.12)}.intel-signal b{display:block;font-size:11px;line-height:1.45}.intel-signal small{display:block;margin-top:5px;color:var(--dim);font-size:10px;line-height:1.45}.intel-signal em{display:inline-block;margin-top:7px;color:var(--gold);font:800 10px var(--ui);font-style:normal}.intel-empty{padding:12px 4px;text-align:center;color:var(--faint);font-size:11px}
 .market-live.after{color:var(--gold);background:rgba(255,211,109,.1);border-color:rgba(255,211,109,.3)}.market-live.after::before{background:var(--gold);box-shadow:0 0 8px var(--gold)}.market-live.closed{color:#ff9aad;background:rgba(255,130,153,.09);border-color:rgba(255,130,153,.25)}.market-live.closed::before{background:#ff8299;box-shadow:none;animation:none}.market-help{position:absolute!important;right:16px;top:16px;z-index:3!important;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:#b9efff;background:rgba(5,14,31,.58);border:1px solid rgba(120,226,255,.35);font:800 13px var(--ui)}
+.intel-tag.hint{background:rgba(255,211,122,.12);border-color:rgba(255,211,122,.38);color:var(--gold)}.intel-tag.rumor{background:rgba(170,180,200,.1);border-color:rgba(170,180,200,.32);color:#c9d0de}.intel-tag.good,.intel-tag.up{background:rgba(75,227,143,.1);border-color:rgba(75,227,143,.32);color:var(--grn)}.intel-tag.bad,.intel-tag.down{background:rgba(255,82,116,.1);border-color:rgba(255,82,116,.32);color:#ff9db0}.intel-tag.sym{background:rgba(98,231,255,.08);border-color:rgba(98,231,255,.3);color:#8cefff}.intel-tag.tier-small{color:var(--faint);border-color:var(--edge-soft);background:transparent}.intel-tag.tier-mid{color:#d3baff}.intel-tag.tier-major{background:rgba(255,211,122,.14);border-color:rgba(255,211,122,.45);color:var(--gold);box-shadow:0 0 10px rgba(255,211,122,.15)}
+.news-react{display:block;margin-top:6px;font:800 10px var(--ui);font-style:normal;letter-spacing:.02em}.news-react.flat{color:var(--faint)}.market-chart-wrap{position:relative}.chart-mark{position:absolute;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;border:2px solid #0a1424;pointer-events:none;z-index:1}.chart-mark.up{background:var(--grn);box-shadow:0 0 8px var(--grn)}.chart-mark.down{background:#ff8299;box-shadow:0 0 8px #ff8299}.chart-mark.event{width:13px;height:13px;margin:-6.5px 0 0 -6.5px;background:var(--gold);box-shadow:0 0 14px var(--gold)}.chart-legend{display:flex;flex-wrap:wrap;gap:12px;margin:2px 0 8px;color:var(--faint);font-size:10px}.chart-legend i{display:inline-block;width:7px;height:7px;margin-right:5px;border-radius:50%;vertical-align:0}.chart-legend i.up{background:var(--grn)}.chart-legend i.down{background:#ff8299}.chart-legend i.event{background:var(--gold)}.limit-tag{display:inline-block;margin-left:7px;padding:2px 6px;border-radius:6px;font:900 9px var(--ui);letter-spacing:.06em;vertical-align:3px}.limit-tag.up{background:rgba(75,227,143,.16);border:1px solid rgba(75,227,143,.4);color:var(--grn)}.limit-tag.down{background:rgba(255,82,116,.16);border:1px solid rgba(255,82,116,.4);color:#ff9db0}
+.market-chart-grid{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:132px auto;column-gap:9px;row-gap:5px;margin:12px 0 5px}.market-chart-wrap{height:132px;min-width:0;overflow:visible;border-radius:9px;background:repeating-linear-gradient(to bottom,rgba(151,226,255,.08) 0 1px,transparent 1px 33px)}.market-chart-grid .market-chart{height:132px;margin:0}.market-price-axis{display:flex;min-width:38px;flex-direction:column;justify-content:space-between;padding:2px 0 14px;text-align:right;color:#8ca4b8;font:700 9px var(--ui)}.market-time-axis{display:flex;grid-column:1;justify-content:space-between;min-width:0;color:#71879a;font:700 8px var(--ui);letter-spacing:.01em}.market-time-axis span{transform:translateX(-1px)}.chart-mark.info{background:var(--cy-hi);box-shadow:0 0 9px rgba(98,231,255,.9)}.chart-legend i.info{background:var(--cy-hi);box-shadow:0 0 6px rgba(98,231,255,.55)}
 .market-leverage-box{margin-top:12px;padding:12px;border-radius:12px;background:linear-gradient(135deg,rgba(178,140,255,.09),rgba(63,199,255,.05));border:1px solid rgba(178,140,255,.22)}.market-leverage-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}.market-leverage-head b{font:800 12px var(--ui);color:#d2b8ff}.market-leverage-head span{font-size:9px;color:var(--faint)}.market-leverage-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.market-leverage-actions button{min-height:40px;border-radius:8px;color:var(--fg);background:rgba(3,9,20,.6);border:1px solid var(--edge)}.market-leverage-actions .long{color:var(--grn);border-color:rgba(75,227,143,.3)}.market-leverage-actions .short{color:#ff9aad;border-color:rgba(255,130,153,.3)}
 .market-position{margin-top:8px;padding:12px;border-radius:11px;background:rgba(3,9,20,.55);border:1px solid var(--edge-soft)}.market-position-top{display:flex;justify-content:space-between;gap:8px}.market-position h3{margin:0;font:800 12px var(--ui)}.market-position .lev-tag{margin-left:5px;color:#d1b5ff}.market-position-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}.market-position-grid small{display:block;color:var(--faint);font-size:9px}.market-position-grid b{display:block;margin-top:3px;font:800 12px var(--ui)}.market-position .mini{margin-top:10px;width:100%}
 .leverage-warning{padding:12px 13px;margin:10px 0;border-radius:10px;color:#ffd8df;background:rgba(255,92,121,.08);border:1px solid rgba(255,92,121,.22);font-size:11px;line-height:1.6}.market-rules{display:flex;flex-direction:column;gap:9px}.market-rule{padding:12px;border-radius:10px;background:rgba(3,9,20,.55);border:1px solid var(--edge-soft)}.market-rule b{display:block;margin-bottom:4px;font-size:12px}.market-rule p{margin:0;color:var(--dim);font-size:11px;line-height:1.65}
 @media(max-width:380px){.market-hero{padding:19px 16px 16px}.market-hero h1{font-size:25px}.market-summary b{font-size:15px}.stock-card{padding:11px}.stock-price{font-size:19px}.market-metrics{grid-template-columns:1fr 1fr}.market-entry .quote{position:relative;right:auto;bottom:auto;text-align:left;margin-top:14px}.market-entry{min-height:160px}}
+
+/* ---------- 星界新聞網 ---------- */
+.news-entry{position:relative;width:100%;min-height:126px;margin-top:9px;padding:19px 20px;overflow:hidden;text-align:left;color:var(--fg);border-radius:16px;border:1px solid rgba(255,211,109,.34);background:radial-gradient(circle at 86% 14%,rgba(255,211,109,.2),transparent 29%),radial-gradient(circle at 11% 90%,rgba(189,145,255,.17),transparent 34%),linear-gradient(145deg,#15130f,#101424 55%,#15122a);box-shadow:0 14px 36px rgba(0,0,0,.22)}
+.news-entry::after{content:"EXCLUSIVE";position:absolute;right:-7px;top:27px;transform:rotate(90deg);font:900 9px var(--ui);letter-spacing:.26em;color:rgba(255,235,184,.28)}.news-entry>*{position:relative;z-index:1}.news-entry .eyebrow,.news-hero .eyebrow{font:900 9px var(--ui);letter-spacing:.22em;color:var(--gold)}.news-entry h3{margin:8px 0 6px;font:900 23px var(--ui);letter-spacing:.04em}.news-entry p{max-width:82%;margin:0;color:var(--dim);font-size:12px;line-height:1.55}.news-entry .news-count{display:inline-flex;margin-top:12px;padding:4px 8px;border-radius:999px;color:#ffe3a5;background:rgba(255,211,109,.08);border:1px solid rgba(255,211,109,.2);font:800 9px var(--ui)}
+.news-page{display:flex;flex-direction:column;gap:12px}.news-back{align-self:flex-start;padding:6px 0;color:var(--dim);font:700 12px var(--ui)}
+.news-hero{position:relative;overflow:hidden;padding:23px 20px 19px;border-radius:18px;background:radial-gradient(circle at 82% 10%,rgba(255,211,109,.23),transparent 35%),radial-gradient(circle at 4% 94%,rgba(189,145,255,.2),transparent 32%),linear-gradient(145deg,#17130d,#101522 56%,#16102b);border:1px solid rgba(255,211,109,.34);box-shadow:0 18px 45px rgba(0,0,0,.28)}
+.news-hero::before{content:"";position:absolute;inset:0;opacity:.12;background:repeating-linear-gradient(112deg,transparent 0 34px,rgba(255,231,171,.35) 35px 36px)}.news-hero>*{position:relative}.news-hero h1{margin:8px 0 5px;font:900 29px var(--ui);letter-spacing:.055em}.news-hero p{margin:0;color:var(--dim);font-size:12px;line-height:1.55}.news-hero-row{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}.news-refresh{flex:none;padding:8px 10px;border-radius:9px;color:#ffe0a0;background:rgba(255,211,109,.08);border:1px solid rgba(255,211,109,.23);font:800 10px var(--ui)}
+.news-ticker{display:flex;align-items:center;gap:9px;margin-top:16px;padding-top:13px;border-top:1px solid rgba(255,226,159,.14);color:#d9c9a1;font-size:10px;white-space:nowrap;overflow:hidden}.news-ticker b{flex:none;color:var(--gold);font:900 9px var(--ui);letter-spacing:.12em}.news-ticker span{overflow:hidden;text-overflow:ellipsis}
+.news-outlets{display:flex;gap:7px;padding:2px 0 3px;overflow-x:auto;scrollbar-width:none}.news-outlets::-webkit-scrollbar{display:none}.news-outlets button{flex:none;display:flex;align-items:center;gap:6px;padding:8px 11px;border-radius:999px;color:var(--dim);background:rgba(7,15,28,.72);border:1px solid var(--edge);font:800 10px var(--ui)}.news-outlets button.on{color:#fff;border-color:var(--outlet);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--outlet) 25%,transparent),0 0 16px color-mix(in srgb,var(--outlet) 12%,transparent)}.outlet-dot{width:7px;height:7px;border-radius:50%;background:var(--outlet);box-shadow:0 0 7px var(--outlet)}
+.news-lead{position:relative;overflow:hidden;padding:20px;border-radius:17px;text-align:left;color:var(--fg);background:linear-gradient(150deg,rgba(28,28,39,.96),rgba(11,17,31,.98));border:1px solid rgba(255,211,109,.28)}.news-lead::after{content:"";position:absolute;right:-52px;bottom:-74px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,var(--outlet),transparent 68%);opacity:.11}.news-kicker{display:flex;align-items:center;gap:7px;color:var(--outlet);font:900 9px var(--ui);letter-spacing:.08em}.news-lead h2{position:relative;margin:13px 0 8px;font:900 24px/1.32 var(--ui);letter-spacing:.015em}.news-lead p{position:relative;margin:0;color:var(--dim);font-size:12px;line-height:1.7}.news-meta{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin-top:14px;color:var(--faint);font:700 9px var(--ui)}
+.news-list{display:flex;flex-direction:column;gap:8px}.news-card{display:grid;grid-template-columns:45px minmax(0,1fr);gap:12px;width:100%;padding:14px;text-align:left;color:var(--fg);border-radius:14px;background:linear-gradient(150deg,var(--glass),var(--glass2));border:1px solid var(--edge)}.news-card:active{transform:scale(.99)}.news-logo{width:45px;height:45px;display:grid;place-items:center;border-radius:11px;color:var(--outlet);background:color-mix(in srgb,var(--outlet) 9%,rgba(3,9,20,.9));border:1px solid color-mix(in srgb,var(--outlet) 32%,transparent);font:900 16px var(--ui)}.news-card-main{min-width:0}.news-card-top{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--faint);font:700 9px var(--ui)}.news-card-top b{color:var(--outlet);font:900 9px var(--ui)}.news-card h3{margin:7px 0 5px;font:800 14px/1.42 var(--ui)}.news-card p{display:-webkit-box;overflow:hidden;margin:0;color:var(--dim);font-size:10.5px;line-height:1.55;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+.news-status{display:inline-flex;padding:3px 6px;border-radius:7px;background:rgba(125,145,170,.08);border:1px solid rgba(125,145,170,.18);color:#aebdca;font:800 8px var(--ui)}.news-status.confirmed{color:var(--grn);border-color:rgba(75,227,143,.3);background:rgba(75,227,143,.08)}.news-status.partial{color:var(--gold);border-color:rgba(255,211,109,.3);background:rgba(255,211,109,.08)}.news-status.disputed{color:#ff9aad;border-color:rgba(255,130,153,.3);background:rgba(255,130,153,.08)}.news-status.background{color:#b9c9d7}
+.news-symbol{display:inline-flex;padding:3px 6px;border-radius:7px;color:#8befff;background:rgba(98,231,255,.07);border:1px solid rgba(98,231,255,.2);font:900 8px var(--ui)}
+.article-shell{overflow:hidden;border-radius:18px;background:linear-gradient(160deg,rgba(20,25,39,.97),rgba(7,13,25,.99));border:1px solid var(--edge)}.article-mast{padding:17px 19px 15px;border-bottom:1px solid var(--edge-soft);background:linear-gradient(130deg,color-mix(in srgb,var(--outlet) 10%,transparent),transparent)}.article-mast .brand{display:flex;align-items:center;gap:10px}.article-mast .news-logo{width:39px;height:39px}.article-mast b{display:block;color:var(--outlet);font:900 13px var(--ui)}.article-mast small{display:block;margin-top:3px;color:var(--faint);font-size:9px}.article-body{padding:21px 19px 24px}.article-body .category{color:var(--outlet);font:900 9px var(--ui);letter-spacing:.14em}.article-body h1{margin:11px 0 10px;font:900 27px/1.3 var(--ui);letter-spacing:.01em}.article-deck{margin:0;padding:0 0 16px;color:#b9c8d7;font-size:13px;line-height:1.75;border-bottom:1px solid var(--edge-soft)}.article-byline{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 20px;color:var(--faint);font:700 9px var(--ui)}.article-body .copy p{margin:0 0 17px;color:#d8e1e9;font-size:13px;line-height:1.95}.article-source{margin-top:21px;padding:12px 13px;border-radius:11px;color:var(--dim);background:rgba(3,9,20,.55);border:1px solid var(--edge-soft);font-size:10px;line-height:1.6}.article-verdict{margin:0 19px 19px;padding:13px;border-radius:11px;color:#dbf8e8;background:rgba(75,227,143,.07);border:1px solid rgba(75,227,143,.25);font-size:11px;line-height:1.6}.article-verdict.disputed{color:#ffdce3;background:rgba(255,130,153,.07);border-color:rgba(255,130,153,.25)}
+.related-box{padding:15px 16px;border-radius:15px;background:linear-gradient(160deg,var(--glass),var(--glass2));border:1px solid var(--edge)}.related-box h2{margin:0 0 4px;font:900 15px var(--ui)}.related-box>p{margin:0 0 11px;color:var(--faint);font-size:10px}.related-row{display:flex;align-items:center;gap:10px;width:100%;padding:10px 0;text-align:left;color:var(--fg);border-top:1px solid var(--edge-soft)}.related-row .news-logo{width:34px;height:34px;flex:none;font-size:12px}.related-row div{min-width:0}.related-row b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:800 11px var(--ui)}.related-row small{color:var(--faint);font-size:9px}
+.news-empty{padding:28px 16px;text-align:center;color:var(--faint);border-radius:14px;background:var(--glass);border:1px solid var(--edge)}
+@media(max-width:380px){.news-hero h1{font-size:25px}.news-lead h2{font-size:21px}.article-body h1{font-size:23px}.news-entry p{max-width:90%}}
 
 /* ---------- 隱藏個人領域：星界龍域 ---------- */
 .profile-domain{position:fixed;inset:0;z-index:90;overflow:hidden;background:#01030a;perspective:900px;cursor:pointer;touch-action:manipulation;isolation:isolate;animation:domainCurtain 5.5s linear forwards}
@@ -1208,6 +1228,7 @@ button.game:active{transform:scale(.99)}
   <div class="views">
     <section id="vHome" class="view"></section>
     <section id="vMarket" class="view" hidden></section>
+    <section id="vNews" class="view" hidden></section>
     <section id="vPoker" class="view pk" hidden>
       <div class="felt" id="pkFelt">
         <div class="pk-center" id="pkCenter"></div>
@@ -1411,6 +1432,7 @@ var S = {
 };
 
 var MKUI = { state: null, selected: 'TKN', loading: false, error: null, open: null, phase: null };
+var NEWSUI = { state: null, outlet: 'all', articleId: '', loading: false, error: null };
 var TITLEUI = { state: null, loading: false, error: null, cat: 'A' };
 
 /* =====================================================================
@@ -5208,6 +5230,7 @@ function endSession() {
   BJ.st = null; B2.tableId = 'main'; B2.st = null; B2.hand = null; B2.selected = {}; S.playersAt = 0; S.accountsAt = 0; closeRaise();
   MAIL.list = []; MAIL.broadcast = []; MAIL.personal = []; MAIL.claimed = {}; HIGHLIGHTS = []; $('announce').hidden = true;
   MKUI.state = null; MKUI.selected = 'TKN'; MKUI.loading = false; MKUI.error = null; MKUI.open = null; MKUI.phase = null;
+  NEWSUI.state = null; NEWSUI.outlet = 'all'; NEWSUI.articleId = ''; NEWSUI.loading = false; NEWSUI.error = null;
   TITLEUI.state = null; TITLEUI.loading = false; TITLEUI.error = null; TITLEUI.cat = 'A';
   MN.bet = 200; MN.busy = false; MN.last = null; MN.picking = -1; MN.rewardReveal = null;
   CP.bet = 200; CP.pick = []; CP.busy = false; CP.last = null; CP.rewardReveal = null;
@@ -5227,7 +5250,7 @@ document.querySelectorAll('.tab').forEach(function (b) {
 
 function switchTab(t) {
   S.tab = t;
-  var tabKey = ['bj', 'big2', 'mine', 'cipher', 'gate', 'slot', 'dice', 'market'].indexOf(t) >= 0 ? 'home' : t;
+  var tabKey = ['bj', 'big2', 'mine', 'cipher', 'gate', 'slot', 'dice', 'market', 'news'].indexOf(t) >= 0 ? 'home' : t;
   document.querySelectorAll('.tab').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === tabKey); });
   $('vBj').hidden = t !== 'bj';
   $('vBig2').hidden = t !== 'big2';
@@ -5238,6 +5261,7 @@ function switchTab(t) {
   $('vDice').hidden = t !== 'dice';
   $('vHome').hidden = t !== 'home';
   $('vMarket').hidden = t !== 'market';
+  $('vNews').hidden = t !== 'news';
   $('vBank').hidden = t !== 'bank';
   $('vPoker').hidden = t !== 'poker';
   $('vRank').hidden = t !== 'rank';
@@ -5254,6 +5278,7 @@ function render(force) {
   if (!S.me) return;
   if (S.tab === 'home') renderHome(force);
   else if (S.tab === 'market') renderMarket(force);
+  else if (S.tab === 'news') renderNews(force);
   else if (S.tab === 'bank') renderBank(force);
   else if (S.tab === 'poker') renderPoker(force);
   else if (S.tab === 'bj') renderBj(force);
@@ -5327,12 +5352,17 @@ function renderHome(force) {
   h += taskEntry();
 
   var lead = MKUI.state && MKUI.state.stocks && MKUI.state.stocks.TKN;
-  var leadPct = lead && lead.previous ? (lead.price - lead.previous) / lead.previous * 100 : 0;
+  var leadPct = marketChange(lead);
   h += '<div class="sec-h"><h2>投資</h2><span>每 5 分鐘更新</span></div>' +
     '<button class="market-entry" id="goMarket"><div class="eyebrow">STELLAR EXCHANGE <span class="market-live">LIVE</span></div>' +
       '<h3>星界交易所</h3><p>買賣虛擬股票，讓市場成為你的另一張牌桌</p>' +
       '<div class="quote"><b>' + (lead ? fmt(lead.price) : '—') + '</b><span class="' + (leadPct < 0 ? 'market-down' : 'market-up') + '">TKN ' + (leadPct >= 0 ? '+' : '') + leadPct.toFixed(2) + '%</span></div>' +
     '</button>';
+
+  var newsCount = NEWSUI.state && NEWSUI.state.articles ? NEWSUI.state.articles.length : 0;
+  h += '<button class="news-entry" id="goNews"><div class="eyebrow">ASTRA NEWS NETWORK</div>' +
+    '<h3>星界新聞網</h3><p>四家媒體追同一事件。讀文章、比來源，自己判斷市場真正發生了什麼。</p>' +
+    '<span class="news-count">' + (newsCount ? newsCount + ' 篇追蹤報導' : '獨家新聞台') + '</span></button>';
 
   h += '<div class="sec-h"><h2>遊戲</h2></div>';
   var seated = PK.st ? PK.st.seats.filter(Boolean).length : 0;
@@ -5355,6 +5385,7 @@ function renderHome(force) {
 
   if (put('vHome', h, force)) {
     $('goMarket').onclick = function () { switchTab('market'); };
+    $('goNews').onclick = function () { switchTab('news'); };
     $('goPoker').onclick = function () { switchTab('poker'); };
     var gt = $('goTasks');
     if (gt) gt.onclick = sheetTasks;
@@ -5407,8 +5438,65 @@ function loadMarket(force) {
 }
 
 function marketChange(stock) {
+  if (!stock) return 0;
+  var ref = stock.dayOpen || stock.previous;
+  if (!ref) return 0;
+  return (stock.price - ref) / ref * 100;
+}
+
+function marketTickChange(stock) {
   if (!stock || !stock.previous) return 0;
   return (stock.price - stock.previous) / stock.previous * 100;
+}
+
+function marketVolLabel(stock) {
+  var v = Number(stock && stock.vol) || 0;
+  if (!v) return '';
+  return v < 0.0025 ? '波動低' : v < 0.004 ? '波動中' : '波動高';
+}
+
+function marketLimitTag(stock) {
+  if (!stock || !stock.limitUp) return '';
+  if (stock.price >= stock.limitUp) return '<span class="limit-tag up">漲停</span>';
+  if (stock.price <= stock.limitDown) return '<span class="limit-tag down">跌停</span>';
+  return '';
+}
+
+var MARKET_TIER = { small: '小', mid: '中', major: '重大' };
+
+function marketNewsTitle(n) {
+  return String(n.title || '').replace(/^傳聞：/, '').replace(/^【(大事件|風聲|快訊|證實|澄清|突發大事件)】/, '');
+}
+
+function marketNewsTags(n) {
+  var h = '', cred = n.cred || '';
+  if (cred === 'event') h += '<span class="intel-tag shock">大事件</span>';
+  else if (cred === 'admin') h += '<span class="intel-tag shock">快訊</span>';
+  else if (cred === 'hint') h += '<span class="intel-tag hint">風聲</span>';
+  else if (cred === 'rumor') h += '<span class="intel-tag rumor">傳聞</span>';
+  else if (cred === 'verified') h += '<span class="intel-tag good">證實</span>';
+  else if (cred === 'debunked') h += '<span class="intel-tag bad">澄清</span>';
+  else if (String(n.batch || '').indexOf('shock-') === 0) h += '<span class="intel-tag shock">突發</span>';
+  else h += '<span class="intel-tag">情報網</span>';
+  if (n.symbol) h += '<span class="intel-tag sym">' + esc(n.symbol) + '</span>';
+  if (MARKET_TIER[n.tier]) h += '<span class="intel-tag tier-' + n.tier + '">' + MARKET_TIER[n.tier] + '</span>';
+  return h;
+}
+
+/* 消息發布前最後一個價格 → 現在價格，直接看出這則消息帶動多少漲跌 */
+function marketNewsReaction(n, state) {
+  if (n.cred === 'closed') return '<em class="news-react flat">休市消息・不影響價格</em>';
+  var s = n.symbol && state && state.stocks && state.stocks[n.symbol];
+  if (!s) return '';
+  var hist = s.history || [], before = null;
+  for (var i = hist.length - 1; i >= 0; i--) { if (hist[i].t < n.t) { before = hist[i].p; break; } }
+  if (!before) return '';
+  var pct = (s.price - before) / before * 100;
+  return '<em class="news-react ' + (pct < 0 ? 'market-down' : 'market-up') + '">' + esc(n.symbol) + ' 消息發布後 ' + (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%（' + fmt(before) + ' → ' + fmt(s.price) + '）</em>';
+}
+
+function marketNewsRow(n, state, withDate) {
+  return '<div class="market-news-row"><span class="market-news-time">' + (withDate ? twDate(n.t) + '<br>' : '') + twClock(n.t) + '</span><div><b>' + marketNewsTags(n) + esc(marketNewsTitle(n)) + '</b><small>' + esc(n.body) + '</small>' + marketNewsReaction(n, state) + '</div></div>';
 }
 
 function marketPositionEquity(position, state) {
@@ -5424,23 +5512,39 @@ function marketLiquidationPrice(position) {
   return Math.max(1, Math.round(position.entryPrice * (position.side === 'long' ? 1 - move : 1 + move)));
 }
 
-function marketSpark(history, color) {
-  var rows = (history || []).slice(-36);
+/* 走勢圖 + 中性消息標記；玩家只看事件與實際價格，不顯示系統預判方向。 */
+function marketSpark(history, color, news, symbol) {
+  var rows = (history || []).slice(-126);
   if (!rows.length) rows = [{ p: 0 }, { p: 0 }];
-  if (rows.length === 1) rows = [rows[0], { p: rows[0].p }];
+  if (rows.length === 1) rows = [rows[0], { t: rows[0].t, p: rows[0].p }];
   var vals = rows.map(function (x) { return Number(x.p) || 0; });
   var lo = Math.min.apply(Math, vals), hi = Math.max.apply(Math, vals);
   if (hi === lo) { hi += 1; lo -= 1; }
+  var mid = (hi + lo) / 2;
+  function yOf(p) { return 86 - (p - lo) / (hi - lo) * 68; }
   var pts = vals.map(function (p, i) {
     var x = i / (vals.length - 1) * 100;
-    var y = 86 - (p - lo) / (hi - lo) * 68;
-    return x.toFixed(2) + ',' + y.toFixed(2);
+    return x.toFixed(2) + ',' + yOf(p).toFixed(2);
   }).join(' ');
-  return '<svg class="market-chart" viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="價格走勢">' +
+  var marks = '';
+  var t0 = rows[0].t || 0, t1 = rows[rows.length - 1].t || 0;
+  (news || []).forEach(function (n) {
+    if (!symbol || n.symbol !== symbol || !n.t || n.t < t0 || n.t > t1 || n.cred === 'closed') return;
+    var idx = rows.length - 1;
+    for (var i = 0; i < rows.length; i++) { if ((rows[i].t || 0) >= n.t) { idx = i; break; } }
+    var x = idx / (rows.length - 1) * 100, y = yOf(vals[idx]);
+    var big = n.cred === 'event' || n.cred === 'admin';
+    marks += '<i class="chart-mark ' + (big ? 'event' : 'info') + '" style="left:' + x.toFixed(2) + '%;top:' + y.toFixed(2) + '%"></i>';
+  });
+  var timeIndexes = [0, Math.floor((rows.length - 1) / 3), Math.floor((rows.length - 1) * 2 / 3), rows.length - 1];
+  var times = timeIndexes.map(function (idx) { return rows[idx] && rows[idx].t ? twClock(rows[idx].t) : '—'; });
+  return '<div class="market-chart-grid"><div class="market-chart-wrap"><svg class="market-chart" viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="價格走勢">' +
     '<defs><linearGradient id="marketFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + color + '" stop-opacity=".34"/><stop offset="1" stop-color="' + color + '" stop-opacity="0"/></linearGradient></defs>' +
     '<polygon points="0,100 ' + pts + ' 100,100" fill="url(#marketFill)"/>' +
     '<polyline points="' + pts + '" fill="none" stroke="' + color + '" stroke-width="2.2" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"/>' +
-  '</svg>';
+  '</svg>' + marks + '</div><div class="market-price-axis"><span>' + fmt(Math.round(hi)) + '</span><span>' + fmt(Math.round(mid)) + '</span><span>' + fmt(Math.round(lo)) + '</span></div>' +
+  '<div class="market-time-axis">' + times.map(function (x) { return '<span>' + esc(x) + '</span>'; }).join('') + '</div></div>' +
+  (marks ? '<div class="chart-legend"><span><i class="info"></i>情報發布</span><span><i class="event"></i>大事件／管理員快訊</span></div>' : '');
 }
 
 function renderMarket(force) {
@@ -5476,24 +5580,25 @@ function renderMarket(force) {
     var s = state.stocks[symbol], ch = marketChange(s);
     return '<button class="stock-card' + (symbol === MKUI.selected ? ' on' : '') + '" data-stock="' + symbol + '" style="--stock:' + s.color + '">' +
       '<div class="stock-top"><span class="stock-code">' + esc(symbol) + '</span><span class="stock-change ' + (ch < 0 ? 'market-down' : 'market-up') + '">' + (ch >= 0 ? '+' : '') + ch.toFixed(2) + '%</span></div>' +
-      '<span class="stock-name">' + esc(s.name) + '</span><div class="stock-price">' + fmt(s.price) + '</div></button>';
+      '<span class="stock-name">' + esc(s.name) + '</span><div class="stock-price">' + fmt(s.price) + marketLimitTag(s) + '</div></button>';
   }).join('') + '</div>';
 
   var ch = marketChange(selected);
-  var delta = selected.price - selected.previous;
+  var delta = selected.price - (selected.dayOpen || selected.previous);
+  var tickCh = marketTickChange(selected);
   var totalShares = Math.max(1, Number(selected.totalShares) || 100000);
   var playerShares = Math.max(0, Number(selected.playerShares) || 0);
   var systemShares = Math.max(0, Number(selected.systemShares) || (totalShares - playerShares));
   var playerPct = Math.min(100, playerShares / totalShares * 100);
   var systemPct = Math.max(0, 100 - playerPct);
   var availableShares = Math.max(0, (Number(selected.playerLimit) || Math.floor(totalShares * .3)) - playerShares);
-  h += '<div class="market-chart-card"><div class="market-chart-head"><div><span class="stock-code" style="color:' + selected.color + '">' + esc(selected.symbol) + '</span><h2>' + esc(selected.name) + '</h2><p>' + esc(selected.tag) + '・最近 ' + Math.min(36, (selected.history || []).length) + ' 次更新</p></div>' +
+  h += '<div class="market-chart-card"><div class="market-chart-head"><div><span class="stock-code" style="color:' + selected.color + '">' + esc(selected.symbol) + '</span><h2>' + esc(selected.name) + marketLimitTag(selected) + '</h2><p>' + esc(selected.tag) + (marketVolLabel(selected) ? '・' + marketVolLabel(selected) : '') + '・最近 ' + Math.min(48, (selected.history || []).length) + ' 筆紀錄</p></div>' +
     '<div class="market-chart-price"><b>' + fmt(selected.price) + '</b><span class="stock-change ' + (ch < 0 ? 'market-down' : 'market-up') + '">' + (ch >= 0 ? '+' : '') + ch.toFixed(2) + '%</span></div></div>' +
-    marketSpark(selected.history, selected.color) +
-    '<div class="market-metrics"><div class="market-metric"><small>目前價格</small><b>' + fmt(selected.price) + '</b></div>' +
-      '<div class="market-metric"><small>前次價格</small><b>' + fmt(selected.previous) + '</b></div>' +
-      '<div class="market-metric"><small>漲跌金額</small><b class="' + (delta < 0 ? 'market-down' : 'market-up') + '">' + (delta >= 0 ? '+' : '') + fmt(delta) + '</b></div>' +
-      '<div class="market-metric"><small>漲跌幅度</small><b class="' + (ch < 0 ? 'market-down' : 'market-up') + '">' + (ch >= 0 ? '+' : '') + ch.toFixed(2) + '%</b></div></div>' +
+    marketSpark(selected.history, selected.color, state.news, selected.symbol) +
+    '<div class="market-metrics"><div class="market-metric"><small>開盤參考</small><b>' + fmt(selected.dayOpen || selected.previous) + '</b></div>' +
+      '<div class="market-metric"><small>當日漲跌</small><b class="' + (delta < 0 ? 'market-down' : 'market-up') + '">' + (delta >= 0 ? '+' : '') + fmt(delta) + '</b></div>' +
+      '<div class="market-metric"><small>5 分鐘</small><b class="' + (tickCh < 0 ? 'market-down' : 'market-up') + '">' + (tickCh >= 0 ? '+' : '') + tickCh.toFixed(2) + '%</b></div>' +
+      '<div class="market-metric"><small>漲停／跌停</small><b>' + (selected.limitUp ? fmt(selected.limitUp) + '／' + fmt(selected.limitDown) : '—') + '</b></div></div>' +
     '<div class="market-ownership"><div class="market-ownership-head"><b>市場持股比例</b><span>玩家上限 30%</span></div>' +
       '<div class="market-ownership-bar"><i class="system" style="width:' + systemPct.toFixed(2) + '%"></i><i class="players" style="width:' + playerPct.toFixed(2) + '%"></i></div>' +
       '<div class="market-ownership-foot"><span>系統 ' + systemPct.toFixed(2) + '%・' + fmt(systemShares) + ' 股</span><span>玩家 ' + playerPct.toFixed(2) + '%・' + fmt(playerShares) + ' 股</span></div>' +
@@ -5529,21 +5634,23 @@ function renderMarket(force) {
   h += '</div>';
 
   var allNews = state.news || [], latestSlot = state.latestIntelSlot || '';
-  var shockNews = allNews.filter(function (n) { return String(n.batch || '').indexOf('shock-') === 0; }).slice(0, 5);
-  if (shockNews.length) {
-    h += '<div class="market-section"><div class="market-section-title"><h2>突發大事件</h2><span>最近 ' + shockNews.length + ' 則</span></div>';
-    shockNews.forEach(function (n) {
-      h += '<div class="market-news-row"><span class="market-news-time">' + twClock(n.t) + '</span><div><b><span class="intel-tag shock">突發</span>' + esc(n.title) + '</b><small>' + esc(n.body) + '</small></div></div>';
-    });
+  var bigNews = allNews.filter(function (n) {
+    var batch = String(n.batch || '');
+    return batch.indexOf('shock-') === 0 || batch.indexOf('event-') === 0;
+  }).slice(0, 5);
+  if (bigNews.length) {
+    h += '<div class="market-section"><div class="market-section-title"><h2>大事件與風聲</h2><span>最近 ' + bigNews.length + ' 則</span></div>';
+    bigNews.forEach(function (n) { h += marketNewsRow(n, state); });
     h += '</div>';
   }
   var intelNews = allNews.filter(function (n) { return n.kind === 'intel'; });
-  var currentNews = latestSlot ? intelNews.filter(function (n) { return n.batch === latestSlot; }).slice(0, 5) : intelNews.slice(0, 5);
-  h += '<div class="market-section"><div class="market-section-title"><h2>即時情報</h2><span>最新一批・' + currentNews.length + ' 則</span></div>';
-  currentNews.forEach(function (n) {
-    h += '<div class="market-news-row"><span class="market-news-time">' + twClock(n.t) + '</span><div><b><span class="intel-tag">情報網</span>' + esc(n.title) + '</b><small>' + esc(n.body) + '</small></div></div>';
-  });
-  if (intelNews.length) h += '<button class="btn ghost" id="marketHistory" type="button" style="width:100%;margin-top:10px">查看最近 20 則情報網</button>';
+  var batchHead = latestSlot ? intelNews.filter(function (n) { return n.batch === latestSlot; }) : [];
+  var batchAt = batchHead.length ? Math.min.apply(Math, batchHead.map(function (n) { return n.t; })) : 0;
+  var currentNews = batchAt ? intelNews.filter(function (n) { return n.t >= batchAt; }).slice(0, 10) : intelNews.slice(0, 5);
+  h += '<div class="market-section"><div class="market-section-title"><h2>即時情報</h2><span>最新一批與後續・' + currentNews.length + ' 則</span></div>';
+  if (!currentNews.length) h += '<div class="empty">情報網每天 08:00～16:00 每半小時發布</div>';
+  currentNews.forEach(function (n) { h += marketNewsRow(n, state); });
+  if (intelNews.length) h += '<button class="btn ghost" id="marketHistory" type="button" style="width:100%;margin-top:10px">查看最近 30 則情報</button>';
   h += '</div></div>';
 
   if (put('vMarket', h, force)) {
@@ -5567,6 +5674,134 @@ function renderMarket(force) {
     });
   }
   paintMarketClock();
+}
+
+/* ---------- 星界新聞網 ---------- */
+function newsOutlet(id) {
+  var rows = NEWSUI.state && NEWSUI.state.outlets || [];
+  for (var i = 0; i < rows.length; i++) if (rows[i].id === id) return rows[i];
+  return { id: id || 'central', name: '星界新聞網', short: '新聞網', accent: '#6ee7ff', motto: '追蹤市場真相', mark: '訊' };
+}
+
+function newsStatus(status) {
+  if (status === 'confirmed') return { cls: 'confirmed', text: '事後確認' };
+  if (status === 'partial') return { cls: 'partial', text: '部分成立' };
+  if (status === 'disputed') return { cls: 'disputed', text: '說法不符' };
+  if (status === 'background') return { cls: 'background', text: '背景追蹤' };
+  return { cls: '', text: '持續查證' };
+}
+
+function newsSymbols(article) {
+  return (article.symbols || []).map(function (symbol) { return '<span class="news-symbol">' + esc(symbol) + '</span>'; }).join('');
+}
+
+function loadNews(force) {
+  if (NEWSUI.loading || (NEWSUI.state && !force)) return;
+  NEWSUI.loading = true; NEWSUI.error = null;
+  call('newsState').then(function (r) {
+    if (!S.me) return;
+    NEWSUI.state = r.newsroom;
+    if (NEWSUI.articleId && !(NEWSUI.state.articles || []).some(function (x) { return x.id === NEWSUI.articleId; })) NEWSUI.articleId = '';
+  }).catch(function (e) {
+    NEWSUI.error = e.message || '讀取新聞失敗';
+  }).then(function () {
+    NEWSUI.loading = false;
+    if (S.tab === 'news') renderNews(true);
+  });
+}
+
+function newsArticle(id) {
+  var rows = NEWSUI.state && NEWSUI.state.articles || [];
+  for (var i = 0; i < rows.length; i++) if (rows[i].id === id) return rows[i];
+  return null;
+}
+
+function newsCard(article) {
+  var outlet = newsOutlet(article.outlet), status = newsStatus(article.status);
+  return '<button class="news-card" type="button" data-news-article="' + esc(article.id) + '" style="--outlet:' + esc(outlet.accent) + '">' +
+    '<span class="news-logo">' + esc(outlet.mark) + '</span><span class="news-card-main">' +
+      '<span class="news-card-top"><b>' + esc(outlet.short) + '</b><span>' + twClock(article.publishedAt) + '</span></span>' +
+      '<h3>' + esc(article.headline) + '</h3><p>' + esc(article.deck) + '</p>' +
+      '<span class="news-meta"><span class="news-status ' + status.cls + '">' + status.text + '</span>' + newsSymbols(article) + '<span>' + esc(article.readingMin) + ' 分鐘</span></span>' +
+    '</span></button>';
+}
+
+function renderNewsArticle(article, force) {
+  var outlet = newsOutlet(article.outlet), status = newsStatus(article.status);
+  var related = (NEWSUI.state.articles || []).filter(function (x) { return x.clusterId === article.clusterId && x.id !== article.id; });
+  var h = '<div class="news-page"><button class="news-back" id="newsArticleBack">‹ 返回新聞首頁</button>' +
+    '<article class="article-shell" style="--outlet:' + esc(outlet.accent) + '">' +
+      '<div class="article-mast"><div class="brand"><span class="news-logo">' + esc(outlet.mark) + '</span><span><b>' + esc(outlet.name) + '</b><small>' + esc(outlet.motto) + '</small></span></div></div>' +
+      '<div class="article-body"><span class="category">' + esc(article.category) + '・EXCLUSIVE</span><h1>' + esc(article.headline) + '</h1>' +
+        '<p class="article-deck">' + esc(article.deck) + '</p><div class="article-byline"><span>' + twDate(article.publishedAt) + ' ' + twClock(article.publishedAt) + '</span><span>閱讀 ' + esc(article.readingMin) + ' 分鐘</span>' +
+        '<span class="news-status ' + status.cls + '">' + status.text + '</span>' + newsSymbols(article) + '</div>' +
+        '<div class="copy">' + (article.body || []).map(function (p) { return '<p>' + esc(p) + '</p>'; }).join('') + '</div>' +
+        '<div class="article-source"><b>資料依據</b><br>' + esc(article.sourceNote || '編輯台整理') + '。新聞內容不構成買賣建議，請比較其他來源與實際價格。</div></div>' +
+      (article.verdict ? '<div class="article-verdict ' + (status.cls === 'disputed' ? 'disputed' : '') + '"><b>查證更新</b><br>' + esc(article.verdict) + '</div>' : '') +
+    '</article>';
+  if (related.length) {
+    h += '<section class="related-box"><h2>同一事件，不同說法</h2><p>比較其他媒體的標題、證據與語氣，找出彼此矛盾的地方。</p>';
+    related.forEach(function (row) {
+      var ro = newsOutlet(row.outlet), rs = newsStatus(row.status);
+      h += '<button class="related-row" type="button" data-news-article="' + esc(row.id) + '" style="--outlet:' + esc(ro.accent) + '"><span class="news-logo">' + esc(ro.mark) + '</span><div><b>' + esc(row.headline) + '</b><small>' + esc(ro.short) + '・' + rs.text + '</small></div></button>';
+    });
+    h += '</section>';
+  }
+  h += '</div>';
+  if (put('vNews', h, force)) {
+    $('newsArticleBack').onclick = function () { NEWSUI.articleId = ''; renderNews(true); };
+    $('vNews').querySelectorAll('[data-news-article]').forEach(function (b) {
+      b.onclick = function () { NEWSUI.articleId = b.getAttribute('data-news-article'); renderNews(true); };
+    });
+  }
+}
+
+function renderNews(force) {
+  var state = NEWSUI.state;
+  if (!state || !state.articles) {
+    var wait = '<div class="news-page"><button class="news-back" id="newsBack">‹ 返回大廳</button><div class="news-hero"><div class="eyebrow">ASTRA NEWS NETWORK</div><h1>星界新聞網</h1><p>' + esc(NEWSUI.error || '正在連接編輯台…') + '</p></div>' + loadingCard() + '</div>';
+    if (put('vNews', wait, force)) $('newsBack').onclick = function () { switchTab('home'); };
+    if (!NEWSUI.loading) loadNews(true);
+    return;
+  }
+  var article = NEWSUI.articleId && newsArticle(NEWSUI.articleId);
+  if (article) { renderNewsArticle(article, force); return; }
+
+  var outlets = state.outlets || [], rows = (state.articles || []).slice();
+  if (NEWSUI.outlet !== 'all') rows = rows.filter(function (x) { return x.outlet === NEWSUI.outlet; });
+  var lead = newsArticle(state.leadId);
+  if (!lead || (NEWSUI.outlet !== 'all' && lead.outlet !== NEWSUI.outlet)) lead = rows[0];
+  var list = rows.filter(function (x) { return !lead || x.id !== lead.id; });
+  var leadOutlet = lead ? newsOutlet(lead.outlet) : newsOutlet('central');
+  var leadStatus = lead ? newsStatus(lead.status) : newsStatus('developing');
+  var latest = (state.articles || [])[0];
+  var h = '<div class="news-page"><button class="news-back" id="newsBack">‹ 返回大廳</button>' +
+    '<div class="news-hero"><div class="news-hero-row"><div><div class="eyebrow">ASTRA NEWS NETWORK</div><h1>星界新聞網</h1><p>不報答案，只報事件。比較四家媒體，從矛盾裡找線索。</p></div><button class="news-refresh" id="newsRefresh" type="button">更新</button></div>' +
+      '<div class="news-ticker"><b>BREAKING</b><span>' + esc(latest ? latest.headline : '編輯台正在整理最新消息') + '</span></div></div>' +
+    '<div class="news-outlets"><button class="' + (NEWSUI.outlet === 'all' ? 'on' : '') + '" data-outlet="all" style="--outlet:#ffd36d"><i class="outlet-dot"></i>全部媒體</button>' +
+      outlets.map(function (o) { return '<button class="' + (NEWSUI.outlet === o.id ? 'on' : '') + '" data-outlet="' + esc(o.id) + '" style="--outlet:' + esc(o.accent) + '"><i class="outlet-dot"></i>' + esc(o.short) + '</button>'; }).join('') + '</div>';
+
+  if (lead) {
+    h += '<button class="news-lead" type="button" data-news-article="' + esc(lead.id) + '" style="--outlet:' + esc(leadOutlet.accent) + '">' +
+      '<span class="news-kicker"><i class="outlet-dot"></i>' + esc(leadOutlet.name) + '・' + esc(lead.category) + '</span>' +
+      '<h2>' + esc(lead.headline) + '</h2><p>' + esc(lead.deck) + '</p>' +
+      '<span class="news-meta"><span>' + twDate(lead.publishedAt) + ' ' + twClock(lead.publishedAt) + '</span><span class="news-status ' + leadStatus.cls + '">' + leadStatus.text + '</span>' + newsSymbols(lead) + '<span>閱讀 ' + esc(lead.readingMin) + ' 分鐘</span></span></button>';
+  }
+  h += '<div class="sec-h"><h2>最新報導</h2><span>' + rows.length + ' 篇</span></div><div class="news-list">';
+  if (!list.length) h += '<div class="news-empty">這家媒體目前沒有更多報導。</div>';
+  list.forEach(function (row) { h += newsCard(row); });
+  h += '</div></div>';
+
+  if (put('vNews', h, force)) {
+    $('newsBack').onclick = function () { switchTab('home'); };
+    $('newsRefresh').onclick = function () { loadNews(true); };
+    $('vNews').querySelectorAll('[data-outlet]').forEach(function (b) {
+      b.onclick = function () { NEWSUI.outlet = b.getAttribute('data-outlet'); NEWSUI.articleId = ''; renderNews(true); };
+    });
+    $('vNews').querySelectorAll('[data-news-article]').forEach(function (b) {
+      b.onclick = function () { NEWSUI.articleId = b.getAttribute('data-news-article'); renderNews(true); };
+    });
+  }
 }
 
 function paintSeason() {
@@ -5811,7 +6046,8 @@ function renderMe(force) {
       '<button class="switch" role="switch" id="regSwitch" aria-checked="' + open + '" aria-label="開放註冊"></button></div>' +
       '<button class="row" data-act="create"><span class="k">開帳號<small>先建好編號和名字，本人第一次登入時自己設密碼</small></span><span class="chev">›</span></button>' +
       '<button class="row" data-act="econ"><span class="k">經濟設定<small>起始資金、借款、銀行、利率</small></span><span class="chev">›</span></button>' +
-      '<button class="row" data-act="market"><span class="k">股市控制台<small>指定股票立即上漲或下跌，並同步所有持倉資產</small></span><span class="chev">›</span></button>' +
+      '<button class="row" data-act="market"><span class="k">股市控制台<small>看今日大事件排程、傳聞真假，手動調價或發布快訊</small></span><span class="chev">›</span></button>' +
+      '<button class="row" data-act="newsAdmin"><span class="k">新聞台控制台<small>查看事件真相、媒體判讀與事後查證狀態</small></span><span class="chev">›</span></button>' +
       '<button class="row" data-act="poker"><span class="k">德州設定<small>盲注、帶入上限、思考秒數、AI 控桌</small></span><span class="chev">›</span></button>' +
       '<button class="row" data-act="seasoncfg"><span class="k">季與數據設定<small>正式季從哪一週開始、牌局數據從什麼時候記錄</small></span><span class="chev">›</span></button>' +
       '<button class="row" data-act="settle"><span class="k">結算上一季<small>週一 00:01 會自動跑，排程失敗時才需要按</small></span><span class="chev">›</span></button>' +
@@ -5856,6 +6092,7 @@ function bindMe() {
       else if (a === 'create') sheetCreate();
       else if (a === 'econ') sheetEcon();
       else if (a === 'market') sheetMarketAdmin();
+      else if (a === 'newsAdmin') sheetNewsAdmin();
       else if (a === 'interest') sheetInterest();
       else if (a === 'games') sheetGames();
       else if (a === 'poker') sheetPokerSettings();
@@ -6264,26 +6501,27 @@ function sheetMarketTrade(symbol, side) {
 function sheetMarketHelp() {
   openSheet('<h3>星界交易所規則</h3><p class="desc">右上角的問號隨時可以再打開。</p>' +
     '<div class="market-rules">' +
-      '<div class="market-rule"><b>開盤時間</b><p>週一到週五 07:00 開盤，17:00 一般盤收盤；17:00–17:30 為盤後交易，17:30 完全收盤。六日不能交易，但情報網仍會發布消息。</p></div>' +
-      '<div class="market-rule"><b>情報網</b><p>每天 08、10、12、14、16 點各發布 5 則特殊公司事件。一般價格波動不會列入情報；首頁顯示最新一批，另外保留最近 20 則。</p></div>' +
-      '<div class="market-rule"><b>一般股票</b><p>買進後會成為持股，賣出時依目前價格結算。每筆成交收取 1% 手續費；平日收盤後持股會保留到下一個交易日。</p></div>' +
+      '<div class="market-rule"><b>開盤時間</b><p>週一到週五 07:00 開盤，17:00 一般盤收盤；17:00–17:30 為盤後交易，17:30 完全收盤。六日不能交易，情報網照常發消息，但休市消息不影響價格。</p></div>' +
+      '<div class="market-rule"><b>股價怎麼動</b><p>每 5 分鐘更新一次。平常只有小幅波動，真正推動股價的是市場事件。走勢圖只標示情報或大事件發布時間，不會替你判斷漲跌方向；右側是實際價格刻度，下方是時間。</p></div>' +
+      '<div class="market-rule"><b>情報網</b><p>每天 08:00～16:00 每半小時各發 5 則，每支股票一則。情報只報導發生的事情，不直接告訴你哪家公司會漲或跌；消息會逐步反映，請搭配後續價格自行判斷。每則消息下面會顯示發布後的實際漲跌。</p></div>' +
+      '<div class="market-rule"><b>傳聞</b><p>標示「傳聞」的消息還沒證實，會先動一半，30–60 分鐘後揭曉：證實就繼續走，被澄清就跌回去。追傳聞風險很高。</p></div>' +
+      '<div class="market-rule"><b>大事件與風聲</b><p>每個交易日 2～4 次，多數事件的總影響約 30%～50%，少數約 20%。事件前 30～75 分鐘可能出現只有線索、沒有漲跌答案的風聲；大事件會分段反映，不會把預測直接寫在情報上。</p></div>' +
+      '<div class="market-rule"><b>單日價格區間</b><p>重大事件可能造成劇烈行情，單日價格最多落在開盤價 ±60% 內。一般更新單次最多 ±7%，大事件單次最多 10%；5× 槓桿仍可能因重大事件快速爆倉。</p></div>' +
+      '<div class="market-rule"><b>一般股票</b><p>買進、賣出各收成交金額 1% 手續費。買賣量會稍微推動下一次價格，但要非常大量才有感。</p></div>' +
       '<div class="market-rule"><b>系統持股 70%</b><p>每支股票固定 100,000 股，全部玩家合計最多持有 30,000 股；系統永遠保留至少 70%。</p></div>' +
-      '<div class="market-rule"><b>星期五週結算</b><p>星期五 17:30 會按最後價格自動賣出全部一般持股，並平掉所有槓桿；槓桿會先判斷是否爆倉，再扣平倉手續費，剩餘權益才回到錢包。本週結算後股價與歷史走勢不重置。</p></div>' +
-      '<div class="market-rule"><b>槓桿與做多／做空</b><p>做多是押上漲，做空是押下跌。2×、3×、5× 會把漲跌損益放大相同倍數，只需要投入保證金。</p></div>' +
-      '<div class="market-rule"><b>每日突發大事件</b><p>每個交易日會在不預告的隨機時點發生 3–5 次。單一股票可能瞬間 ×2／×3，或反向 ÷2／÷3；押對可能暴賺，押錯的槓桿可能直接爆倉。</p></div>' +
-      '<div class="market-rule"><b>爆倉</b><p>權益降到原保證金的 60% 時立即爆倉，整筆保證金歸零，不退回殘餘權益。2× 約反向 20%、3× 約 13.3%、5× 約 8% 就會爆倉。</p></div>' +
-    '</div><div class="leverage-warning">5× 槓桿投入 5,000 保證金會建立 25,000 合約，錢包扣 5,000 加合約手續費；若直接扣 25,000 就不是槓桿。爆倉會確實吃掉整筆保證金。單筆保證金上限恢復 100,000，同時最多 3 個倉位。</div>' +
+      '<div class="market-rule"><b>星期五週結算</b><p>星期五 17:30 按最後價格自動賣出全部一般持股（跟手動賣出一樣扣 1% 手續費），並平掉所有槓桿；槓桿先判斷是否爆倉，再扣平倉手續費。股價與走勢不重置。</p></div>' +
+      '<div class="market-rule"><b>槓桿與做多／做空</b><p>做多是押上漲，做空是押下跌。2×、3×、5× 把漲跌放大相同倍數，開倉與平倉各收合約價值 1% 手續費（5× 來回等於吃掉保證金 10%）。</p></div>' +
+      '<div class="market-rule"><b>爆倉</b><p>權益降到原保證金的 60% 時立即爆倉，整筆保證金歸零。2× 約反向 20%、3× 約 13.3%、5× 約 8% 就會爆倉。</p></div>' +
+    '</div><div class="leverage-warning">亂押沒有好處，手續費會一直吃掉本金。真正能賺的是看懂重大消息、判斷風聲，並在消息反映完之前進出。</div>' +
     '<div class="acts"><button class="btn" type="button" data-close>知道了</button></div>', function (sh) { sh.querySelector('[data-close]').onclick = closeSheet; });
 }
 
 function sheetMarketHistory() {
   var state = MKUI.state || {};
-  var rows = (state.news || []).filter(function (n) { return n.kind === 'intel'; }).slice(0, 20);
-  var h = '<h3>最近 20 則情報網</h3><p class="desc">只收錄可能影響行情的特殊事件，不顯示一般價格漲跌。</p><div class="market-history-list">';
-  if (!rows.length) h += '<div class="empty">目前還沒有情報網事件</div>';
-  rows.forEach(function (n) {
-    h += '<div class="market-news-row"><span class="market-news-time">' + twDate(n.t) + '<br>' + twClock(n.t) + '</span><div><b><span class="intel-tag">情報網</span>' + esc(n.title) + '</b><small>' + esc(n.body) + '</small></div></div>';
-  });
+  var rows = (state.news || []).filter(function (n) { return n.kind === 'intel' || String(n.batch || '').indexOf('event-') === 0; }).slice(0, 30);
+  var h = '<h3>最近 30 則情報</h3><p class="desc">每則下面是消息發布後到現在的實際漲跌。</p><div class="market-history-list">';
+  if (!rows.length) h += '<div class="empty">目前還沒有情報</div>';
+  rows.forEach(function (n) { h += marketNewsRow(n, state, true); });
   h += '</div><div class="acts" style="margin-top:14px"><button class="btn ghost" type="button" data-close>關閉</button></div>';
   openSheet(h, function (sh) { sh.classList.add('flush'); sh.querySelector('[data-close]').onclick = closeSheet; });
 }
@@ -6337,57 +6575,95 @@ function sheetLeverageClose(symbol) {
   });
 }
 
+function sheetNewsAdmin() {
+  openSheet('<h3>新聞台控制台</h3><p class="desc">正在讀取私有事件與媒體判讀…</p>' + loadingCard());
+  call('adminNewsState').then(function (r) {
+    var room = r.newsroom || { articles: [], clusters: [] }, rows = r.private && r.private.rows || [];
+    var h = '<h3>新聞台控制台</h3><p class="desc">玩家看不到這裡的真相與媒體正確性。排程會在事件風聲出現後，自動產生三到四家互相有落差的報導。</p>' +
+      '<div class="breakdown sheet-bd"><div><span>報導</span><b>' + fmt((room.articles || []).length) + '</b></div><div><span>事件群</span><b>' + fmt((room.clusters || []).length) + '</b></div><div><span>待查證</span><b>' + fmt(rows.filter(function (x) { return !x.resolvedAt; }).length) + '</b></div></div>' +
+      '<div class="grp">';
+    if (!rows.length) h += '<div class="empty">目前還沒有連動事件；可按下方按鈕同步今天已出現的風聲。</div>';
+    rows.slice(0, 12).forEach(function (row) {
+      var dir = row.truth === 'down' ? '下跌' : row.truth === 'neutral' ? '中性' : '上漲';
+      var good = Object.keys(row.articleTruth || {}).filter(function (id) { return row.articleTruth[id] && row.articleTruth[id].accurate; }).length;
+      var total = Object.keys(row.articleTruth || {}).length;
+      h += '<div class="row"><span class="k"><b>' + esc(row.symbol || '國際') + '・' + esc(row.clusterId) + '</b><small>真相：' + dir + (row.magnitude ? ' ' + (row.magnitude * 100).toFixed(1) + '%' : '') + '・媒體判讀 ' + good + '/' + total + ' 接近真相</small></span><span class="tag ' + (row.resolvedAt ? 'cy' : 'warn') + '">' + (row.resolvedAt ? '已查證' : '追蹤中') + '</span></div>';
+    });
+    h += '</div><div class="acts" style="margin-top:14px"><button class="btn ghost" type="button" data-news-open>查看前台</button><button class="btn" type="button" data-news-publish>立即同步</button></div>';
+    openSheet(h, function (sh) {
+      sh.querySelector('[data-news-open]').onclick = function () { closeSheet(); switchTab('news'); loadNews(true); };
+      var publish = sh.querySelector('[data-news-publish]');
+      publish.onclick = function () {
+        busy(publish, true);
+        call('adminNewsPublish').then(function (out) {
+          toast('新聞台已同步：新增 ' + (out.published || []).length + ' 群、查證 ' + (out.resolved || []).length + ' 群', 'good');
+          return loadNews(true);
+        }).then(function () { sheetNewsAdmin(); }).catch(function (e) { toast(e.message, 'bad'); }).then(function () { busy(publish, false); });
+      };
+    });
+  }).catch(function (e) {
+    openSheet('<h3>新聞台控制台</h3><p class="desc">' + esc(e.message || '讀取失敗') + '</p><div class="acts"><button class="btn ghost" type="button" data-close>關閉</button></div>', function (sh) { sh.querySelector('[data-close]').onclick = closeSheet; });
+  });
+}
+
 function sheetMarketAdmin() {
   if (!MKUI.state || !MKUI.state.stocks) {
     toast('正在載入行情，請稍後再開一次', 'bad');
     loadMarket(true);
     return;
   }
-  toast('正在讀取情報網…');
+  toast('正在讀取市場引擎…');
   call('adminMarketSignals').then(function (r) {
     var stocks = MKUI.state.stocks, symbols = Object.keys(stocks), rows = (r && r.rows) || [];
     var latestSlot = (r && r.latestSlot) || (rows[0] && rows[0].slot) || '';
-    var pending = rows.filter(function (x) { return x.status !== 'applied' && (!latestSlot || x.slot === latestSlot); }).slice(0, 5);
-    var selectedSignal = null;
-    var intel = '<div class="intel-panel"><div class="intel-panel-head"><b>情報網建議</b><span>每個時段 5 則</span></div>';
-    if (!pending.length) intel += '<div class="intel-empty">目前沒有待處理情報，可以直接手動操作。</div>';
-    pending.forEach(function (x) {
-      var stock = stocks[x.symbol];
-      if (!stock) return;
-      intel += '<button class="intel-signal" type="button" data-signal="' + esc(x.id) + '" data-symbol="' + esc(x.symbol) + '" data-direction="' + esc(x.direction) + '" data-percent="' + esc(x.percent) + '">' +
-        '<b>' + esc(x.title) + '</b><small>' + esc(x.reason) + '</small><em>帶入建議：' + esc(x.symbol) + ' ' + (x.direction === 'up' ? '上漲 ' : '下跌 ') + esc(x.percent) + '%</em></button>';
+    var latest = rows.filter(function (x) { return !latestSlot || x.slot === latestSlot; }).slice(0, 5);
+    var events = (r && r.events) || [], rumors = (r && r.rumors) || [];
+    var intel = '<div class="intel-panel"><div class="intel-panel-head"><b>今日大事件（只有你看得到）</b><span>' + events.length + ' 次</span></div>';
+    if (!events.length) intel += '<div class="intel-empty">今天還沒排程（開盤後第一次更新時建立）</div>';
+    events.forEach(function (e) {
+      var st = e.applied ? '已爆出' : e.hinted ? '已出風聲' : '未發生';
+      intel += '<div class="intel-signal"><b>' + esc(e.time) + '・' + esc(e.symbol) + ' ' + (e.dir === 'up' ? '利多 +' : '利空 -') + esc(e.percent) + '%</b><small>' + esc(e.headline || '') + '</small><em>' + st + '・' + esc(e.hintTime) + ' 的風聲會說「' + (e.hintDir === 'up' ? '利多' : '利空') + '」' + (e.hintDir === e.dir ? '（正確）' : '（誤導）') + '</em></div>';
+    });
+    intel += '</div>';
+    if (rumors.length) {
+      intel += '<div class="intel-panel"><div class="intel-panel-head"><b>待揭曉傳聞</b><span>' + rumors.length + ' 則</span></div>';
+      rumors.forEach(function (x) {
+        intel += '<div class="intel-signal"><b>' + esc(x.title) + '</b><em>' + twClock(x.resolveAt) + ' 揭曉・' + (x.truth ? '會被證實' : '會被澄清') + '</em></div>';
+      });
+      intel += '</div>';
+    }
+    intel += '<div class="intel-panel"><div class="intel-panel-head"><b>最新情報（已自動影響股價）</b><span>' + latest.length + ' 則</span></div>';
+    if (!latest.length) intel += '<div class="intel-empty">目前沒有情報</div>';
+    latest.forEach(function (x) {
+      intel += '<div class="intel-signal"><b>' + esc(x.title) + '</b><small>' + esc(x.reason || '') + '</small></div>';
     });
     intel += '</div>';
     var list = '<div class="market-admin-list grp">' + symbols.map(function (symbol) {
       var s = stocks[symbol], ch = marketChange(s);
-      return '<div class="row"><span class="k"><b style="color:' + s.color + '">' + esc(symbol) + '</b>　' + esc(s.name) + '</span><span class="v ' + (ch < 0 ? 'market-down' : 'market-up') + '">' + fmt(s.price) + '</span></div>';
+      return '<div class="row"><span class="k"><b style="color:' + s.color + '">' + esc(symbol) + '</b>　' + esc(s.name) + '</span><span class="v ' + (ch < 0 ? 'market-down' : 'market-up') + '">' + fmt(s.price) + '（' + (ch >= 0 ? '+' : '') + ch.toFixed(1) + '%）</span></div>';
     }).join('') + '</div>';
     var options = symbols.map(function (symbol) { return '<option value="' + symbol + '">' + symbol + '・' + esc(stocks[symbol].name) + '</option>'; }).join('');
     var fields = intel + list + '<div class="fld"><label for="maStock">指定股票</label><select class="sel" id="maStock">' + options + '</select></div>' +
       '<div class="fld-grid"><div class="fld"><label for="maDir">方向</label><select class="sel" id="maDir"><option value="up">上漲</option><option value="down">下跌</option></select></div>' +
-      '<div class="fld"><label for="maPct">調整幅度 %</label><input id="maPct" inputmode="decimal" autocomplete="off" value="3"></div></div>' +
-      '<div class="quick"><button type="button" data-mapct="1">1%</button><button type="button" data-mapct="3">3%</button><button type="button" data-mapct="5">5%</button><button type="button" data-mapct="8">8%</button></div>' +
-      '<p class="note-s">情報只是建議。你可以照做、反向操作，或完全手動突然拉升／打壓。玩家只會看到市場買賣盤，不會知道是管理員操作。</p>';
-    formSheet('股市控制台', '情報網會定時出消息；實際漲跌仍由你決定。調整範圍 0.5% 到 10%。', fields, '立即執行', '', function () {
+      '<div class="fld"><label for="maPct">幅度 %</label><input id="maPct" inputmode="decimal" autocomplete="off" value="3"></div></div>' +
+      '<div class="fld-grid"><div class="fld"><label for="maMode">方式</label><select class="sel" id="maMode"><option value="instant">立即調價（不發新聞）</option><option value="news">發布快訊・逐步反映</option></select></div>' +
+      '<div class="fld"><label for="maTicks">反映時間</label><select class="sel" id="maTicks"><option value="3">15 分鐘</option><option value="6" selected>30 分鐘</option><option value="9">45 分鐘</option><option value="12">60 分鐘</option></select></div></div>' +
+      '<div class="fld"><label for="maTitle">快訊標題（發布快訊才會用到）</label><input id="maTitle" maxlength="40" autocomplete="off" placeholder="例如：星界銀行宣布發放特別股利"></div>' +
+      '<div class="quick"><button type="button" data-mapct="1">1%</button><button type="button" data-mapct="3">3%</button><button type="button" data-mapct="5">5%</button><button type="button" data-mapct="8">8%</button><button type="button" data-mapct="12">12%</button></div>' +
+      '<p class="note-s">立即調價 0.5–10%，玩家只看得到價格變動。發布快訊 1–15%，會出現在「大事件與風聲」，三成立刻反映、其餘在反映時間內走完。兩種都受每日 ±60% 價格區間限制。</p>';
+    formSheet('股市控制台', '情報網與大事件會自動影響股價；這裡可以額外手動操作。', fields, '立即執行', '', function () {
       var symbol = $('maStock').value, direction = $('maDir').value, percent = Number($('maPct').value);
-      if (!(percent >= .5 && percent <= 10)) { toast('幅度要在 0.5% 到 10% 之間', 'bad'); return null; }
-      return call('adminMarketMove', { symbol: symbol, direction: direction, percent: percent, signalId: selectedSignal }).then(function (out) {
+      var mode = $('maMode').value, ticks = parseInt($('maTicks').value, 10), title = $('maTitle').value.trim();
+      var lo = mode === 'news' ? 1 : .5, hi = mode === 'news' ? 15 : 10;
+      if (!(percent >= lo && percent <= hi)) { toast('幅度要在 ' + lo + '% 到 ' + hi + '% 之間', 'bad'); return null; }
+      return call('adminMarketMove', { symbol: symbol, direction: direction, percent: percent, mode: mode, ticks: ticks, title: title }).then(function (out) {
         if (out.market) MKUI.state = out.market;
         if (S.tab === 'market') renderMarket(true);
-        return stocks[symbol].name + ' 已' + (direction === 'up' ? '上漲 ' : '下跌 ') + percent + '%';
+        return stocks[symbol].name + (mode === 'news' ? ' 已發布快訊，' : ' 已') + (direction === 'up' ? '上漲 ' : '下跌 ') + percent + '%' + (mode === 'news' ? '（逐步反映）' : '');
       });
     });
-    $('sheet').querySelectorAll('[data-signal]').forEach(function (b) {
-      b.onclick = function () {
-        selectedSignal = b.getAttribute('data-signal');
-        $('maStock').value = b.getAttribute('data-symbol');
-        $('maDir').value = b.getAttribute('data-direction');
-        $('maPct').value = b.getAttribute('data-percent');
-        $('sheet').querySelectorAll('[data-signal]').forEach(function (x) { x.classList.toggle('on', x === b); });
-      };
-    });
     $('sheet').querySelectorAll('[data-mapct]').forEach(function (b) { b.onclick = function () { $('maPct').value = b.getAttribute('data-mapct'); }; });
-  }).catch(function (e) { toast(e.message || '讀取情報失敗', 'bad'); });
+  }).catch(function (e) { toast(e.message || '讀取市場引擎失敗', 'bad'); });
 }
 
 function sheetInterest() {

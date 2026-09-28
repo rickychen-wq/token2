@@ -23,6 +23,7 @@ const { createBig2 } = require('./games/big2');
 const { createRewards } = require('./core/rewards');
 const { createFeedback } = require('./core/feedback');
 const { createMarket } = require('./core/market');
+const { createNewsroom } = require('./core/newsroom');
 const { createTitles } = require('./core/titles');
 
 const db = admin.firestore();
@@ -44,6 +45,9 @@ const TI = createTitles({ db, now, requireSession: A.requireSession, requireAdmi
 const MK = createMarket({
   db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin,
   mutate: EC.mutate
+});
+const NW = createNewsroom({
+  db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin
 });
 
 /* 把自訂錯誤轉成前端讀得到的 HttpsError，其他錯誤不外洩細節 */
@@ -101,6 +105,11 @@ exports.marketLeverageOpen = wrap(MK.leverageOpen);
 exports.marketLeverageClose = wrap(MK.leverageClose);
 exports.adminMarketMove = wrap(MK.adminMove);
 exports.adminMarketSignals = wrap(MK.adminSignals);
+
+/* ---------- 星界新聞網 ---------- */
+exports.newsState = wrap(NW.state);
+exports.adminNewsState = wrap(NW.adminState);
+exports.adminNewsPublish = wrap(NW.adminPublish);
 
 /* ---------- 德州 ---------- */
 exports.pokerSit = wrap(PK.sit);
@@ -218,14 +227,34 @@ exports.marketSupplySync = onSchedule({ schedule: '55 6 * * 1-5', timeZone: 'Asi
   logger.info('market supply sync', await MK.syncSupply(scheduledAt));
 });
 
+/* 每個交易日 06:50 先建立當天事件排程，供 06:55 的晨間新聞使用。 */
+exports.marketDayPrepare = onSchedule({ schedule: '50 6 * * 1-5', timeZone: 'Asia/Taipei', retryCount: 3 }, async (event) => {
+  const scheduledAt = Date.parse(event.scheduleTime) || Date.now();
+  logger.info('market day prepare', await MK.prepareDay(scheduledAt));
+});
+
+/* 每個交易日 06:55 先排好整天新聞，玩家 07:00 開盤時即可閱讀。 */
+exports.marketNewsDaily = onSchedule({ schedule: '55 6 * * 1-5', timeZone: 'Asia/Taipei', retryCount: 3 }, async (event) => {
+  const scheduledAt = Date.parse(event.scheduleTime) || Date.now();
+  const prepared = await MK.prepareDay(scheduledAt);
+  const edition = await NW.publishDailyEdition(scheduledAt);
+  logger.info('market newsroom daily edition', { prepared, edition });
+});
+
 /* 星期五 17:30 收盤：所有持股與槓桿按固定收盤價換回現金，行情本身跨週延續。 */
 exports.marketWeeklyClose = onSchedule({ schedule: '30 17 * * 5', timeZone: 'Asia/Taipei', retryCount: 5 }, async (event) => {
   const scheduledAt = Date.parse(event.scheduleTime) || Date.now();
   logger.info('market weekly close', await MK.closeWeek(scheduledAt));
 });
 
-/* 情報網：每天台灣時間 08、10、12、14、16 點各發布五則消息與管理員建議。 */
-exports.marketIntel = onSchedule({ schedule: '0 8,10,12,14,16 * * *', timeZone: 'Asia/Taipei', retryCount: 3 }, async (event) => {
+/* 情報網：每天台灣時間 08:00～16:00 每半小時發布五則；16:30 排程會由核心安全略過。 */
+exports.marketIntel = onSchedule({ schedule: '*/30 8-16 * * *', timeZone: 'Asia/Taipei', retryCount: 3 }, async (event) => {
   const scheduledAt = Date.parse(event.scheduleTime) || Date.now();
   logger.info('market intel', await MK.publishIntel(scheduledAt));
+});
+
+/* 新聞台：交易日 07:00～16:05 每 5 分鐘更新事後查證，並補上漏掉的事件報導。 */
+exports.marketNewsroom = onSchedule({ schedule: '*/5 7-16 * * 1-5', timeZone: 'Asia/Taipei', retryCount: 3 }, async (event) => {
+  const scheduledAt = Date.parse(event.scheduleTime) || Date.now();
+  logger.info('market newsroom', await NW.publish(scheduledAt));
 });
