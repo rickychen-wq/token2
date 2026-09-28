@@ -6,7 +6,7 @@ const {
   freshState, positionRawEquity, positionEquity, maintenanceMargin,
   shouldLiquidate, leverageCloseFee, liquidationPrice, settlePortfolio,
   tickState, buildShockPlan, applyMarketShock,
-  MAINTENANCE_MARGIN_RATE, MAX_LEVERAGE_MARGIN, MAX_LEVERAGE_POSITIONS
+  MAINTENANCE_MARGIN_RATE, MAX_LEVERAGE_MARGIN, MAX_LEVERAGE_POSITIONS, FORCED_SHOCKS
 } = require('./core/market');
 
 const t = Date.UTC(2026, 8, 28, 1, 0, 0);
@@ -21,6 +21,9 @@ function position(side, leverage) {
 assert.strictEqual(MAINTENANCE_MARGIN_RATE, 0.6);
 assert.strictEqual(MAX_LEVERAGE_MARGIN, 100000);
 assert.strictEqual(MAX_LEVERAGE_POSITIONS, 3);
+assert.deepStrictEqual(FORCED_SHOCKS, [
+  { id: '20260928-1700-bnk-up-3', day: '20260928', slot: 120, symbol: 'BNK', direction: 'up', factor: 3 }
+]);
 
 const long5 = position('long', 5);
 assert.strictEqual(maintenanceMargin(long5), 600);

@@ -15,7 +15,7 @@ const MAX_LEVERAGE_POSITIONS = 3;
 const SHOCK_MIN_PER_DAY = 3;
 const SHOCK_MAX_PER_DAY = 5;
 const FORCED_SHOCKS = [
-  { id: '20260928-1510-bnk-up-3', day: '20260928', slot: 98, symbol: 'BNK', direction: 'up', factor: 3 }
+  { id: '20260928-1700-bnk-up-3', day: '20260928', slot: 120, symbol: 'BNK', direction: 'up', factor: 3 }
 ];
 
 const STOCKS = [
