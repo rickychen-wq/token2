@@ -5417,6 +5417,11 @@ function endSession() {
   TITLEUI.state = null; TITLEUI.loading = false; TITLEUI.error = null; TITLEUI.cat = 'A';
   MN.bet = 200; MN.busy = false; MN.last = null; MN.picking = -1; MN.rewardReveal = null;
   CP.bet = 200; CP.pick = []; CP.busy = false; CP.last = null; CP.rewardReveal = null;
+  if (window.EstateApp) window.EstateApp.unmount();
+  var estateTab = document.querySelector('[data-tab="estate"]'), estateView = $('vEstate');
+  if (estateTab) estateTab.remove();
+  if (estateView) estateView.remove();
+  document.body.classList.remove('estate-mode');
   _last = {};
   closeSheet();
   showGate();
@@ -5425,6 +5430,63 @@ function endSession() {
 function paintTop() {
   $('topName').textContent = S.me.name;
   $('topPid').textContent = '#' + (S.player && S.player.vanity ? S.player.vanity : S.me.pid);
+  ensureEstateAccess();
+}
+
+var ESTATE_LOAD = null;
+function loadEstateScript(src, id) {
+  return new Promise(function (resolve, reject) {
+    if (id && document.getElementById(id)) return resolve();
+    var script = document.createElement('script');
+    script.src = src; if (id) script.id = id; script.async = true;
+    script.onload = resolve;
+    script.onerror = function () { reject(new Error('3D 資源載入失敗，請檢查網路後重試')); };
+    document.head.appendChild(script);
+  });
+}
+function loadEstateEngine() {
+  if (window.EstateApp) return Promise.resolve(window.EstateApp);
+  if (!ESTATE_LOAD) ESTATE_LOAD = loadEstateScript('assets/vendor/three-r147/three.min.js', 'estate-three')
+    .then(function () { return loadEstateScript('assets/vendor/three-r147/GLTFLoader.js', 'estate-gltf'); })
+    .then(function () { return loadEstateScript('assets/vendor/three-r147/OrbitControls.js', 'estate-orbit'); })
+    .then(function () { return loadEstateScript('assets/estate/estate.js?v=1', 'estate-app'); })
+    .then(function () { if (!window.EstateApp) throw new Error('3D 城市初始化失敗'); return window.EstateApp; })
+    .catch(function (e) { ESTATE_LOAD = null; throw e; });
+  return ESTATE_LOAD;
+}
+function ensureEstateAccess() {
+  if (!S.me) return;
+  var admin = S.me.role === 'admin', tab = document.querySelector('[data-tab="estate"]'), view = $('vEstate');
+  if (!admin) {
+    if (S.tab === 'estate') switchTab('home');
+    if (tab) tab.remove();
+    if (view) view.remove();
+    return;
+  }
+  if (!view) {
+    view = document.createElement('section'); view.id = 'vEstate'; view.className = 'view estate-view'; view.hidden = true;
+    view.style.height = 'calc(100dvh - 124px)'; view.style.minHeight = '520px';
+    document.querySelector('.views').appendChild(view);
+  }
+  if (!tab) {
+    tab = document.createElement('button'); tab.className = 'tab estate-tab'; tab.type = 'button'; tab.setAttribute('data-tab', 'estate'); tab.setAttribute('aria-label', '領地');
+    tab.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M4 21V9l8-5 8 5v12"/><path d="M8 21v-7h8v7M3 21h18"/><path d="M9 10h6"/></svg><span>領地</span>';
+    tab.addEventListener('click', function () { switchTab('estate'); });
+    document.querySelector('.tabs-in').appendChild(tab);
+  }
+}
+function renderEstateSecret() {
+  if (!S.me || S.me.role !== 'admin') { switchTab('home'); return; }
+  var root = $('vEstate');
+  if (!root) { ensureEstateAccess(); root = $('vEstate'); }
+  if (!window.EstateApp) {
+    root.innerHTML = '<div class="estate-boot"><span></span><b>正在建立秘密領地</b><small>第一次會載入 3D 引擎與目前階級模型</small></div>';
+    loadEstateEngine().then(function (app) {
+      if (S.tab === 'estate' && S.me && S.me.role === 'admin') app.mount(root, { me: S.me, player: S.player });
+    }).catch(function (e) { root.innerHTML = '<div class="estate-boot error"><b>領地載入失敗</b><small>' + esc(e.message) + '</small><button class="btn ghost" type="button" data-estate-retry>重試</button></div>'; var b = root.querySelector('[data-estate-retry]'); if (b) b.onclick = function () { renderEstateSecret(); }; });
+    return;
+  }
+  window.EstateApp.mount(root, { me: S.me, player: S.player });
 }
 
 document.querySelectorAll('.tab').forEach(function (b) {
@@ -5432,6 +5494,7 @@ document.querySelectorAll('.tab').forEach(function (b) {
 });
 
 function switchTab(t) {
+  if (t === 'estate' && (!S.me || S.me.role !== 'admin')) t = 'home';
   S.tab = t;
   var tabKey = ['bj', 'big2', 'mine', 'cipher', 'gate', 'slot', 'dice', 'market', 'news'].indexOf(t) >= 0 ? 'home' : t;
   document.querySelectorAll('.tab').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === tabKey); });
@@ -5449,7 +5512,10 @@ function switchTab(t) {
   $('vPoker').hidden = t !== 'poker';
   $('vRank').hidden = t !== 'rank';
   $('vMe').hidden = t !== 'me';
+  var estateView = $('vEstate'); if (estateView) estateView.hidden = t !== 'estate';
   document.body.classList.toggle('pk-mode', t === 'poker');
+  document.body.classList.toggle('estate-mode', t === 'estate');
+  if (window.EstateApp) window.EstateApp.setActive(t === 'estate');
   window.scrollTo(0, 0);
   if (t === 'poker') sizePoker();
   syncLive();
@@ -5472,6 +5538,7 @@ function render(force) {
   else if (S.tab === 'slot') renderSlot(force);
   else if (S.tab === 'dice') renderDice(force);
   else if (S.tab === 'rank') renderRank(force);
+  else if (S.tab === 'estate') renderEstateSecret();
   else renderMe(force);
 }
 
