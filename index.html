@@ -5449,7 +5449,7 @@ function loadEstateEngine() {
   if (!ESTATE_LOAD) ESTATE_LOAD = loadEstateScript('assets/vendor/three-r147/three.min.js', 'estate-three')
     .then(function () { return loadEstateScript('assets/vendor/three-r147/GLTFLoader.js', 'estate-gltf'); })
     .then(function () { return loadEstateScript('assets/vendor/three-r147/OrbitControls.js', 'estate-orbit'); })
-    .then(function () { return loadEstateScript('assets/estate/estate.js?v=1', 'estate-app'); })
+    .then(function () { return loadEstateScript('assets/estate/estate-v2.js?v=2', 'estate-app'); })
     .then(function () { if (!window.EstateApp) throw new Error('3D 城市初始化失敗'); return window.EstateApp; })
     .catch(function (e) { ESTATE_LOAD = null; throw e; });
   return ESTATE_LOAD;
@@ -5482,11 +5482,11 @@ function renderEstateSecret() {
   if (!window.EstateApp) {
     root.innerHTML = '<div class="estate-boot"><span></span><b>正在建立秘密領地</b><small>第一次會載入 3D 引擎與目前階級模型</small></div>';
     loadEstateEngine().then(function (app) {
-      if (S.tab === 'estate' && S.me && S.me.role === 'admin') app.mount(root, { me: S.me, player: S.player });
+      if (S.tab === 'estate' && S.me && S.me.role === 'admin') app.mount(root, { me: S.me, player: S.player, roster: S.roster, api: call, onExit: function () { switchTab('home'); } });
     }).catch(function (e) { root.innerHTML = '<div class="estate-boot error"><b>領地載入失敗</b><small>' + esc(e.message) + '</small><button class="btn ghost" type="button" data-estate-retry>重試</button></div>'; var b = root.querySelector('[data-estate-retry]'); if (b) b.onclick = function () { renderEstateSecret(); }; });
     return;
   }
-  window.EstateApp.mount(root, { me: S.me, player: S.player });
+  window.EstateApp.mount(root, { me: S.me, player: S.player, roster: S.roster, api: call, onExit: function () { switchTab('home'); } });
 }
 
 document.querySelectorAll('.tab').forEach(function (b) {
