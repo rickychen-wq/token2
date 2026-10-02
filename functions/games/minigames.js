@@ -7,6 +7,7 @@ const { AppError } = require('../core/util');
 const E = require('../core/econ');
 const TK = require('../core/tasks');
 const { publishHighlights } = require('../core/highlights');
+const { applyActivities } = require('../core/activities');
 
 /* ---------- 設定 ---------- */
 const DEFAULTS = {
@@ -39,9 +40,9 @@ function playCap(raw) {
   return v > 0 ? v : 0;
 }
 
-function gamesCfg(raw) {
+function gamesCfg(raw, t) {
   const g = (raw && raw.games) || {};
-  return {
+  return applyActivities({
     mine: Object.assign({}, DEFAULTS.mine, g.mine, {
       bets: DEFAULTS.mine.bets.slice(), safeMult: 1.25, treasureMult: 1.55,
       specialMinBet: 2000, safeSpecialChance: 0.05, treasureSpecialChance: 0.10
@@ -55,7 +56,7 @@ function gamesCfg(raw) {
     dice: Object.assign({}, DEFAULTS.dice, g.dice),
     bj: Object.assign({}, g.bj),
     big2: Object.assign({}, DEFAULTS.big2, g.big2, { buyIn: 1000, reserve: 2000 })
-  };
+  }, raw, t);
 }
 
 /* ---------- 星核解碼 ----------
@@ -99,9 +100,17 @@ function cipherSpecialRate(cfg, attempt, bet) {
 }
 
 /* ---------- 礦洞探險 ----------
-   每輪三門等機率：安全、寶藏、陷阱。結果只在玩家選門後由伺服器抽出，
+   一般每輪三門等機率；限時活動可以減少陷阱，其餘平均分給安全與寶藏。
+   結果只在玩家選門後由伺服器抽出，
    不把門後內容預先寫進玩家可讀帳戶，避免前端偷看。 */
 const MINE_OUTCOMES = ['safe', 'treasure', 'trap'];
+function mineOutcome(cfg, roll) {
+  const trap = (1 - Math.max(0, Math.min(1, Number(cfg.trapReduction) || 0))) / 3;
+  // 與 randomInt(30000) 同格數，避免 2/3 的浮點誤差吞掉邊界那一格。
+  const trapSlots = Math.round(trap * 30000);
+  const good = Math.ceil((30000 - trapSlots) / 2) / 30000;
+  return roll < good ? 'safe' : roll < (30000 - trapSlots) / 30000 ? 'treasure' : 'trap';
+}
 function mineCanPlay(cfg, role) { return !!(cfg && cfg.enabled) || role === 'admin'; }
 function mineNextValue(value, kind, cfg) {
   const mult = kind === 'safe' ? cfg.safeMult : kind === 'treasure' ? cfg.treasureMult : 0;
@@ -287,7 +296,7 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
       const requested = Number(req.data && req.data.bet);
       let out;
       const r = await mutate(s.pid, (acc, cfg, t, raw) => {
-        const M = gamesCfg(raw).mine;
+        const M = gamesCfg(raw, t).mine;
         if (!mineCanPlay(M, s.player.role)) throw new AppError('礦洞探險尚未開放，請等待管理員開放', 'disabled');
         if (M.bets.indexOf(requested) < 0) throw new AppError('探險本金不正確', 'bad-bet', 'invalid-argument');
         if (acc.mine && acc.mine.active) throw new AppError('你還有一場探險尚未結束', 'mine-active');
@@ -307,11 +316,11 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
       if (!Number.isInteger(door) || door < 0 || door > 2) throw new AppError('請選擇一扇門', 'bad-door', 'invalid-argument');
       let out;
       const r = await mutate(s.pid, (acc, cfg, t, raw, pl, setPlayer) => {
-        const M = gamesCfg(raw).mine;
+        const M = gamesCfg(raw, t).mine;
         const run = acc.mine;
         if (!run || !run.active) throw new AppError('目前沒有進行中的探險', 'no-mine');
         const before = Number(run.value || run.bet || 0);
-        const kind = MINE_OUTCOMES[crypto.randomInt(MINE_OUTCOMES.length)];
+        const kind = mineOutcome(M, crypto.randomInt(30000) / 30000);
         const specialRate = mineSpecialRate(M, kind, run.bet);
         const specialHit = specialRate > 0 && crypto.randomInt(10000) < Math.round(specialRate * 10000);
         const specialReward = specialHit ? mineRewardForRoll(crypto.randomInt(10000)) : null;
@@ -321,7 +330,7 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
           if (E.recordPlay(acc, t, 'mine', playCap(raw))) {
             if (TK.bump(pl, t, 'play', 1, raw)) setPlayer({ tasks: pl.tasks });
           }
-          out = { door, kind, before, value: 0, depth, ended: true, profit: -bet, specialEligible: false, specialTriggered: false };
+          out = { door, kind, before, value: 0, depth, ended: true, profit: -bet, specialEligible: false, specialTriggered: false, activity: M.activity };
           return [{ type: 'game', amount: 0, wallet: acc.wallet, bank: acc.bank.balance, loans: acc.loans, note: '礦洞探險・陷阱吞沒本金' }];
         }
         const rewardResult = applyMineReward(acc, pl, specialReward);
@@ -331,7 +340,7 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
         out = {
           door, kind, before, value, depth: acc.mine.depth, ended: false,
           specialEligible: specialRate > 0, specialRate, specialTriggered: specialHit,
-          specialReward, session: acc.mine
+          specialReward, session: acc.mine, activity: M.activity
         };
         return rewardResult.ledger || [];
       });
@@ -465,7 +474,7 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
       const d = req.data || {};
       let out;
       const r = await mutate(s.pid, (acc, cfg, t, raw, pl, setPl) => {
-        const G = gamesCfg(raw).gate;
+        const G = gamesCfg(raw, t).gate;
         if (!G.enabled) throw new AppError('射龍門目前關閉中', 'disabled');
         const bet = cleanBet(d.bet, G.minBet, G.maxBet);
         if (!acc.gate || !acc.gate.posts) throw new AppError('先發門柱', 'no-posts');
@@ -498,13 +507,13 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
         const post = lo === hi ? v === lo : (v === lo || v === hi);
         const inside = lo === hi ? (guess === 'high' ? v > lo : v < lo) : (v > lo && v < hi);
         if (post) { result = 'post'; delta = -bet * 2; }
-        else if (inside) { result = 'win'; delta = Math.floor(bet * odds.mult); }
+        else if (inside) { result = 'win'; delta = Math.floor(bet * odds.mult * G.payoutMult); }
         else { result = 'lose'; delta = -bet; }
         acc.wallet += delta;
         delete acc.gate;
         if (E.recordPlay(acc, t, 'gate', playCap(raw))) { if (TK.bump(pl, t, 'play', 1, raw)) setPl({ tasks: pl.tasks }); }
-        out = { card: c, result, delta, mult: odds.mult, posts: [a, b], guess };
-        return [{ type: 'game', amount: delta, wallet: acc.wallet, bank: acc.bank.balance, loans: acc.loans, note: '射龍門' + { win: '射中', lose: '沒中', post: '撞柱' }[result] }];
+        out = { card: c, result, delta, mult: odds.mult * G.payoutMult, baseMult: odds.mult, activity: G.activity, posts: [a, b], guess };
+        return [{ type: 'game', amount: delta, wallet: acc.wallet, bank: acc.bank.balance, loans: acc.loans, activityId: G.activity ? G.activity.id : null, note: '射龍門' + { win: '射中', lose: '沒中', post: '撞柱' }[result] + (G.activity ? '・' + G.activity.title : '') }];
       });
       out.wallet = r.account.wallet;
       return out;
@@ -647,6 +656,6 @@ function createMini({ db, now, requireSession, requireAdmin, mutate }) {
 module.exports = {
   createMini, gateOdds, slotPayout, slotRTP, gamesCfg, SYMBOLS, PAY3, diceOdds, DICE_KEYS, newDeck,
   MINE_OUTCOMES, MINE_REWARDS, mineCanPlay, mineNextValue, mineSpecialRate, mineCanCashout,
-  mineRewardForRoll, applyMineReward,
+  mineRewardForRoll, applyMineReward, mineOutcome,
   CIPHER_SYMBOLS, cipherCanPlay, cipherCreateCode, cipherCleanGuess, cipherScore, cipherMultiplier, cipherSpecialRate
 };

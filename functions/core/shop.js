@@ -1,7 +1,8 @@
 'use strict';
 /* core/shop.js — 星幣商店、包包、寶箱、卡片、外觀、管理員發放與商品管理 */
 
-const { AppError, cleanPid, cleanName } = require('./util');
+const { AppError, cleanPid, cleanName, seasonId, seasonRange } = require('./util');
+const E = require('./econ');
 const { SLOT_KEY, STACKABLE, EDITABLE, RARITY, DEX_FULL_STARS, DEX_MAX_EQUIPPED, dexInterest, loadCatalog } = require('./catalog');
 const T = require('./tasks');
 const { benefitsOf, recordTitleProgress } = require('./titles');
@@ -40,6 +41,31 @@ function grant(p, item, qty) {
 /* ---------- v11 寶箱／合成工具 ---------- */
 const rnd = () => Math.random();
 function randInt(min, max) { return min + Math.floor(rnd() * (max - min + 1)); }
+
+/* 原本寶箱獎勵全部結算後，再獨立擲一次牌背典藏：神話 2%、傳奇 5%、神秘 15%。 */
+const CARD_BACK_BONUS_RATE = Object.freeze({ 4: 0.02, 5: 0.05, 6: 0.15 });
+
+function pickNewBack(cat, p, random) {
+  const owned = inv(p).backs || [];
+  const pool = Object.keys(cat.items).filter((id) => cat.items[id].type === 'back' && owned.indexOf(id) < 0);
+  if (!pool.length) return null;
+  const roll = typeof random === 'function' ? random : rnd;
+  return cat.items[pool[Math.min(pool.length - 1, Math.floor(roll() * pool.length))]];
+}
+
+function rollCardBackBonus(chestRarity, cat, p, random) {
+  const chance = CARD_BACK_BONUS_RATE[Number(chestRarity)] || 0;
+  if (!chance) return null;
+  const roll = typeof random === 'function' ? random : rnd;
+  if (roll() >= chance) return { chance, hit: false, completed: false, item: null };
+  const item = pickNewBack(cat, p, roll);
+  if (!item) return { chance, hit: true, completed: true, item: null };
+  grant(p, item, 1);
+  return {
+    chance, hit: true, completed: false,
+    item: { itemId: item.id, name: item.name, img: item.img || null, type: item.type, qty: 1 }
+  };
+}
 
 /* 破損的陶碗滿 2 個自動合成 1 個保硬的鐵碗公，回傳合成了幾個 */
 function fuseBowls(p, t) {
@@ -112,6 +138,18 @@ function cleanQty(v, max) {
   const n = v === undefined ? 1 : Number(v);
   if (!Number.isInteger(n) || n < 1 || n > (max || 99)) throw new AppError('數量要在 1 到 ' + (max || 99) + ' 之間', 'bad-qty', 'invalid-argument');
   return n;
+}
+
+function adminChestChoices(cat, data) {
+  const ur = cat.items[String(data.urChoice || '')];
+  const back = cat.items[String(data.backChoice || '')];
+  if (!ur || ur.type !== 'avatar' || ur.sub !== 'ur' || ur.hidden) {
+    throw new AppError('請先選擇一個 UR 頭像；若沒有選擇介面，請重新整理遊戲', 'chest-choice-required', 'invalid-argument');
+  }
+  if (!back || back.type !== 'back' || back.hidden) {
+    throw new AppError('請先選擇一款牌背典藏', 'chest-choice-required', 'invalid-argument');
+  }
+  return { ur, back };
 }
 
 function createShop({ db, now, requireSession, requireAdmin }) {
@@ -268,9 +306,10 @@ function createShop({ db, now, requireSession, requireAdmin }) {
       const s = await requireSession(req);
       const d = req.data || {};
       const cr = Number(d.chest), kr = Number(d.key);
-      if (!(cr >= 1 && cr <= 7) || !(kr >= 1 && kr <= 7)) throw new AppError('寶箱或鑰匙不對', 'bad-item', 'invalid-argument');
+      if (!Number.isInteger(cr) || !Number.isInteger(kr) || !(cr >= 1 && cr <= 7) || !(kr >= 1 && kr <= 7)) throw new AppError('寶箱或鑰匙不對', 'bad-item', 'invalid-argument');
       if (kr < cr) throw new AppError(RARITY[kr] + '鑰匙打不開' + RARITY[cr] + '寶箱', 'key-too-low');
       return db.runTransaction(async (tx) => {
+        const t = now();
         const cat = await loadCatalog(db, tx);
         const snap = await tx.get(playerRef(s.pid));
         const p = snap.data();
@@ -279,6 +318,24 @@ function createShop({ db, now, requireSession, requireAdmin }) {
         if (!((p.items || {})[keyId] > 0)) throw new AppError('你沒有' + RARITY[kr] + '鑰匙', 'no-key');
         const L = cat.items[chestId].loot;
         if (!L || !Array.isArray(L.items)) throw new AppError('這個寶箱還沒設定內容', 'empty-chest');
+        const choices = cr === 7 ? adminChestChoices(cat, d) : null;
+        const money = cr === 7 ? 1000000 : 0;
+        let acc = null, accRef = null, cfg = null, sRef = null, seasonExists = true;
+        if (money) {
+          const sid = seasonId(t);
+          sRef = db.collection('seasons').doc(sid);
+          accRef = sRef.collection('accounts').doc(s.pid);
+          const [cfgSnap, seasonSnap, accSnap] = await Promise.all([
+            tx.get(db.collection('config').doc('app')), tx.get(sRef), tx.get(accRef)
+          ]);
+          if (seasonSnap.exists && seasonSnap.data().status && seasonSnap.data().status !== 'active') {
+            throw new AppError('本季正在結算，請稍後再開管理員寶箱', 'season-locked');
+          }
+          seasonExists = seasonSnap.exists;
+          cfg = E.cfgOf(cfgSnap.exists ? cfgSnap.data() : null);
+          acc = accSnap.exists ? accSnap.data() : E.newAccount(s.pid, cfg, t);
+          E.rollDaily(acc, t, cfg);
+        }
         useCard(p, chestId); useCard(p, keyId);
 
         const got = [];
@@ -305,7 +362,10 @@ function createShop({ db, now, requireSession, requireAdmin }) {
         if (L.avatar > 0 && rnd() < L.avatar) {
           add(pickFrom(cat, (it) => it.type === 'avatar' && ['female', 'male', 'meme'].indexOf(it.sub) >= 0), 1, 'avatar');
         }
-        if (L.ur > 0 && rnd() < L.ur) {
+        if (choices) {
+          add(choices.ur, 1, 'ur');
+          add(choices.back, 1, 'back');
+        } else if (L.ur > 0 && rnd() < L.ur) {
           add(pickFrom(cat, (it) => it.type === 'avatar' && it.sub === 'ur'), 1, 'ur');
         }
         if (L.bg > 0 && rnd() < L.bg) {
@@ -318,14 +378,37 @@ function createShop({ db, now, requireSession, requireAdmin }) {
           else { dexFull = L.dexFullStars || DEX_FULL_STARS; p.stars = (p.stars || 0) + dexFull; }
         }
 
-        const t = now();
+        /* 第二輪獨立加抽，不取代、也不降低上面任何原獎勵。 */
+        const backBonus = rollCardBackBonus(cr, cat, p, rnd);
+
         const fused = fuseBowls(p, t);
         if (got.some((x) => x.tag === 'item')) T.bump(p, t, 'firstItem');
         recordTitleProgress(p, t, 'chest', cr);
         p.titleStats = Object.assign({}, p.titleStats || {});
         p.titleStats.maxChestRarity = Math.max(Number(p.titleStats.maxChestRarity || 0), cr);
-        const result = { chest: cr, key: kr, stars, items: got, fused, dexFull };
-        tx.update(playerRef(s.pid), playerPatch(p));
+        const result = { chest: cr, key: kr, stars, money, items: got, fused, dexFull, backBonus };
+        if (acc) {
+          acc.wallet += money;
+          const creditWallet = acc.wallet;
+          const repayments = E.autoRepay(acc, cfg, t);
+          E.refresh(acc, cfg, t);
+          if (!seasonExists) {
+            const range = seasonRange(t);
+            tx.set(sRef, { id: seasonId(t), startAt: range.start, endAt: range.end, status: 'active', createdAt: t });
+          }
+          tx.set(accRef, acc);
+          tx.set(accRef.collection('ledger').doc(), {
+            type: 'chest', amount: money, wallet: creditWallet, bank: acc.bank.balance, loans: acc.loans + repayments.length,
+            at: t, by: s.pid, note: '管理員寶箱・遊戲幣獎勵'
+          });
+          repayments.forEach((entry) => tx.set(accRef.collection('ledger').doc(), Object.assign({}, entry, { at: t, by: s.pid })));
+          if (acc.peakNet > Number((p.stats || {}).peakNet || 0)) {
+            p.stats = Object.assign({}, p.stats || {}, { peakNet: acc.peakNet, peakNetSeason: seasonId(t) });
+          }
+        }
+        const patch = playerPatch(p);
+        if (acc && p.stats) patch.stats = p.stats;
+        tx.update(playerRef(s.pid), patch);
         tx.set(playerRef(s.pid).collection('logs').doc(), Object.assign({ kind: 'open', at: t }, result));
         return result;
       });
@@ -464,4 +547,8 @@ function createShop({ db, now, requireSession, requireAdmin }) {
   };
 }
 
-module.exports = { createShop, grant, inv, useCard, playerPatch, fuseBowls, expireTemp, canWear, SHAMPOO_HOURS, TEMP_AVATAR_SUBS };
+module.exports = {
+  createShop, grant, inv, useCard, playerPatch, fuseBowls, expireTemp, canWear,
+  rollCardBackBonus, pickNewBack, CARD_BACK_BONUS_RATE, adminChestChoices,
+  SHAMPOO_HOURS, TEMP_AVATAR_SUBS
+};

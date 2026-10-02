@@ -25,6 +25,7 @@ const { createFeedback } = require('./core/feedback');
 const { createMarket } = require('./core/market');
 const { createNewsroom } = require('./core/newsroom');
 const { createTitles } = require('./core/titles');
+const { createActivities } = require('./core/activities');
 
 const db = admin.firestore();
 const now = () => Date.now();
@@ -42,6 +43,7 @@ const SE = createSeason({ db, now, requireAdmin: A.requireAdmin, runInterest: EC
 const RW = createRewards({ db, now, requireAdmin: A.requireAdmin });
 const FB = createFeedback({ db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin });
 const TI = createTitles({ db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin });
+const EV = createActivities({ db, now, requireAdmin: A.requireAdmin });
 const MK = createMarket({
   db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin,
   mutate: EC.mutate
@@ -165,6 +167,8 @@ exports.big2Pass = wrap(B2.pass);
 exports.big2Tick = wrap(B2.tick);
 exports.adminBig2Start = wrap(B2.adminStart);
 exports.adminGames = wrap(MG.adminGames);
+exports.adminActivityStart = wrap(EV.start);
+exports.adminActivityStop = wrap(EV.stop);
 
 /* ---------- 公告、信箱 ---------- */
 exports.adminAnnounce = wrap(ML.adminAnnounce);

@@ -649,6 +649,12 @@ button.game:active{transform:scale(.99)}
 .prize-cell b{font-size:12px;font-weight:600;text-align:center;line-height:1.25;word-break:break-all}
 .prize-cell small{font-size:11px;color:var(--dim);text-align:center}
 .prize-cell.dup{opacity:.72}
+.back-bonus-fx{position:relative;min-height:330px;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;text-align:center;border-radius:16px;background:radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--rc) 23%,transparent),transparent 30%),linear-gradient(160deg,#11172a,#070d1a 70%);border:1px solid color-mix(in srgb,var(--rc) 45%,transparent);isolation:isolate}
+.back-bonus-fx::before,.back-bonus-fx::after{content:"";position:absolute;width:260px;height:260px;border-radius:50%;border:1px solid color-mix(in srgb,var(--rc) 45%,transparent);animation:bonusOrbit 6s linear infinite;z-index:-1}.back-bonus-fx::after{width:190px;height:190px;border-style:dashed;animation-direction:reverse;animation-duration:4s}
+.back-bonus-eyebrow{color:var(--rc);font:900 10px var(--ui);letter-spacing:.28em;text-indent:.28em}.back-bonus-fx h3{margin:9px 0 5px;font:900 25px var(--ui)}.back-bonus-fx p{max-width:280px;margin:0;color:var(--dim);font-size:11px;line-height:1.65}
+.back-bonus-card{display:grid;place-items:center;min-height:150px;margin:13px 0 10px;filter:drop-shadow(0 0 20px color-mix(in srgb,var(--rc) 75%,transparent));animation:bonusCardIn .72s cubic-bezier(.16,1.35,.35,1) both}.back-bonus-card.miss{width:92px;min-height:92px;border-radius:50%;color:var(--faint);background:rgba(5,11,23,.72);border:1px solid var(--edge);filter:none;font:900 28px var(--ui)}
+.back-bonus-name{color:#fff!important;font:900 15px var(--ui)!important}.back-bonus-rate{display:inline-flex;margin-top:10px;padding:4px 8px;border-radius:999px;color:var(--rc);background:color-mix(in srgb,var(--rc) 9%,transparent);border:1px solid color-mix(in srgb,var(--rc) 28%,transparent);font:800 9px var(--ui)}
+@keyframes bonusOrbit{to{transform:rotate(360deg)}}@keyframes bonusCardIn{0%{opacity:0;transform:translateY(28px) scale(.38) rotate(-7deg);filter:blur(8px)}70%{opacity:1;transform:translateY(-5px) scale(1.08) rotate(2deg);filter:blur(0)}100%{transform:none}}
 .bj-dealer-id[data-dealer]{cursor:pointer}
 /* v11b 幹錢券選牌 */
 .pick-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:5px;margin:14px 0;max-height:46vh;overflow-y:auto;padding:2px}
@@ -1164,6 +1170,11 @@ button.game:active{transform:scale(.99)}
 .title-detail{display:grid;gap:7px;margin-top:12px;padding-top:11px;border-top:1px solid var(--edge-soft)}.title-detail div{display:grid;grid-template-columns:54px 1fr;gap:8px;font-size:12px;line-height:1.55}.title-detail label{color:var(--faint)}.title-detail span{color:var(--dim)}.title-progress{color:var(--cy)!important;font-family:var(--ui);font-weight:700}.title-actions{display:flex;gap:7px;margin-top:11px}.title-actions button{flex:1;height:34px;border-radius:7px;border:1px solid var(--edge);color:var(--cy);font-size:12px}.title-actions button.primary{border:0;background:linear-gradient(135deg,var(--cy-hi),var(--cy));color:#04121c;font-weight:700}.title-actions button:disabled{opacity:.35}
 .title-admin{margin-top:16px;border:1px solid rgba(255,211,122,.25);border-radius:11px;padding:14px;background:rgba(255,211,122,.045)}.title-admin h3{margin:0 0 9px;font-size:15px;color:var(--gold)}.title-admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.title-admin .sel{height:40px}.title-admin-actions{display:flex;gap:8px;margin-top:8px}.title-admin-actions .btn{height:38px}
 @media(max-width:390px){.title-stats{grid-template-columns:1fr}.title-admin-grid{grid-template-columns:1fr}.title-count span{font-size:16px}.title-gate,.title-hero{padding:18px}}
+.activity-card{position:relative;margin:12px 0;padding:17px;border:1px solid #5264a2;border-radius:16px;background:radial-gradient(ellipse at 100% 0,#30366680,transparent 65%),linear-gradient(135deg,#101d30,#111325);overflow:hidden}
+.activity-top{display:flex;align-items:center;justify-content:space-between;gap:12px}.activity-label{font-size:10px;letter-spacing:.18em;color:#b6b9ff}.activity-card h3{margin:7px 0;font-size:18px}.activity-card p{font-size:12px;line-height:1.7;color:var(--dim);margin:6px 0}.activity-clock{white-space:nowrap;font:700 14px var(--ui);color:#9be5ff;font-variant-numeric:tabular-nums}.activity-facts{display:flex;flex-wrap:wrap;gap:7px}.activity-facts span{padding:6px 9px;border-radius:7px;background:#ffffff08;border:1px solid #ffffff12;font-size:12px}.activity-card .btn{margin-top:12px}.activity-form .fld-grid{align-items:start}.activity-form .quick{margin:8px 0 15px}.activity-preview{padding:12px;border-left:2px solid #8ca4ff;background:#ffffff05;font-size:12px;line-height:1.8;margin:12px 0;color:var(--dim)}
+.activity-form select{width:100%;height:50px;padding:0 12px;border-radius:4px;font-size:15px;color:var(--fg);background:rgba(3,8,18,.72);border:1px solid var(--edge);color-scheme:dark}.activity-form select:focus-visible{outline:2px solid var(--cy);outline-offset:2px}
+.chest-choice-summary{padding:14px;border-radius:12px;background:linear-gradient(120deg,#27365d,#24213e);display:flex;justify-content:space-between;gap:8px;margin:12px 0;font-weight:700;font-size:13px}.chest-choice-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.chest-choice{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-width:0;padding:12px 6px;color:var(--fg);background:#0c1727;border:1px solid var(--edge);border-radius:12px;cursor:pointer}.chest-choice b{font-size:12px;line-height:1.5;text-align:center;overflow-wrap:anywhere}.chest-choice small{font-size:10px;color:var(--dim)}.chest-choice.on{border-color:#a893ff;background:#29204b;box-shadow:inset 0 0 0 1px #a893ff55}.chest-choice:focus-visible{outline:2px solid var(--cy);outline-offset:2px}.chest-choice-actions{position:sticky;bottom:-24px;padding:12px 0;background:#0c1727;margin-top:18px}.prize-money{font-size:23px;font-weight:900;color:#86e2bd;text-align:center;margin:12px 0}
+@media(max-width:380px){.chest-choice-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.chest-choice-summary{font-size:11px;flex-wrap:wrap}.activity-top{align-items:flex-start}.activity-card{padding:14px}}
 </style>
 <style>.seg button{min-width:0}@media(max-width:420px){.seg button{font-size:11px;letter-spacing:0;padding-left:1px;padding-right:1px}}</style>
 <style>.seg{min-width:0}.seg button{overflow:hidden;white-space:nowrap}.me-sub{min-width:0;overflow-x:hidden}.title-count{grid-template-columns:repeat(4,minmax(0,1fr))}</style>
@@ -1711,6 +1722,7 @@ DEFAULT_ITEMS.push(
 var BASIC_EMOTES = ["👍","😂","😮","😡","🤡","🔥","🙏","😭"];
 var EDITABLE = ["name","price","onSale","tier","desc","stock","perUser","startAt","endAt","salvage","rewards","loot","sub"];
 var RARITY = ["","稀有","極稀有","史詩","神話","傳奇","神秘","管理員"];
+var CARD_BACK_BONUS_RATE = { 4: .02, 5: .05, 6: .15 };
 var ITEM = {}, CATALOG = [], SOLD = {};
 var LEGACY_REVIVE_LOOT = { 1: [1, 1], 2: [1, 2], 3: [3, 3], 4: [5, 5], 5: [5, 5], 6: [5, 5], 7: [10, 10] };
 var TARGET_REVIVE_LOOT = { 1: null, 2: null, 3: [0, 1], 4: [1, 2], 5: [1, 3], 6: [5, 5], 7: [20, 20] };
@@ -1736,6 +1748,9 @@ function rebuildItems(doc) {
     if (o[d.id]) EDITABLE.forEach(function (k) { if (o[d.id][k] !== undefined) x[k] = o[d.id][k]; });
     if (x.type === 'back' && LEGACY_BACK_NAMES_V17.indexOf(x.name) >= 0) x.name = BACK_NAMES_V17[x.id] || x.name;
     migrateReviveLoot(x);
+    if (x.id === 'chest_7') x.loot = Object.assign({}, x.loot, {
+      stars: { min: 2000, max: 2000 }, money: 1000000, backChoice: true, urChoice: true, ur: 1
+    });
     ITEM[x.id] = x; CATALOG.push(x);
   });
 }
@@ -2498,6 +2513,7 @@ function sheetOpenChest(chest) {
     rows += '<div class="row"><span class="k">★ 星幣</span><span class="v">' + (L.stars.min === L.stars.max ? L.stars.min : L.stars.min + '～' + L.stars.max) + '</span></div>';
   }
   (L.items || []).forEach(function (e) {
+    // 管理員寶箱遊戲幣另外列出，原有道具保留。
     var it = ITEM[e.itemId];
     if (!it) return;
     rows += '<div class="row"><span class="k">' + esc(it.name) + '</span><span class="v">' +
@@ -2505,8 +2521,13 @@ function sheetOpenChest(chest) {
   });
   [['avatar', '一般頭像'], ['ur', 'UR 頭像'], ['bg', '背景板'], ['dex', '圖鑑收藏品']].forEach(function (x) {
     if (!(L[x[0]] > 0)) return;
-    rows += '<div class="row"><span class="k">' + x[1] + '</span><span class="v">' + pct(L[x[0]]) + '</span></div>';
+    rows += '<div class="row"><span class="k">' + x[1] + '</span><span class="v">' + pct(L[x[0]]) + (x[0] === 'ur' && L.urChoice ? '・自選' : '') + '</span></div>';
   });
+  if (L.money) rows += '<div class="row"><span class="k">遊戲幣</span><span class="v">' + fmt(L.money) + '<small>　必得</small></span></div>';
+  if (L.backChoice) rows += '<div class="row"><span class="k">牌背典藏</span><span class="v">100%・自選</span></div>';
+  if (CARD_BACK_BONUS_RATE[chest.rarity]) {
+    rows += '<div class="row"><span class="k">牌背典藏<small>原獎勵結算後，獨立再抽一次</small></span><span class="v">' + pct(CARD_BACK_BONUS_RATE[chest.rarity]) + '</span></div>';
+  }
   var h = '<div class="buy-prev">' + itemThumb(chest, 120) + '</div><h3 class="center">' + esc(chest.name) + '</h3>' +
     '<p class="desc center">持有 ' + countOf(p, chest.id) + ' 個</p>' +
     '<div class="stat-h">開出的內容（一次全部給，公開機率）</div><div class="grp">' + rows + '</div>' +
@@ -2521,6 +2542,7 @@ function sheetOpenChest(chest) {
     sh.querySelectorAll('[data-k]').forEach(function (b) {
       b.onclick = function () {
         var kr = +b.getAttribute('data-k');
+        if (chest.rarity === 7) return sheetAdminChestChoices(chest, kr);
         var go = function () {
           busy(b, true);
           call('shopOpenChest', { chest: chest.rarity, key: kr }).then(function (res) { showChestResult(chest, res); })
@@ -2536,11 +2558,49 @@ function sheetOpenChest(chest) {
   });
 }
 
+function sheetAdminChestChoices(chest, key) {
+  var selection = { urChoice: '', backChoice: '' }, sending = false;
+  function group(type, title, test, ownedKey) {
+    var owned = ((S.player || {}).unlocked || {})[ownedKey] || [];
+    var pool = CATALOG.filter(test).sort(function (a, b) { return Number(owned.indexOf(a.id) >= 0) - Number(owned.indexOf(b.id) >= 0); });
+    return '<div class="stat-h">' + title + '</div><div class="chest-choice-grid">' + pool.map(function (it) {
+      return '<button type="button" class="chest-choice" data-choice-kind="' + type + '" data-choice-id="' + esc(it.id) + '" aria-pressed="false">' + itemThumb(it, it.type === 'back' ? 82 : 64) + '<b>' + esc(it.name) + '</b><small>' + (owned.indexOf(it.id) >= 0 ? '已擁有・重複將分解為星幣' : '尚未收藏') + '</small></button>';
+    }).join('') + '</div>';
+  }
+  openSheet('<h3>管理員寶箱・選擇珍藏</h3><p class="desc">各選一個 UR 頭像和牌背，再開啟寶箱。兩項都必得，其餘獎勵照舊。</p>' +
+    '<div class="chest-choice-summary"><span>★ 2,000 星幣</span><span>遊戲幣 1,000,000</span></div>' +
+    group('urChoice', '自選 UR 頭像', function (it) { return it.type === 'avatar' && it.sub === 'ur' && !it.hidden; }, 'avatars') +
+    group('backChoice', '自選牌背典藏', function (it) { return it.type === 'back' && !it.hidden; }, 'backs') +
+    '<p class="desc" id="chestChoiceNote">請選擇兩項珍藏</p><div class="acts chest-choice-actions"><button class="btn ghost" type="button" data-close>返回</button><button class="btn" type="button" id="chestChoiceOpen" disabled>選好兩項再開啟</button></div>', function (sh) {
+      sh.querySelector('[data-close]').onclick = function () { if (!sending) sheetOpenChest(chest); };
+      var go = sh.querySelector('#chestChoiceOpen');
+      sh.querySelectorAll('[data-choice-id]').forEach(function (button) {
+        button.onclick = function () {
+          if (sending) return;
+          selection[button.getAttribute('data-choice-kind')] = button.getAttribute('data-choice-id');
+          sh.querySelectorAll('[data-choice-id]').forEach(function (b) {
+            var selected = selection[b.getAttribute('data-choice-kind')] === b.getAttribute('data-choice-id');
+            b.classList.toggle('on', selected); b.setAttribute('aria-pressed', String(selected));
+          });
+          var ready = selection.urChoice && selection.backChoice;
+          go.disabled = !ready; go.textContent = ready ? '消耗寶箱與鑰匙・開啟' : '選好兩項再開啟';
+          sh.querySelector('#chestChoiceNote').textContent = ready ? ITEM[selection.urChoice].name + ' ＋ ' + ITEM[selection.backChoice].name : '還需要選擇' + (selection.urChoice ? '牌背' : selection.backChoice ? ' UR 頭像' : '兩項珍藏');
+        };
+      });
+      go.onclick = function () {
+        if (sending || !selection.urChoice || !selection.backChoice) return;
+        sending = true; busy(go, true);
+        call('shopOpenChest', { chest: 7, key: key, urChoice: selection.urChoice, backChoice: selection.backChoice }).then(function (result) { showChestResult(chest, result); }).catch(function (e) { sending = false; busy(go, false); toast(e.message, 'bad'); });
+      };
+    });
+}
+
 /* v11：一次開出多項，全部列在同一張結果卡裡 */
 function showChestResult(chest, res) {
   var got = res.items || [];
   var prize = '';
   if (res.stars) prize += '<div class="prize-stars">★ ' + fmt(res.stars) + '</div><p class="desc center">星幣</p>';
+  if (res.money) prize += '<div class="prize-money">遊戲幣 ＋' + fmt(res.money) + '</div>';
   if (got.length) {
     prize += '<div class="prize-list">' + got.map(function (x) {
       var it = ITEM[x.itemId] || { name: x.name, img: x.img, type: x.type };
@@ -2553,8 +2613,32 @@ function showChestResult(chest, res) {
   if (res.dexFull) prize += '<p class="desc center">圖鑑已經收滿，改發 ★ ' + fmt(res.dexFull) + '</p>';
   if (res.fused) prize += '<p class="desc center">破損的陶碗自動合成了 ' + res.fused + ' 個保硬的鐵碗公</p>';
   if (!prize) prize = '<p class="desc center">這次什麼都沒開到</p>';
+  var hasBackBonus = !!res.backBonus;
   openSheet('<div class="open-fx' + (got.length > 1 ? ' multi' : '') + '" style="--rc:' + RARITY_COLOR[chest.rarity] + '"><div class="fx-ring"></div><div class="fx-rays"></div>' +
     '<div class="fx-chest">' + itemThumb(chest, 110) + '</div><div class="fx-prize">' + prize + '</div></div>' +
+    '<div class="acts" style="margin-top:10px"><button class="btn" type="button" ' + (hasBackBonus ? 'data-back-bonus' : 'data-close') + '>' + (hasBackBonus ? '進行牌背典藏加抽' : '收下') + '</button></div>', function (sh) {
+    var close = sh.querySelector('[data-close]');
+    if (close) close.onclick = closeSheet;
+    var next = sh.querySelector('[data-back-bonus]');
+    if (next) next.onclick = function () { showCardBackBonus(chest, res.backBonus); };
+  });
+}
+
+function showCardBackBonus(chest, bonus) {
+  var chance = Math.round((bonus.chance || 0) * 1000) / 10;
+  var color = RARITY_COLOR[chest.rarity] || 'var(--gold)', content;
+  if (bonus.hit && bonus.item) {
+    var it = ITEM[bonus.item.itemId] || { id: bonus.item.itemId, name: bonus.item.name, img: bonus.item.img, type: 'back' };
+    content = '<div class="back-bonus-eyebrow">COLLECTION ACQUIRED</div><h3>抽中牌背典藏</h3>' +
+      '<div class="back-bonus-card">' + itemThumb(it, 120) + '</div><p class="back-bonus-name">' + esc(it.name) + '</p><p>已永久加入衣櫃，可以到牌背欄位裝備。</p>';
+  } else if (bonus.hit && bonus.completed) {
+    content = '<div class="back-bonus-eyebrow">COLLECTION COMPLETE</div><h3>牌背典藏已全收集</h3>' +
+      '<div class="back-bonus-card miss">✓</div><p>這次加抽有命中，但你的牌背典藏已經全部收滿。</p>';
+  } else {
+    content = '<div class="back-bonus-eyebrow">BONUS DRAW</div><h3>這次沒有抽中</h3>' +
+      '<div class="back-bonus-card miss">—</div><p>原本的寶箱獎勵不受影響，下次開箱還會再獨立抽一次。</p>';
+  }
+  openSheet('<div class="back-bonus-fx" style="--rc:' + color + '">' + content + '<span class="back-bonus-rate">本次機率 ' + chance + '%</span></div>' +
     '<div class="acts" style="margin-top:10px"><button class="btn" type="button" data-close>收下</button></div>', function (sh) {
     sh.querySelector('[data-close]').onclick = closeSheet;
   });
@@ -4016,7 +4100,46 @@ function gcfg(k) {
     out.payouts = GAMES_DEF.cipher.payouts.slice(); out.specialBet = 5000;
     out.specialChances = GAMES_DEF.cipher.specialChances.slice();
   }
+  if (k === 'mine') {
+    out.safeMult = 1.25; out.treasureMult = 1.55; out.specialMinBet = 2000;
+    out.safeSpecialChance = 0.05; out.treasureSpecialChance = 0.10;
+  }
+  var event = activeGameActivity(k);
+  out.activity = event;
+  if (k === 'gate') out.payoutMult = event ? event.payoutMult : 1;
+  if (k === 'mine') {
+    out.trapReduction = event ? event.trapReduction : 0;
+    if (event && event.specialChance !== null) out.safeSpecialChance = out.treasureSpecialChance = event.specialChance;
+  }
   return out;
+}
+
+var ACTIVITY_UI = { signature: '' };
+function activeGameActivity(game) {
+  var event = ((S.cfg || {}).gameActivities || {})[game], t = serverNow();
+  return event && event.startsAt <= t && t < event.endsAt ? event : null;
+}
+function activityFacts(event) {
+  if (event.game === 'gate') return ['射中獎金 × ' + event.payoutMult, '未中與撞柱扣款照舊'];
+  var trap = Math.round((1 - event.trapReduction) / 3 * 10000) / 100;
+  return ['陷阱機率 ' + trap + '%', event.specialChance === null ? '特殊寶物維持原機率' : '特殊寶物 ' + Math.round(event.specialChance * 100) + '%', '特殊寶物需投入 5,000'];
+}
+function activityCard(event, admin) {
+  return '<div class="activity-card"><div class="activity-top"><span class="activity-label">LIVE EVENT · ' + (event.game === 'gate' ? '射龍門' : '礦洞探險') + '</span><span class="activity-clock" data-activity-end="' + event.endsAt + '">' + hms(event.endsAt - serverNow()) + '</span></div>' +
+    '<h3>' + esc(event.title) + '</h3><div class="activity-facts">' + activityFacts(event).map(function (fact) { return '<span>' + esc(fact) + '</span>'; }).join('') + '</div>' +
+    (admin ? '<button class="btn ghost sm" type="button" data-activity-stop="' + esc(event.game) + '" data-activity-id="' + esc(event.id) + '">提前結束活動</button>' : '<p>活動期間每次結算即時套用，時間到自動恢復。</p>') + '</div>';
+}
+function activityBanner(game) { var e = activeGameActivity(game); return e ? activityCard(e, false) : ''; }
+function paintActivityClocks() {
+  document.querySelectorAll('[data-activity-end]').forEach(function (el) {
+    var left = Number(el.getAttribute('data-activity-end')) - serverNow();
+    el.textContent = left > 0 ? hms(left) : '活動已結束';
+  });
+  var signature = ['gate', 'mine'].map(function (game) { var e = activeGameActivity(game); return e ? e.id : ''; }).join('|');
+  if (signature !== ACTIVITY_UI.signature) {
+    ACTIVITY_UI.signature = signature;
+    if (['home', 'gate', 'mine'].indexOf(S.tab) >= 0) render(true);
+  }
 }
 
 function gameHead(title, right) {
@@ -4413,6 +4536,7 @@ function renderMine(force) {
   var run = S.acc && S.acc.mine && S.acc.mine.active ? S.acc.mine : null;
   var access = c.enabled || admin || !!run;
   var h = gameHead('礦洞探險', rulesBtn('mine'));
+  h += activityBanner('mine');
   h += '<div class="mine-shell"><div class="mine-inner"><div class="mine-kicker">TOKEN DEEP MINE</div>' +
     '<div class="mine-title">三門之下，命運無聲</div><p class="mine-sub">選一扇門深入地底。安全與寶藏會讓本金成長，但踩中陷阱，這趟探險就會一無所有。</p>';
   if (!access) {
@@ -4452,7 +4576,7 @@ function renderMine(force) {
       }).join('') + '</div><div class="mine-odds"><div class="mine-odd safe"><b>安全門 × 1.25</b>穩定增加</div>' +
         '<div class="mine-odd treasure"><b>寶藏門 × 1.55</b>高額成長</div><div class="mine-odd trap"><b>陷阱門 × 0</b>全數失去</div></div>' +
         '<button class="btn gold" type="button" data-mine-start' + (MN.busy || !S.acc || S.acc.wallet < MN.bet ? ' disabled' : '') + '>投入 ' + fmt(MN.bet) + '・開始探險</button>' +
-        '<p class="mine-sub" style="margin-top:12px">只有投入 5,000 才能觸發特殊獎勵判定：安全門 5%、寶藏門 10%。命中後會再從完整獎池抽出一份獎勵。</p>';
+        '<p class="mine-sub" style="margin-top:12px">只有投入 5,000 才能觸發特殊獎勵判定：安全門 ' + Math.round(c.safeSpecialChance * 100) + '%、寶藏門 ' + Math.round(c.treasureSpecialChance * 100) + '%。命中後會再從完整獎池抽出一份獎勵。</p>';
     }
   }
   h += '</div></div>';
@@ -4620,12 +4744,14 @@ function gateOdds(lo, hi, guess, edge) {
   if (win <= 0) return 0;
   var pWin = win / 50, pPost = post / 50;
   var pLose = 1 - pWin - pPost;
-  return Math.max(0.01, Math.floor(((pLose + 2 * pPost - edge) / pWin) * 100) / 100);
+  var base = Math.max(0.01, Math.floor(((pLose + 2 * pPost - edge) / pWin) * 100) / 100);
+  return Math.round(base * gcfg('gate').payoutMult * 10000) / 10000;
 }
 
 function renderGate(force) {
   var c = gcfg('gate'), posts = GT.posts || (S.acc && S.acc.gate && S.acc.gate.posts) || null;
   var h = gameHead('射龍門', rulesBtn('gate'));
+  h += activityBanner('gate');
   var lo, hi, pair, adj;
   if (posts) { lo = Math.min(gRank(posts[0]), gRank(posts[1])); hi = Math.max(gRank(posts[0]), gRank(posts[1])); pair = lo === hi; adj = hi - lo === 1; }
   var last = GT.last;
@@ -4758,6 +4884,60 @@ function spinSlot(bet) {
   });
 }
 
+function sheetActivities() {
+  if (!S.me || S.me.role !== 'admin') return;
+  var running = ['gate', 'mine'].map(function (game) { var e = activeGameActivity(game); return e ? activityCard(e, true) : ''; }).join('');
+  var h = '<h3>管理員活動</h3><p class="desc">選遊戲、設定效果與秒數，即刻開放限時加成。兩個遊戲可以同時辦活動。</p>' +
+    (running || '<div class="activity-preview">目前沒有進行中的活動</div>') +
+    '<form class="activity-form"><div class="stat-h">建立／替換活動</div><div class="fld"><label for="evGame">遊戲</label><select id="evGame"><option value="gate">射龍門・獎金加倍</option><option value="mine">礦洞探險・尋寶祭</option></select></div>' +
+    fld('evTitle', '活動名稱', 'text', ' maxlength="40" placeholder="可留空，使用預設名稱"') +
+    '<div id="evGateFields">' + fld('evMult', '射中獎金倍率', 'number', ' min="1" max="10" step="0.1" value="2"') + '<div class="quick"><button type="button" data-event-mult="2">2 倍</button><button type="button" data-event-mult="3">3 倍</button><button type="button" data-event-mult="4">4 倍</button></div></div>' +
+    '<div id="evMineFields" hidden><div class="fld"><label for="evTrap">陷阱機率降低 %</label><select id="evTrap"><option value="0">不變</option><option value="50" selected>降低 50%</option><option value="70">降低 70%</option><option value="80">降低 80%</option><option value="100">降低 100%・無陷阱</option></select></div><div class="fld"><label for="evSpecial">安全／寶藏門特殊寶物機率</label><select id="evSpecial"><option value="">原機率（5%／10%）</option><option value="50">50%</option><option value="100">100%・必得</option><option value="custom">自訂機率</option></select></div><div id="evCustomSpecial" hidden>' + fld('evSpecialPct', '自訂特殊寶物 %', 'number', ' min="0" max="100" step="1" value="50"') + '</div></div>' +
+    fld('evSeconds', '持續秒數', 'number', ' min="1" max="604800" step="1" value="300"') +
+    '<div class="quick"><button type="button" data-event-sec="30">30 秒</button><button type="button" data-event-sec="60">1 分鐘</button><button type="button" data-event-sec="300">5 分鐘</button></div>' +
+    '<div class="activity-preview" id="evPreview"></div><p class="note-s">同遊戲的新活動會替換原活動。活動不會改變遊戲的公開開關。</p>' +
+    '<div class="acts"><button class="btn ghost" type="button" data-close>關閉</button><button class="btn" type="submit">開始活動</button></div></form>';
+  openSheet(h, function (sh) {
+    var form = sh.querySelector('form'), submit = form.querySelector('[type="submit"]');
+    function field(id) { return sh.querySelector('#' + id); }
+    var specialValue = function () { return field('evSpecial').value === 'custom' ? Number(field('evSpecialPct').value) : field('evSpecial').value === '' ? null : Number(field('evSpecial').value); };
+    function preview() {
+      var mine = field('evGame').value === 'mine', trap = Number(field('evTrap').value), special = specialValue();
+      field('evGateFields').hidden = mine; field('evMineFields').hidden = !mine;
+      field('evCustomSpecial').hidden = field('evSpecial').value !== 'custom';
+      field('evPreview').textContent = mine
+        ? '陷阱：33.33% → ' + (Math.round((1 - trap / 100) / 3 * 10000) / 100) + '%；其餘機率平均分給安全門與寶藏門。特殊寶物：' + (special === null ? '5%／10%' : special + '%') + '，仍需投入 5,000。'
+        : '射中獎金乘以 ' + field('evMult').value + ' 倍；射中機率、沒射中扣款與撞柱雙倍扣款維持原規則。';
+    }
+    sh.querySelector('[data-close]').onclick = closeSheet;
+    form.oninput = preview; form.onchange = preview;
+    sh.querySelectorAll('[data-event-sec]').forEach(function (b) { b.onclick = function () { field('evSeconds').value = b.getAttribute('data-event-sec'); }; });
+    sh.querySelectorAll('[data-event-mult]').forEach(function (b) { b.onclick = function () { field('evMult').value = b.getAttribute('data-event-mult'); preview(); }; });
+    sh.querySelectorAll('[data-activity-stop]').forEach(function (b) {
+      b.onclick = function () {
+        if (b.disabled) return; busy(b, true);
+        call('adminActivityStop', { game: b.getAttribute('data-activity-stop'), id: b.getAttribute('data-activity-id') }).then(function (r) {
+          S.skew = r.serverNow - Date.now();
+          S.cfg = Object.assign({}, S.cfg || {}); S.cfg.gameActivities = Object.assign({}, S.cfg.gameActivities || {}, (function () { var m = {}; m[r.event.game] = r.event; return m; })());
+          toast('活動已結束', 'good'); sheetActivities(); render(true);
+        }).catch(function (e) { busy(b, false); toast(e.message, 'bad'); });
+      };
+    });
+    form.onsubmit = function (ev) {
+      ev.preventDefault(); if (submit.disabled) return;
+      var game = field('evGame').value;
+      var data = { game: game, title: field('evTitle').value, durationSec: Number(field('evSeconds').value), payoutMult: Number(field('evMult').value), trapReduction: Number(field('evTrap').value), specialChance: specialValue() };
+      busy(submit, true);
+      call('adminActivityStart', data).then(function (r) {
+        S.skew = r.serverNow - Date.now();
+        S.cfg = Object.assign({}, S.cfg || {}); var events = Object.assign({}, S.cfg.gameActivities || {}); events[game] = r.event; S.cfg.gameActivities = events;
+        toast('活動已開始', 'good'); sheetActivities(); render(true);
+      }).catch(function (e) { busy(submit, false); toast(e.message, 'bad'); });
+    };
+    preview();
+  });
+}
+
 function sheetGames() {
   var mn = gcfg('mine'), cp = gcfg('cipher'), bj = gcfg('bj'), gt = gcfg('gate'), sl = gcfg('slot'), b2 = gcfg('big2');
   function sel(id, on) { return '<select id="' + id + '" class="sel"><option value="1"' + (on ? ' selected' : '') + '>開放</option><option value="0"' + (on ? '' : ' selected') + '>關閉</option></select>'; }
@@ -4858,13 +5038,15 @@ function sheetRules(game) {
       ['離桌', '牌局中不能離座；斷線後可以重連。結算顯示 ' + b2c.resultSec + ' 秒後，四人全部自動離桌']
     ]);
   } else if (game === 'mine') {
-    h = '<h3>礦洞探險說明</h3><p class="desc">每一層都有三扇外觀相同的門，結果會在選定後由伺服器隨機揭曉。</p>' + ruleRows([
+    var mc = gcfg('mine');
+    h = '<h3>礦洞探險說明</h3><p class="desc">每一層都有三扇外觀相同的門，結果會在選定後由伺服器隨機揭曉。</p>' + activityBanner('mine') + ruleRows([
       ['選擇本金', '每次可以投入 200、500、1,000、2,000 或 5,000'],
       ['安全門', '目前價值乘上 1.25，可以收手或繼續深入'],
       ['寶藏門', '目前價值乘上 1.55，可以收手或繼續深入'],
       ['陷阱門', '本次探險目前累積的價值全部歸零，直接結束'],
       ['安全撤離', '成功開門後隨時可以帶走目前價值；重新整理也會保留進度'],
-      ['特殊判定', '初始本金必須高於 2,000，所以只有投入 5,000 符合資格。安全門 5%、寶藏門 10%'],
+      ['門的機率', '陷阱 ' + (Math.round((1 - mc.trapReduction) / 3 * 10000) / 100) + '%；剩餘機率平均分給安全門與寶藏門'],
+      ['特殊判定', '初始本金必須高於 2,000，所以只有投入 5,000 符合資格。安全門 ' + Math.round(mc.safeSpecialChance * 100) + '%、寶藏門 ' + Math.round(mc.treasureSpecialChance * 100) + '%'],
       ['特殊獎池', '3,000 遊戲幣 30%、5,000 遊戲幣 20%、史詩／神話／傳奇寶箱各 10%、傳奇／神話鑰匙各 5%、30 星幣 5%、神秘寶箱／神秘鑰匙各 2.5%'],
       ['公平性', '門後結果不會預先放在前端，只有按下選擇後才由伺服器產生']
     ]);
@@ -5154,6 +5336,7 @@ function enterApp(profile) {
   var beat = 0;
   S.tick = setInterval(function () {
     if (!S.me) return;
+    paintActivityClocks();
     if (sidOf(Date.now()) !== S.sid) { openSeason(); return; }
     if (S.tab === 'poker') { paintPokerClock(); paintBubbles(); }
     if (S.tab === 'bj') paintBjClock();
@@ -5308,6 +5491,7 @@ function renderHome(force) {
   var p = S.player || { name: S.me.name, pid: S.me.pid, role: S.me.role, stats: {} };
   var st = p.stats || {}, a = S.acc, c = econ();
   var h = '';
+  h += activityBanner('gate') + activityBanner('mine');
 
   h += '<div class="idcard">' + bannerHTML(p, 74) + '<div class="id-row">' +
     '<div class="id-name"><h1>' + esc(p.name) + '</h1><div class="id-meta">' +
@@ -6037,6 +6221,7 @@ function renderMe(force) {
   if (isAdmin) {
     var open = !!(S.cfg && S.cfg.registrationOpen);
     h += '<div class="sec-h"><h2>管理員</h2></div><div class="grp">' +
+      '<button class="row" data-act="activities"><span class="k">管理員活動<small>限時獎金加倍、降低陷阱機率、提高特殊寶物機率</small></span><span class="chev">›</span></button>' +
       '<button class="row" data-act="catalog"><span class="k">商品管理<small>名字、價格、上架、限時、限量、寶箱內容</small></span><span class="chev">›</span></button>' +
       '<button class="row" data-act="announce"><span class="k">公告<small>' + (S.cfg && S.cfg.announce ? '目前：' + esc(S.cfg.announce.text.slice(0, 24)) : '顯示在所有人畫面最上方') + '</small></span><span class="chev">›</span></button>' +
       '<button class="row" data-act="mail"><span class="k">寄信<small>全服或指定玩家，可以附資產、星幣、物品</small></span><span class="chev">›</span></button>' +
@@ -6095,6 +6280,7 @@ function bindMe() {
       else if (a === 'newsAdmin') sheetNewsAdmin();
       else if (a === 'interest') sheetInterest();
       else if (a === 'games') sheetGames();
+      else if (a === 'activities') sheetActivities();
       else if (a === 'poker') sheetPokerSettings();
       else if (a === 'settle') sheetSettle();
       else if (a === 'seasoncfg') sheetSeasonConfig();

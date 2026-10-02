@@ -69,7 +69,7 @@ const CHEST_LOOT = {
   4: { stars: [10, 20],   items: [['bankruptcy_protection', 1, 2], ['forced_duel', 3, 3], ['forced_action', 3, 3], ['premium_dry_shampoo', 3, 3], ['iron_bowl', 3, 3], ['broken_bowl', 3, 6]], avatar: 0.1, ur: 0, bg: 0.035, dex: 0.35 },
   5: { stars: [20, 25],   items: [['bankruptcy_protection', 1, 3], ['forced_duel', 5, 5], ['forced_action', 3, 3], ['premium_dry_shampoo', 3, 3], ['iron_bowl', 3, 3], ['broken_bowl', 3, 6]], avatar: 0.2, ur: 0.05, bg: 0.075, dex: 0.6 },
   6: { stars: [25, 50],   items: [['bankruptcy_protection', 5, 5], ['forced_duel', 5, 5], ['forced_action', 3, 3], ['premium_dry_shampoo', 3, 3], ['iron_bowl', 3, 3], ['broken_bowl', 3, 6]], avatar: 0.3, ur: 0.1, bg: 0.1, dex: 0.75 },
-  7: { stars: [150, 150], items: [['bankruptcy_protection', 20, 20], ['forced_duel', 10, 10], ['forced_action', 10, 10], ['premium_dry_shampoo', 10, 10], ['iron_bowl', 10, 10], ['broken_bowl', 50, 50]], avatar: 1, ur: 1, bg: 1, dex: 1 }
+  7: { stars: [2000, 2000], money: 1000000, backChoice: true, urChoice: true, items: [['bankruptcy_protection', 20, 20], ['forced_duel', 10, 10], ['forced_action', 10, 10], ['premium_dry_shampoo', 10, 10], ['iron_bowl', 10, 10], ['broken_bowl', 50, 50]], avatar: 1, ur: 1, bg: 1, dex: 1 }
 };
 const DEX_FULL_STARS = 30;   // 圖鑑已經收集完時，dex 那一抽改發的星幣
 
@@ -78,7 +78,8 @@ function lootOf(r) {
   return {
     stars: { min: L.stars[0], max: L.stars[1] },
     items: L.items.map((x) => ({ itemId: x[0], min: x[1], max: x[2], p: x[3] === undefined ? 1 : x[3] })),
-    avatar: L.avatar, ur: L.ur, bg: L.bg, dex: L.dex, dexFullStars: DEX_FULL_STARS
+    avatar: L.avatar, ur: L.ur, bg: L.bg, dex: L.dex, dexFullStars: DEX_FULL_STARS,
+    ...(r === 7 ? { money: L.money, backChoice: true, urChoice: true } : {})
   };
 }
 
@@ -166,6 +167,10 @@ function merge(overrides) {
     // 舊版名稱若曾被寫進 config/catalog，隨新版圖片一起遷移；之後手動改的新名稱仍會保留。
     if (x.type === 'back' && LEGACY_BACKS.indexOf(x.name) >= 0) x.name = d.name;
     migrateReviveLoot(x);
+    // 管理員寶箱的新規格也套用到舊 catalog 覆寫；其他道具與加抽設定保留。
+    if (x.id === 'chest_7') x.loot = Object.assign({}, x.loot, {
+      stars: { min: 2000, max: 2000 }, money: 1000000, backChoice: true, urChoice: true, ur: 1
+    });
     out[x.id] = x;
   });
   return out;
