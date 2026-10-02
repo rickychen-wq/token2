@@ -27,6 +27,7 @@ const { createNewsroom } = require('./core/newsroom');
 const { createTitles } = require('./core/titles');
 const { createActivities } = require('./core/activities');
 const { createEstate } = require('./core/estate');
+const { createTower } = require('./games/tower');
 
 const db = admin.firestore();
 const now = () => Date.now();
@@ -46,6 +47,7 @@ const FB = createFeedback({ db, now, requireSession: A.requireSession, requireAd
 const TI = createTitles({ db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin });
 const EV = createActivities({ db, now, requireAdmin: A.requireAdmin });
 const ES = createEstate({ db, now, requireAdmin: A.requireAdmin });
+const TW = createTower({ db, now, requireAdmin: A.requireAdmin, mutate: EC.mutate });
 const MK = createMarket({
   db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin,
   mutate: EC.mutate
@@ -173,6 +175,11 @@ exports.adminActivityStart = wrap(EV.start);
 exports.adminActivityStop = wrap(EV.stop);
 exports.estateSandboxState = wrap(ES.state);
 exports.adminEstateSandboxAction = wrap(ES.action);
+exports.towerState = wrap(TW.state);
+exports.towerStart = wrap(TW.start);
+exports.towerDrop = wrap(TW.drop);
+exports.towerCashout = wrap(TW.cashout);
+exports.towerAbandon = wrap(TW.abandon);
 
 /* ---------- 公告、信箱 ---------- */
 exports.adminAnnounce = wrap(ML.adminAnnounce);

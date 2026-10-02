@@ -3,7 +3,7 @@
   "private": true,
   "main": "index.js",
   "scripts": {
-    "test": "node test_titles.js && node test_season_avatar.js && node test_minigames.js && node test_market.js && node test_newsroom.js && node test_shop.js && node test_activities.js && node test_estate.js"
+    "test": "node test_titles.js && node test_season_avatar.js && node test_minigames.js && node test_market.js && node test_newsroom.js && node test_shop.js && node test_activities.js && node test_estate.js && node test_tower.js"
   },
   "engines": { "node": "22" },
   "dependencies": {

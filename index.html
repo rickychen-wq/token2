@@ -5422,6 +5422,8 @@ function endSession() {
   if (estateTab) estateTab.remove();
   if (estateView) estateView.remove();
   document.body.classList.remove('estate-mode');
+  if (window.TowerApp) window.TowerApp.unmount();
+  var towerView = $('vTower'); if (towerView) towerView.remove();
   _last = {};
   closeSheet();
   showGate();
@@ -5431,6 +5433,7 @@ function paintTop() {
   $('topName').textContent = S.me.name;
   $('topPid').textContent = '#' + (S.player && S.player.vanity ? S.player.vanity : S.me.pid);
   ensureEstateAccess();
+  ensureTowerAccess();
 }
 
 var ESTATE_LOAD = null;
@@ -5489,14 +5492,49 @@ function renderEstateSecret() {
   window.EstateApp.mount(root, { me: S.me, player: S.player, roster: S.roster, api: call, onExit: function () { switchTab('home'); } });
 }
 
+var TOWER_LOAD = null;
+function ensureTowerAccess() {
+  if (!S.me) return;
+  var admin = S.me.role === 'admin', view = $('vTower');
+  if (!admin) {
+    if (S.tab === 'tower') switchTab('home');
+    if (view) view.remove();
+    return;
+  }
+  if (!view) {
+    view = document.createElement('section'); view.id = 'vTower'; view.className = 'view game-view'; view.hidden = true;
+    document.querySelector('.views').appendChild(view);
+  }
+}
+function loadTowerApp() {
+  if (window.TowerApp) return Promise.resolve(window.TowerApp);
+  if (!TOWER_LOAD) TOWER_LOAD = loadEstateScript('assets/tower/tower.js?v=1', 'tower-app')
+    .then(function () { if (!window.TowerApp) throw new Error('高塔遊戲初始化失敗'); return window.TowerApp; })
+    .catch(function (e) { TOWER_LOAD = null; throw e; });
+  return TOWER_LOAD;
+}
+function renderTowerSecret() {
+  if (!S.me || S.me.role !== 'admin') { switchTab('home'); return; }
+  var root = $('vTower'); if (!root) { ensureTowerAccess(); root = $('vTower'); }
+  if (!window.TowerApp) {
+    root.innerHTML = '<div class="estate-boot"><span></span><b>正在架設霓虹高塔</b><small>管理員秘密測試場</small></div>';
+    loadTowerApp().then(function (app) {
+      if (S.tab === 'tower' && S.me && S.me.role === 'admin') app.mount(root, { me: S.me, account: S.acc, api: call, toast: toast, onExit: function () { switchTab('home'); } });
+    }).catch(function (e) { toast(e.message || '高塔載入失敗', 'bad'); switchTab('home'); });
+    return;
+  }
+  window.TowerApp.mount(root, { me: S.me, account: S.acc, api: call, toast: toast, onExit: function () { switchTab('home'); } });
+}
+
 document.querySelectorAll('.tab').forEach(function (b) {
   b.addEventListener('click', function () { switchTab(b.getAttribute('data-tab')); });
 });
 
 function switchTab(t) {
   if (t === 'estate' && (!S.me || S.me.role !== 'admin')) t = 'home';
+  if (t === 'tower' && (!S.me || S.me.role !== 'admin')) t = 'home';
   S.tab = t;
-  var tabKey = ['bj', 'big2', 'mine', 'cipher', 'gate', 'slot', 'dice', 'market', 'news'].indexOf(t) >= 0 ? 'home' : t;
+  var tabKey = ['bj', 'big2', 'mine', 'cipher', 'gate', 'slot', 'dice', 'market', 'news', 'tower'].indexOf(t) >= 0 ? 'home' : t;
   document.querySelectorAll('.tab').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === tabKey); });
   $('vBj').hidden = t !== 'bj';
   $('vBig2').hidden = t !== 'big2';
@@ -5513,9 +5551,11 @@ function switchTab(t) {
   $('vRank').hidden = t !== 'rank';
   $('vMe').hidden = t !== 'me';
   var estateView = $('vEstate'); if (estateView) estateView.hidden = t !== 'estate';
+  var towerView = $('vTower'); if (towerView) towerView.hidden = t !== 'tower';
   document.body.classList.toggle('pk-mode', t === 'poker');
   document.body.classList.toggle('estate-mode', t === 'estate');
   if (window.EstateApp) window.EstateApp.setActive(t === 'estate');
+  if (window.TowerApp) window.TowerApp.setActive(t === 'tower');
   window.scrollTo(0, 0);
   if (t === 'poker') sizePoker();
   syncLive();
@@ -5539,6 +5579,7 @@ function render(force) {
   else if (S.tab === 'dice') renderDice(force);
   else if (S.tab === 'rank') renderRank(force);
   else if (S.tab === 'estate') renderEstateSecret();
+  else if (S.tab === 'tower') renderTowerSecret();
   else renderMe(force);
 }
 
@@ -5632,6 +5673,7 @@ function renderHome(force) {
     '<button class="game mini-g" data-go="gate"><div class="game-suit">🐉</div><div class="game-txt"><h3>射龍門</h3><p>射進兩柱中間</p></div></button>' +
     '<button class="game mini-g" data-go="slot"><div class="game-suit">🎰</div><div class="game-txt"><h3>拉霸機</h3><p>拉一把試手氣</p></div></button>' +
     '<button class="game mini-g" data-go="dice"><div class="game-suit">🎲</div><div class="game-txt"><h3>骰寶</h3><p>大小單雙豹子</p></div></button>' +
+    (S.me.role === 'admin' ? '<button class="game mini-g" data-go="tower"><div class="game-suit">▥</div><div class="game-txt"><h3>高塔疊疊樂</h3><p>抓準落點・越高倍率越高</p></div></button>' : '') +
   '</div>';
 
   if (put('vHome', h, force)) {
