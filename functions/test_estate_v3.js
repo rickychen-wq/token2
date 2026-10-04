@@ -13,15 +13,19 @@ const seeded = seedCity(t, admin);
 const b2 = seeded.plots.find((p) => p.id === 'B2');
 const a1 = seeded.plots.find((p) => p.id === 'A1');
 
-assert.strictEqual(seeded.version, 3);
+assert.strictEqual(seeded.version, 4);
 assert.strictEqual(seeded.plots.length, 16);
 assert.strictEqual(b2.stage, 1);
 assert.strictEqual(b2.level, 0);
 assert.deepStrictEqual(upgradeSpec(b2).materials, { wood: 2, stone: 3 });
 assert.strictEqual(upgradeSpec(b2).money, 50000);
-assert.strictEqual(baseRate({ stage: 3, level: 3 }), 650);
-assert.strictEqual(rateAt({ stage: 3, level: 3, debuffUntil: t + 1 }, t), 299);
-assert.strictEqual(storageCap({ stage: 1, level: 0 }), 1800);
+assert.strictEqual(Object.hasOwn(upgradeSpec(b2), 'exp'), false);
+assert.strictEqual(baseRate({ stage: 1, level: 0 }), 0);
+assert.strictEqual(baseRate({ stage: 3, level: 3 }), 690);
+assert.strictEqual(baseRate({ stage: 5, level: 10 }), 9200);
+assert.strictEqual(rateAt({ stage: 3, level: 3, debuffUntil: t + 1 }, t), 317);
+assert.strictEqual(storageCap({ stage: 1, level: 0 }), 0);
+assert.strictEqual(storageCap({ stage: 5, level: 10 }), 1324800);
 assert.strictEqual(publicState(seeded, '27', t, seedProfile('27', t)).maxHoldings, 1);
 assert.strictEqual(maxHoldings(seeded, '27'), 1);
 const finished = normalizeCity(seeded, t, admin);
@@ -56,27 +60,40 @@ assert.strictEqual(maxHoldings(finished, '27'), 2);
 
   await assert.rejects(estate.state({ data: {} }), /管理員/);
   await assert.rejects(estate.action({ data: {} }), /管理員/);
+  await assert.rejects(estate.blackMarketState({ data: {} }), /管理員/);
   role = 'admin';
   let result = await estate.state({ data: {} });
-  assert.strictEqual(result.state.version, 3);
+  assert.strictEqual(result.state.version, 4);
   assert.strictEqual(result.state.holdings, 1);
   assert.strictEqual(result.state.profile.missiles, 8);
+  assert.strictEqual(result.state.profile.blackCoins, 10000);
   await assert.rejects(estate.action({ data: { action: 'claim', lotId: 'B1' } }), /五階十級/);
-
-  clock += 10 * 60000;
-  result = await estate.state({ data: {} });
-  assert.strictEqual(result.state.plots.find((p) => p.id === 'B2').storedCash, 600);
-  result = await estate.economy({ data: { action: 'collect', lotId: 'B2' } });
-  assert.strictEqual(result.amount, 600);
-  assert.strictEqual(result.state.plots.find((p) => p.id === 'B2').storedCash, 0);
-  assert.strictEqual(wallet.value, 1000600);
 
   result = await estate.economy({ data: { action: 'upgrade', lotId: 'B2' } });
   assert.strictEqual(result.stage, 1);
   assert.strictEqual(result.level, 1);
-  assert.strictEqual(wallet.value, 950600);
+  assert.strictEqual(wallet.value, 950000);
   assert.strictEqual(result.state.profile.materials.wood, 118);
   assert.strictEqual(result.state.profile.materials.stone, 117);
+
+  clock += 10 * 60000;
+  result = await estate.state({ data: {} });
+  assert.strictEqual(result.state.plots.find((p) => p.id === 'B2').storedCash, 20);
+  result = await estate.economy({ data: { action: 'collect', lotId: 'B2' } });
+  assert.strictEqual(result.amount, 20);
+  assert.strictEqual(result.state.plots.find((p) => p.id === 'B2').storedCash, 0);
+  assert.strictEqual(wallet.value, 950020);
+  assert.strictEqual(Object.hasOwn(result.state.plots.find((p) => p.id === 'B2'), 'exp'), false);
+
+  result = await estate.blackMarketState({ data: {} });
+  assert.strictEqual(result.market.currencyName, '黑曜幣');
+  assert.strictEqual(result.market.items.length, 7);
+  await assert.rejects(estate.blackMarketBuy({ data: { itemId: 'wood', quantity: 2 } }), /只能選/);
+  result = await estate.blackMarketBuy({ data: { itemId: 'wood', quantity: 5 } });
+  assert.strictEqual(result.cost, 75);
+  assert.strictEqual(result.market.balance, 9925);
+  assert.strictEqual(result.market.items.find((x) => x.id === 'wood').owned, 123);
+  await assert.rejects(estate.blackMarketBuy({ data: { itemId: 'core', quantity: 10 } }), /不足/);
 
   result = await estate.action({ data: { action: 'mine', lotId: 'B2' } });
   assert.strictEqual(result.state.plots.find((p) => p.id === 'B2').mines, 1);
@@ -98,6 +115,7 @@ assert.strictEqual(maxHoldings(finished, '27'), 2);
 
   result = await estate.action({ data: { action: 'reset' } });
   assert.strictEqual(result.state.profile.missiles, 8);
+  assert.strictEqual(result.state.profile.blackCoins, 10000);
   assert.strictEqual(result.state.plots.find((p) => p.id === 'B2').level, 0);
   console.log('estate v3 tests passed');
 })().catch((err) => { console.error(err); process.exitCode = 1; });

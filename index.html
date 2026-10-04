@@ -1179,6 +1179,7 @@ button.game:active{transform:scale(.99)}
 <style>.seg button{min-width:0}@media(max-width:420px){.seg button{font-size:11px;letter-spacing:0;padding-left:1px;padding-right:1px}}</style>
 <style>.seg{min-width:0}.seg button{overflow:hidden;white-space:nowrap}.me-sub{min-width:0;overflow-x:hidden}.title-count{grid-template-columns:repeat(4,minmax(0,1fr))}</style>
 <style>.prof-title{margin:10px 16px 0;padding:10px 12px;text-align:center;border-radius:9px;border:1px solid rgba(99,218,255,.3);background:linear-gradient(90deg,rgba(63,199,255,.08),rgba(166,104,255,.08));color:var(--cy-hi);font-size:13px;font-weight:700}.prof-showcase{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:7px 16px 0}.prof-showcase div{min-width:0;padding:8px 5px;border-radius:7px;text-align:center;background:rgba(3,8,18,.55);border:1px solid var(--edge-soft)}.prof-showcase small,.prof-showcase b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.prof-showcase small{font-size:9px;color:var(--faint)}.prof-showcase b{margin-top:3px;font-size:11px;color:var(--dim)}</style>
+<style>.black-market{position:relative;overflow:hidden;padding:18px;border:1px solid rgba(178,116,255,.24);border-radius:18px;background:radial-gradient(circle at 90% 0,rgba(127,69,216,.2),transparent 40%),linear-gradient(145deg,#0a1524,#111226)}.black-market:before{content:"";position:absolute;inset:0 0 auto;height:2px;background:linear-gradient(90deg,#5ee4ff,#a35cff,#ff6cae)}.black-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.black-kicker{color:#bd8dff;font:900 9px var(--ui);letter-spacing:.18em}.black-head h2{margin:6px 0 3px;font:900 23px var(--ui)}.black-head p{margin:0;color:var(--dim);font-size:11px}.black-balance{flex:0 0 auto;padding:10px 13px;border-radius:13px;text-align:right;background:rgba(132,83,225,.12);border:1px solid rgba(182,124,255,.22)}.black-balance small,.black-balance b{display:block}.black-balance small{color:#9e86c9;font-size:8px}.black-balance b{margin-top:3px;color:#e4d5ff;font:900 16px var(--ui)}.black-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:18px}.black-item{padding:13px;border-radius:14px;background:rgba(5,15,28,.72);border:1px solid rgba(119,209,241,.1)}.black-item-top{display:flex;align-items:center;gap:10px}.black-icon{display:grid;place-items:center;width:42px;height:42px;border-radius:12px;background:linear-gradient(145deg,rgba(63,211,242,.12),rgba(139,81,225,.14));font-size:21px}.black-item-copy{min-width:0}.black-item-copy b,.black-item-copy small{display:block}.black-item-copy b{font-size:13px}.black-item-copy small{margin-top:3px;color:var(--faint);font-size:9px}.black-item-price{display:flex;align-items:center;justify-content:space-between;margin-top:11px;padding-top:10px;border-top:1px solid var(--edge-soft);color:#a993d8;font-size:10px}.black-item-price strong{color:#d8c0ff}.black-qty{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:9px}.black-qty button{padding:8px 3px;border-radius:9px;border:1px solid rgba(172,115,255,.2);color:#d6c9ee;background:rgba(111,70,190,.09);font:800 9px var(--ui)}.black-qty button:disabled{opacity:.4}.black-note{margin-top:13px;padding:11px;border-radius:11px;color:#819aaa;background:rgba(255,255,255,.025);font-size:9px;line-height:1.6}@media(max-width:560px){.black-market{padding:14px}.black-grid{grid-template-columns:1fr}.black-head h2{font-size:19px}.black-balance b{font-size:13px}}</style>
 </head>
 <body class="gate-mode">
 
@@ -1445,6 +1446,7 @@ var S = {
 var MKUI = { state: null, selected: 'TKN', loading: false, error: null, open: null, phase: null };
 var NEWSUI = { state: null, outlet: 'all', articleId: '', loading: false, error: null };
 var TITLEUI = { state: null, loading: false, error: null, cat: 'A' };
+var BLACKUI = { state: null, loading: false, error: null, busy: false };
 
 /* =====================================================================
    啟動
@@ -2398,6 +2400,38 @@ function renderShop() {
   }
   h += list.length ? '<div class="shop-grid">' + list.map(shopCard).join('') + '</div>' : '<div class="empty rk-empty">目前沒有販售中的商品</div>';
   return h;
+}
+
+function loadBlackMarket(force) {
+  if (!S.me || S.me.role !== 'admin' || BLACKUI.loading || (!force && BLACKUI.state)) return;
+  BLACKUI.loading = true; BLACKUI.error = null;
+  call('adminEstateBlackMarketState', {}).then(function (r) {
+    BLACKUI.state = r.market; BLACKUI.loading = false;
+    if (S.meTab === 'blackmarket') renderMe(true);
+  }).catch(function (e) {
+    BLACKUI.error = e.message || '黑市連線失敗'; BLACKUI.loading = false;
+    if (S.meTab === 'blackmarket') renderMe(true);
+  });
+}
+function renderBlackMarket() {
+  if (!S.me || S.me.role !== 'admin') return '<div class="empty">只有管理員能進入黑市</div>';
+  if (!BLACKUI.state && !BLACKUI.loading && !BLACKUI.error) setTimeout(function () { loadBlackMarket(true); }, 0);
+  if (BLACKUI.loading || !BLACKUI.state && !BLACKUI.error) return '<div class="empty">正在打開黑市加密通道…</div>';
+  if (BLACKUI.error) return '<div class="empty">' + esc(BLACKUI.error) + '<div class="acts"><button class="btn ghost" type="button" data-black-retry>重新連線</button></div></div>';
+  var m = BLACKUI.state;
+  return '<section class="black-market"><div class="black-head"><div><div class="black-kicker">OBSIDIAN EXCHANGE · ADMIN ONLY</div><h2>黑曜黑市</h2><p>獨立材料市場，與星幣、遊戲幣分開計算。</p></div><div class="black-balance"><small>' + esc(m.currencyName) + '</small><b>◈ ' + fmt(m.balance) + '</b></div></div><div class="black-grid">' + (m.items || []).map(function (it) {
+    return '<article class="black-item"><div class="black-item-top"><span class="black-icon">' + esc(it.icon) + '</span><span class="black-item-copy"><b>' + esc(it.name) + '</b><small>' + esc(it.rarity) + ' · 持有 ' + fmt(it.owned) + '</small></span></div><div class="black-item-price"><span>單價</span><strong>◈ ' + fmt(it.price) + '</strong></div><div class="black-qty">' + [1, 5, 10].map(function (n) { return '<button type="button" data-black-buy="' + esc(it.id) + '" data-black-qty="' + n + '" ' + (m.balance < it.price * n || BLACKUI.busy ? 'disabled' : '') + '>買 ' + n + '<br>◈ ' + fmt(it.price * n) + '</button>'; }).join('') + '</div></article>';
+  }).join('') + '</div><div class="black-note">每日／每週任務之後可加入材料獎勵；目前黑市先販售全部七種測試材料。正式開放前會再依你的新版配方重排價格與稀有度。</div></section>';
+}
+function bindBlackMarket() {
+  var root = $('vMe'), retry = root.querySelector('[data-black-retry]');
+  if (retry) retry.onclick = function () { BLACKUI.error = null; loadBlackMarket(true); renderMe(true); };
+  root.querySelectorAll('[data-black-buy]').forEach(function (b) { b.onclick = function () {
+    if (BLACKUI.busy) return; BLACKUI.busy = true; renderMe(true);
+    call('adminEstateBlackMarketBuy', { itemId: b.getAttribute('data-black-buy'), quantity: Number(b.getAttribute('data-black-qty')) }).then(function (r) {
+      BLACKUI.state = r.market; toast(r.message, 'good');
+    }).catch(function (e) { toast(e.message, 'bad'); }).then(function () { BLACKUI.busy = false; renderMe(true); });
+  }; });
 }
 
 function renderBag() {
@@ -5415,6 +5449,7 @@ function endSession() {
   MKUI.state = null; MKUI.selected = 'TKN'; MKUI.loading = false; MKUI.error = null; MKUI.open = null; MKUI.phase = null;
   NEWSUI.state = null; NEWSUI.outlet = 'all'; NEWSUI.articleId = ''; NEWSUI.loading = false; NEWSUI.error = null;
   TITLEUI.state = null; TITLEUI.loading = false; TITLEUI.error = null; TITLEUI.cat = 'A';
+  BLACKUI.state = null; BLACKUI.loading = false; BLACKUI.error = null; BLACKUI.busy = false;
   MN.bet = 200; MN.busy = false; MN.last = null; MN.picking = -1; MN.rewardReveal = null;
   CP.bet = 200; CP.pick = []; CP.busy = false; CP.last = null; CP.rewardReveal = null;
   if (window.EstateApp) window.EstateApp.unmount();
@@ -5452,7 +5487,7 @@ function loadEstateEngine() {
   if (!ESTATE_LOAD) ESTATE_LOAD = loadEstateScript('assets/vendor/three-r147/three.min.js', 'estate-three')
     .then(function () { return loadEstateScript('assets/vendor/three-r147/GLTFLoader.js', 'estate-gltf'); })
     .then(function () { return loadEstateScript('assets/vendor/three-r147/OrbitControls.js', 'estate-orbit'); })
-    .then(function () { return loadEstateScript('assets/estate/estate-v2.js?v=3', 'estate-app'); })
+    .then(function () { return loadEstateScript('assets/estate/estate-v2.js?v=4', 'estate-app'); })
     .then(function () { if (!window.EstateApp) throw new Error('3D 城市初始化失敗'); return window.EstateApp; })
     .catch(function (e) { ESTATE_LOAD = null; throw e; });
   return ESTATE_LOAD;
@@ -5492,11 +5527,11 @@ function renderEstateSecret() {
   if (!window.EstateApp) {
     root.innerHTML = '<div class="estate-boot"><span></span><b>正在建立秘密領地</b><small>第一次會載入 3D 引擎與目前階級模型</small></div>';
     loadEstateEngine().then(function (app) {
-      if (S.tab === 'estate' && S.me && S.me.role === 'admin') app.mount(root, { me: S.me, player: S.player, roster: S.roster, api: call, avatarHTML: estateAvatarHTML, onExit: function () { switchTab('home'); } });
+      if (S.tab === 'estate' && S.me && S.me.role === 'admin') app.mount(root, { me: S.me, player: S.player, roster: S.roster, account: S.acc, api: call, avatarHTML: estateAvatarHTML, onAccount: function (acc) { S.acc = acc; }, onExit: function () { switchTab('home'); } });
     }).catch(function (e) { root.innerHTML = '<div class="estate-boot error"><b>領地載入失敗</b><small>' + esc(e.message) + '</small><button class="btn ghost" type="button" data-estate-retry>重試</button></div>'; var b = root.querySelector('[data-estate-retry]'); if (b) b.onclick = function () { renderEstateSecret(); }; });
     return;
   }
-  window.EstateApp.mount(root, { me: S.me, player: S.player, roster: S.roster, api: call, avatarHTML: estateAvatarHTML, onExit: function () { switchTab('home'); } });
+  window.EstateApp.mount(root, { me: S.me, player: S.player, roster: S.roster, account: S.acc, api: call, avatarHTML: estateAvatarHTML, onAccount: function (acc) { S.acc = acc; }, onExit: function () { switchTab('home'); } });
 }
 
 var TOWER_LOAD = null;
@@ -6313,12 +6348,16 @@ function renderMe(force) {
   var me = S.me, h = '';
   var isAdmin = me.role === 'admin';
   var mt = S.meTab || 'acct';
-  h += '<div class="seg" role="tablist">' + [['acct', '帳號'], ['titles', '稱號'], ['shop', '商店'], ['bag', '包包'], ['closet', '衣櫃'], ['dex', '圖鑑']].map(function (x) {
+  if (!isAdmin && mt === 'blackmarket') mt = S.meTab = 'acct';
+  var meTabs = [['acct', '帳號'], ['titles', '稱號'], ['shop', '商店']];
+  if (isAdmin) meTabs.push(['blackmarket', '黑市']);
+  meTabs = meTabs.concat([['bag', '包包'], ['closet', '衣櫃'], ['dex', '圖鑑']]);
+  h += '<div class="seg" role="tablist">' + meTabs.map(function (x) {
     return '<button role="tab" data-mt="' + x[0] + '" class="' + (mt === x[0] ? 'on' : '') + '">' + x[1] + '</button>';
   }).join('') + '</div>';
   if (mt !== 'acct') {
-    h += '<div class="me-sub">' + (mt === 'titles' ? renderTitles() : mt === 'shop' ? renderShop() : mt === 'bag' ? renderBag() : mt === 'dex' ? renderDex() : renderCloset()) + '</div>';
-    if (put('vMe', h, force)) { bindMeTabs(); if (mt === 'titles') bindTitles(); else if (mt === 'dex') bindDex(); else bindShopCloset(); }
+    h += '<div class="me-sub">' + (mt === 'titles' ? renderTitles() : mt === 'shop' ? renderShop() : mt === 'blackmarket' ? renderBlackMarket() : mt === 'bag' ? renderBag() : mt === 'dex' ? renderDex() : renderCloset()) + '</div>';
+    if (put('vMe', h, force)) { bindMeTabs(); if (mt === 'titles') bindTitles(); else if (mt === 'dex') bindDex(); else if (mt === 'blackmarket') bindBlackMarket(); else bindShopCloset(); }
     return;
   }
 
@@ -6379,7 +6418,7 @@ function renderMe(force) {
 
 function bindMeTabs() {
   $('vMe').querySelectorAll('[data-mt]').forEach(function (b) {
-    b.onclick = function () { S.meTab = b.getAttribute('data-mt'); window.scrollTo(0, 0); if (S.meTab === 'titles') loadTitles(true); renderMe(true); };
+    b.onclick = function () { S.meTab = b.getAttribute('data-mt'); window.scrollTo(0, 0); if (S.meTab === 'titles') loadTitles(true); if (S.meTab === 'blackmarket') loadBlackMarket(false); renderMe(true); };
   });
 }
 

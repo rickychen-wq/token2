@@ -8,15 +8,25 @@ const ATTACK_DEBUFF_MS = 24 * 3600 * 1000;
 const ATTACK_RATE_MULT = 0.46;
 const MATERIALS = Object.freeze(['wood', 'stone', 'alloy', 'gold', 'crystal', 'scroll', 'core']);
 const MAX_LEVEL = Object.freeze([0, 3, 4, 5, 7, 10]);
+// 每個數字代表「每 5 分鐘」的產出；一階 Lv.0 不產錢，五階 Lv.10 為 9,200。
 const RATES = Object.freeze({
-  1: [60, 85, 110, 150],
-  2: [200, 250, 300, 350, 400],
-  3: [500, 550, 600, 650, 720, 800],
-  4: [900, 970, 1040, 1120, 1200, 1280, 1350, 1400],
-  5: [1600, 1700, 1800, 1900, 2000, 2100, 2200, 2300, 2380, 2450, 2500]
+  1: [0, 10, 25, 100],
+  2: [130, 170, 220, 280, 350],
+  3: [420, 500, 590, 690, 800, 950],
+  4: [1100, 1280, 1480, 1700, 1950, 2230, 2540, 2900],
+  5: [3000, 3300, 3750, 4250, 4800, 5400, 6050, 6750, 7500, 8300, 9200]
 });
 const STORAGE_MINUTES = Object.freeze([0, 30, 60, 120, 240, 720]);
 const MATERIAL_CYCLE_MINUTES = Object.freeze([0, 120, 90, 60, 45, 30]);
+const BLACK_MARKET = Object.freeze({
+  wood: { name: '木材', icon: '🪵', rarity: '普通', price: 15 },
+  stone: { name: '石材', icon: '🪨', rarity: '普通', price: 20 },
+  alloy: { name: '合金', icon: '🔩', rarity: '進階', price: 45 },
+  gold: { name: '黃金', icon: '◆', rarity: '稀有', price: 80 },
+  crystal: { name: '晶礦', icon: '💎', rarity: '史詩', price: 140 },
+  scroll: { name: '魔法卷軸', icon: '📜', rarity: '神話', price: 450 },
+  core: { name: '星核', icon: '✦', rarity: '傳奇', price: 1200 }
+});
 
 function plotId(index) {
   return String.fromCharCode(65 + Math.floor(index / 4)) + String(index % 4 + 1);
@@ -25,7 +35,7 @@ function plotId(index) {
 function blankPlot(index) {
   return {
     id: plotId(index), status: 'vacant', ownerPid: null, ownerName: null,
-    stage: 0, level: 0, exp: 0, mines: 0, shieldUntil: 0, acquiredAt: 0,
+    stage: 0, level: 0, mines: 0, shieldUntil: 0, acquiredAt: 0,
     storedCash: 0, lastProducedAt: 0, lastMaterialAt: 0,
     debuffUntil: 0, materialPausedCycles: 0, updatedAt: 0
   };
@@ -34,7 +44,7 @@ function blankPlot(index) {
 function ownedPlot(index, owner, t, stage, level) {
   return Object.assign(blankPlot(index), {
     status: 'owned', ownerPid: owner.pid, ownerName: owner.name || '管理員',
-    stage: stage || 1, level: level || 0, exp: owner.exp || 0,
+    stage: stage || 1, level: level || 0,
     shieldUntil: owner.shield === false ? 0 : t + NEW_SHIELD_MS,
     acquiredAt: t, lastProducedAt: t, lastMaterialAt: t, updatedAt: t
   });
@@ -51,50 +61,50 @@ function seedCity(t, admin) {
     plots[x.i] = Object.assign(blankPlot(x.i), {
       status: 'showcase', ownerPid: 'system', ownerName: x.name,
       stage: x.stage, level: x.level,
-      storedCash: Math.floor(RATES[x.stage][x.level] * STORAGE_MINUTES[x.stage] * 0.6),
+      storedCash: Math.floor(RATES[x.stage][x.level] * (STORAGE_MINUTES[x.stage] / 5) * 0.6),
       lastProducedAt: t, lastMaterialAt: t, updatedAt: t
     });
   });
-  plots[5] = ownedPlot(5, { pid: admin.pid, name: admin.name, exp: 3000, shield: false }, t, 1, 0);
-  return { id: CITY_ID, version: 3, sandbox: true, plots, createdAt: t, updatedAt: t };
+  plots[5] = ownedPlot(5, { pid: admin.pid, name: admin.name, shield: false }, t, 1, 0);
+  return { id: CITY_ID, version: 4, sandbox: true, plots, createdAt: t, updatedAt: t };
 }
 
 function seedProfile(pid, t) {
   return {
-    pid, version: 3,
+    pid, version: 4,
     materials: { wood: 120, stone: 120, alloy: 80, gold: 60, crystal: 40, scroll: 18, core: 8 },
-    missiles: 8, mines: 2, createdAt: t, updatedAt: t
+    blackCoins: 10000, missiles: 8, mines: 2, createdAt: t, updatedAt: t
   };
 }
 
 function normalizeProfile(raw, pid, t) {
   const base = seedProfile(pid, t);
   if (!raw) return base;
-  const out = Object.assign({}, base, raw, { pid, version: 3 });
+  const out = Object.assign({}, base, raw, { pid, version: 4 });
   out.materials = Object.assign({}, base.materials, raw.materials || {});
   MATERIALS.forEach((k) => { out.materials[k] = Math.max(0, Math.floor(Number(out.materials[k]) || 0)); });
   out.missiles = Math.max(0, Math.floor(Number(out.missiles) || 0));
   out.mines = Math.max(0, Math.floor(Number(out.mines) || 0));
+  out.blackCoins = Math.max(0, Math.floor(Number(out.blackCoins) || 0));
   return out;
 }
 
 function normalizeCity(raw, t, admin) {
   if (!raw || !Array.isArray(raw.plots) || raw.plots.length !== 16) return seedCity(t, admin);
-  const city = Object.assign({}, raw, { id: CITY_ID, version: 3, sandbox: true });
+  const city = Object.assign({}, raw, { id: CITY_ID, version: 4, sandbox: true });
   city.plots = raw.plots.map((p, i) => {
     const src = p || {}, out = Object.assign(blankPlot(i), src, { id: plotId(i) });
     if (out.status === 'ruined') out.status = out.ownerPid === 'system' ? 'showcase' : 'owned';
     if (out.status !== 'vacant') {
       out.stage = Math.max(1, Math.min(5, Math.floor(Number(out.stage) || 1)));
       out.level = Math.max(0, Math.min(MAX_LEVEL[out.stage], Math.floor(Number(out.level) || 0)));
-      out.exp = Math.max(0, Math.floor(Number(out.exp) || 0));
+      delete out.exp;
       out.storedCash = Math.max(0, Math.floor(Number(out.storedCash) || 0));
       out.lastProducedAt = Number(out.lastProducedAt || out.updatedAt || t);
       out.lastMaterialAt = Number(out.lastMaterialAt || out.updatedAt || t);
       out.debuffUntil = Math.max(0, Number(out.debuffUntil) || 0);
       out.materialPausedCycles = Math.max(0, Math.floor(Number(out.materialPausedCycles) || 0));
       if (Number(raw.version || 0) < 3 && out.status === 'showcase' && !out.storedCash) out.storedCash = Math.floor(storageCap(out) * 0.6);
-      if (Number(raw.version || 0) < 3 && out.status === 'owned' && out.ownerPid === admin.pid) out.exp = Math.max(out.exp, 3000);
     }
     return out;
   });
@@ -111,7 +121,7 @@ function rateAt(plot, t) {
 }
 
 function storageCap(plot) {
-  return baseRate(plot) * (STORAGE_MINUTES[plot.stage] || 30);
+  return baseRate(plot) * ((STORAGE_MINUTES[plot.stage] || 30) / 5);
 }
 
 function materialYield(plot, cycles) {
@@ -133,10 +143,10 @@ function accruePlot(plot, profile, pid, t) {
     const debuffEnd = Number(plot.debuffUntil || 0);
     if (debuffEnd > from) {
       const weakEnd = Math.min(t, debuffEnd);
-      earned += (weakEnd - from) / 60000 * Math.floor(baseRate(plot) * ATTACK_RATE_MULT);
+      earned += (weakEnd - from) / 300000 * Math.floor(baseRate(plot) * ATTACK_RATE_MULT);
       from = weakEnd;
     }
-    if (t > from) earned += (t - from) / 60000 * baseRate(plot);
+    if (t > from) earned += (t - from) / 300000 * baseRate(plot);
     plot.storedCash = Math.min(storageCap(plot), Math.floor(Number(plot.storedCash || 0) + earned));
     plot.lastProducedAt = t;
     changed = true;
@@ -177,22 +187,33 @@ function upgradeSpec(plot) {
   else if (plot.stage === 4) { materials.gold = 8 + plot.level * 2; materials.crystal = 4 + plot.level; }
   else { materials.crystal = 10 + plot.level * 2; materials.scroll = 1 + Math.floor(plot.level / 3); if (plot.level >= 7) materials.core = 1; }
   if (major) materials.scroll = (materials.scroll || 0) + plot.stage;
-  return { nextStage, nextLevel, money, exp: major ? plot.stage * 250 : Math.max(0, (step - 2) * 20), materials };
+  return { nextStage, nextLevel, money, materials, specialMission: major && plot.stage >= 3 ? '正式開放前公布' : null };
 }
 
 function maxHoldings(city, pid) {
   return city.plots.some((p) => p.ownerPid === pid && p.status === 'owned' && p.stage === 5 && p.level === 10) ? 2 : 1;
 }
 
+function blackMarketState(profile) {
+  return {
+    currencyName: '黑曜幣',
+    balance: Math.max(0, Math.floor(Number(profile.blackCoins) || 0)),
+    items: Object.keys(BLACK_MARKET).map((id) => Object.assign({
+      id,
+      owned: Math.max(0, Math.floor(Number((profile.materials || {})[id]) || 0))
+    }, BLACK_MARKET[id]))
+  };
+}
+
 function publicState(city, pid, t, profile) {
   const plots = city.plots.map((p) => Object.assign({}, p, {
     shielded: Number(p.shieldUntil || 0) > t,
     debuffed: Number(p.debuffUntil || 0) > t,
-    ratePerMinute: rateAt(p, t), baseRatePerMinute: baseRate(p),
+    ratePerFiveMinutes: rateAt(p, t), baseRatePerFiveMinutes: baseRate(p),
     storageCap: storageCap(p), nextUpgrade: upgradeSpec(p)
   }));
   return {
-    id: city.id, sandbox: true, version: 3,
+    id: city.id, sandbox: true, version: 4,
     maxHoldings: maxHoldings(city, pid),
     holdings: plots.filter((p) => p.ownerPid === pid && p.status === 'owned').length,
     vacant: plots.filter((p) => p.status === 'vacant').length,
@@ -346,14 +367,13 @@ function createEstate({ db, now, requireAdmin, mutate }) {
         if (action === 'collect') {
           const amount = Math.floor(Number(plot.storedCash || 0));
           if (amount < 1) throw new AppError('倉庫目前沒有可領取的收益', 'empty-storage');
-          plot.storedCash = 0; plot.exp = Number(plot.exp || 0) + Math.max(1, Math.floor(amount / 5000)); plot.updatedAt = t;
+          plot.storedCash = 0; plot.updatedAt = t;
           acc.wallet = Number(acc.wallet || 0) + amount;
-          extra.result = { amount, exp: plot.exp };
+          extra.result = { amount };
           return [{ type: 'estate-income', amount, note: id + ' 倉庫收益' }];
         }
         const spec = upgradeSpec(plot);
         if (!spec) throw new AppError('這棟房屋已經達到最高等級', 'max-level');
-        if (Number(plot.exp || 0) < spec.exp) throw new AppError('房屋經驗不足，還需要 ' + (spec.exp - Number(plot.exp || 0)), 'low-exp');
         if (Number(acc.wallet || 0) < spec.money) throw new AppError('錢包餘額不足，升級需要 ' + spec.money, 'low-wallet');
         Object.keys(spec.materials).forEach((k) => {
           if (Number(extra.profile.materials[k] || 0) < spec.materials[k]) throw new AppError('材料不足：' + k, 'low-material');
@@ -365,14 +385,41 @@ function createEstate({ db, now, requireAdmin, mutate }) {
         return [{ type: 'estate-upgrade', amount: -spec.money, note: id + ' 升至 ' + plot.stage + '階 Lv.' + plot.level }];
       }, meta);
       return Object.assign({ account: r.account, state: publicState(r.extra.city, admin.pid, now(), r.extra.profile) }, r.extra.result || {}, {
-        message: action === 'collect' ? '倉庫收益已轉入錢包，房屋經驗同步增加' : id + ' 升級完成'
+        message: action === 'collect' ? '倉庫收益已轉入錢包' : id + ' 升級完成'
       });
+    },
+
+    async blackMarketState(req) {
+      const admin = await requireAdmin(req);
+      const result = await transact({ data: { action: 'black-market-view' } }, (city, profile) => ({
+        market: blackMarketState(profile)
+      }), admin);
+      return { market: result.market };
+    },
+
+    async blackMarketBuy(req) {
+      const admin = await requireAdmin(req), d = req.data || {};
+      const itemId = String(d.itemId || ''), quantity = Math.floor(Number(d.quantity) || 0);
+      const item = BLACK_MARKET[itemId];
+      if (!item) throw new AppError('找不到這項黑市材料', 'bad-market-item', 'invalid-argument');
+      if (![1, 5, 10].includes(quantity)) throw new AppError('購買數量只能選 1、5 或 10', 'bad-market-quantity', 'invalid-argument');
+      const result = await transact({ data: { action: 'black-market-buy', itemId, quantity } }, (city, profile) => {
+        const cost = item.price * quantity;
+        if (profile.blackCoins < cost) throw new AppError('黑曜幣不足，還差 ' + (cost - profile.blackCoins), 'low-black-coins');
+        profile.blackCoins -= cost;
+        profile.materials[itemId] = Number(profile.materials[itemId] || 0) + quantity;
+        return {
+          market: blackMarketState(profile), itemId, quantity, cost,
+          message: '已取得 ' + item.name + ' × ' + quantity
+        };
+      }, admin);
+      return { market: result.market, itemId, quantity, cost: result.cost, message: result.message };
     }
   };
 }
 
 module.exports = {
   createEstate, seedCity, seedProfile, normalizeCity, normalizeProfile, publicState,
-  accruePlot, upgradeSpec, baseRate, rateAt, storageCap, materialYield, maxHoldings,
-  CITY_ID, MATERIALS, MAX_LEVEL, RATES, STORAGE_MINUTES, ATTACK_DEBUFF_MS, ATTACK_RATE_MULT
+  accruePlot, upgradeSpec, baseRate, rateAt, storageCap, materialYield, maxHoldings, blackMarketState,
+  CITY_ID, MATERIALS, MAX_LEVEL, RATES, STORAGE_MINUTES, BLACK_MARKET, ATTACK_DEBUFF_MS, ATTACK_RATE_MULT
 };
