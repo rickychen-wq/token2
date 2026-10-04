@@ -6,10 +6,24 @@
 
 const crypto = require('crypto');
 const { AppError, cleanPid, cleanName, cleanPw } = require('./util');
+const { SEASON_TWO_RANK_AVATARS } = require('./catalog');
 
 const MAX_FAILS = 5;
 const LOCK_MS = 5 * 60 * 1000;
 const SCRYPT = { N: 16384, r: 8, p: 1 };
+const ADMIN_SEASON_TWO_AVATAR_IDS = SEASON_TWO_RANK_AVATARS.map((x) => x.id);
+
+/* 管理員圖鑑原本會在稱號頁同步；新賽季頭像改成任何有效連線都會立即補齊。 */
+function grantAdminSeasonTwoAvatars(player) {
+  if (!player || player.role !== 'admin') return false;
+  const unlocked = Object.assign({}, player.unlocked || {});
+  const current = Array.isArray(unlocked.avatars) ? unlocked.avatars : [];
+  const next = Array.from(new Set(current.concat(ADMIN_SEASON_TWO_AVATAR_IDS)));
+  if (next.length === current.length) return false;
+  unlocked.avatars = next;
+  player.unlocked = unlocked;
+  return true;
+}
 
 function hashPw(pw) {
   const salt = crypto.randomBytes(16).toString('hex');
@@ -69,7 +83,17 @@ function createAuth({ db, auth, now }) {
     if (!pSnap.exists || !a || !a.hash || a.sv !== tk.sv) {
       throw new AppError('登入已失效，請重新登入', 'session-expired', 'unauthenticated');
     }
-    return { pid: tk.pid, player: pSnap.data(), authData: a };
+    let player = pSnap.data();
+    if (player.role === 'admin' && ADMIN_SEASON_TWO_AVATAR_IDS.some((id) => !(((player.unlocked || {}).avatars || []).includes(id)))) {
+      player = await db.runTransaction(async (tx) => {
+        const freshSnap = await tx.get(playerRef(tk.pid));
+        if (!freshSnap.exists) throw new AppError('這個帳號不存在', 'not-found');
+        const fresh = freshSnap.data();
+        if (grantAdminSeasonTwoAvatars(fresh)) tx.update(playerRef(tk.pid), { unlocked: fresh.unlocked });
+        return fresh;
+      });
+    }
+    return { pid: tk.pid, player, authData: a };
   }
 
   async function requireAdmin(req) {
@@ -259,4 +283,4 @@ function createAuth({ db, auth, now }) {
   };
 }
 
-module.exports = { createAuth, hashPw, verifyPw };
+module.exports = { createAuth, hashPw, verifyPw, grantAdminSeasonTwoAvatars, ADMIN_SEASON_TWO_AVATAR_IDS };

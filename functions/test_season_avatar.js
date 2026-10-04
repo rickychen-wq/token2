@@ -4,6 +4,7 @@ const {
   FIRST_SEASON_ID, SECOND_SEASON_ID, firstSeasonAvatarMail, seasonAvatarMail
 } = require('./core/season');
 const { merge } = require('./core/catalog');
+const { grantAdminSeasonTwoAvatars, ADMIN_SEASON_TWO_AVATAR_IDS } = require('./core/auth');
 
 const at = Date.UTC(2026, 8, 27, 16, 1, 0);
 for (let rank = 1; rank <= 3; rank++) {
@@ -39,5 +40,13 @@ for (let rank = 1; rank <= 3; rank++) {
   assert.strictEqual(avatar.img, 'assets/av/season2-rank-' + rank + '.webp');
   assert.strictEqual(avatar.onSale, false);
 }
+
+const admin = { role: 'admin', unlocked: { avatars: ['av_s1_1'] } };
+assert.strictEqual(grantAdminSeasonTwoAvatars(admin), true);
+assert.deepStrictEqual(admin.unlocked.avatars.slice(-3), ADMIN_SEASON_TWO_AVATAR_IDS);
+assert.strictEqual(grantAdminSeasonTwoAvatars(admin), false, 'admin sync must be idempotent');
+const player = { role: 'player', unlocked: { avatars: [] } };
+assert.strictEqual(grantAdminSeasonTwoAvatars(player), false);
+assert.deepStrictEqual(player.unlocked.avatars, []);
 
 console.log('season avatar tests ok');
