@@ -26,7 +26,7 @@ const { createMarket } = require('./core/market');
 const { createNewsroom } = require('./core/newsroom');
 const { createTitles } = require('./core/titles');
 const { createActivities } = require('./core/activities');
-const { createEstate } = require('./core/estate');
+const { createEstate } = require('./core/estate_v3');
 const { createTower } = require('./games/tower');
 
 const db = admin.firestore();
@@ -46,7 +46,7 @@ const RW = createRewards({ db, now, requireAdmin: A.requireAdmin });
 const FB = createFeedback({ db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin });
 const TI = createTitles({ db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin });
 const EV = createActivities({ db, now, requireAdmin: A.requireAdmin });
-const ES = createEstate({ db, now, requireAdmin: A.requireAdmin });
+const ES = createEstate({ db, now, requireAdmin: A.requireAdmin, mutate: EC.mutate });
 const TW = createTower({ db, now, requireAdmin: A.requireAdmin, mutate: EC.mutate });
 const MK = createMarket({
   db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin,
@@ -175,6 +175,7 @@ exports.adminActivityStart = wrap(EV.start);
 exports.adminActivityStop = wrap(EV.stop);
 exports.estateSandboxState = wrap(ES.state);
 exports.adminEstateSandboxAction = wrap(ES.action);
+exports.adminEstateSandboxEconomy = wrap(ES.economy);
 exports.towerState = wrap(TW.state);
 exports.towerStart = wrap(TW.start);
 exports.towerDrop = wrap(TW.drop);
