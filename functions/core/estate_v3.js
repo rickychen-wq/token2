@@ -227,8 +227,8 @@ function createEstate({ db, now, requireAdmin, mutate }) {
     profile.updatedAt = t;
   }
 
-  async function transact(req, fn) {
-    const admin = await requireAdmin(req), t = now();
+  async function transact(req, fn, authenticatedAdmin) {
+    const admin = authenticatedAdmin || await requireAdmin(req), t = now();
     let out;
     await db.runTransaction(async (tx) => {
       const [snap, profileSnap] = await Promise.all([tx.get(ref), tx.get(profileRef(admin.pid))]);
@@ -280,6 +280,7 @@ function createEstate({ db, now, requireAdmin, mutate }) {
     },
 
     async action(req) {
+      const authenticatedAdmin = await requireAdmin(req);
       const d = req.data || {}, action = String(d.action || '');
       if (!['claim', 'sell', 'mine', 'attack', 'reset'].includes(action)) throw new AppError('未知的領地操作', 'bad-action', 'invalid-argument');
       return transact(req, (city, profile, admin, t) => {
@@ -332,7 +333,7 @@ function createEstate({ db, now, requireAdmin, mutate }) {
             message: defended ? '防禦地雷完整攔截飛彈，房屋毫髮無傷' : '飛彈命中：倉庫損失 75%，24 小時產能受損並停產三次材料'
           };
         }
-      });
+      }, authenticatedAdmin);
     },
 
     async economy(req) {

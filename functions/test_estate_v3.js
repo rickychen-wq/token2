@@ -55,6 +55,7 @@ assert.strictEqual(maxHoldings(finished, '27'), 2);
   });
 
   await assert.rejects(estate.state({ data: {} }), /管理員/);
+  await assert.rejects(estate.action({ data: {} }), /管理員/);
   role = 'admin';
   let result = await estate.state({ data: {} });
   assert.strictEqual(result.state.version, 3);
@@ -100,4 +101,3 @@ assert.strictEqual(maxHoldings(finished, '27'), 2);
   assert.strictEqual(result.state.plots.find((p) => p.id === 'B2').level, 0);
   console.log('estate v3 tests passed');
 })().catch((err) => { console.error(err); process.exitCode = 1; });
-
