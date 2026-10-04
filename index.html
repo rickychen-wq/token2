@@ -1722,6 +1722,11 @@ DEFAULT_ITEMS.push(
   { id: 'av_s1_2', type: 'avatar', sub: 'season1_rank', tier: 3, name: '第一賽季亞軍頭像', price: null, onSale: false, img: 'assets/av/season1-rank-2.webp', desc: '第一賽季排行榜第 2 名限定，換季結算後透過信箱發放。' },
   { id: 'av_s1_3', type: 'avatar', sub: 'season1_rank', tier: 3, name: '第一賽季季軍頭像', price: null, onSale: false, img: 'assets/av/season1-rank-3.webp', desc: '第一賽季排行榜第 3 名限定，換季結算後透過信箱發放。' }
 );
+DEFAULT_ITEMS.push(
+  { id: 'av_s2_1', type: 'avatar', sub: 'season2_rank', tier: 4, name: '第二賽季冠軍頭像', price: null, onSale: false, img: 'assets/av/season2-rank-1.webp', desc: '第二賽季排行榜第 1 名限定，換季結算後透過信箱發放。' },
+  { id: 'av_s2_2', type: 'avatar', sub: 'season2_rank', tier: 3, name: '第二賽季亞軍頭像', price: null, onSale: false, img: 'assets/av/season2-rank-2.webp', desc: '第二賽季排行榜第 2 名限定，換季結算後透過信箱發放。' },
+  { id: 'av_s2_3', type: 'avatar', sub: 'season2_rank', tier: 3, name: '第二賽季季軍頭像', price: null, onSale: false, img: 'assets/av/season2-rank-3.webp', desc: '第二賽季排行榜第 3 名限定，換季結算後透過信箱發放。' }
+);
 var BASIC_EMOTES = ["👍","😂","😮","😡","🤡","🔥","🙏","😭"];
 var EDITABLE = ["name","price","onSale","tier","desc","stock","perUser","startAt","endAt","salvage","rewards","loot","sub"];
 var RARITY = ["","稀有","極稀有","史詩","神話","傳奇","神秘","管理員"];
@@ -1761,7 +1766,7 @@ rebuildItems(null);
 
 var STACK = { card: 1, key: 1, chest: 1 };
 var TYPE_TXT = { avatar: '頭像', bg: '背景', back: '卡背', emote: '表情包', card: '道具', key: '鑰匙', chest: '寶箱', dex: '塗鴉', effect: '頭像登場特效' };
-var SUB_TXT = { male: '男主', female: '女主', meme: '迷因', ur: 'UR', god: '神域', test_rank: '測試服限定', season1_rank: '第一賽季限定' };
+var SUB_TXT = { male: '男主', female: '女主', meme: '迷因', ur: 'UR', god: '神域', test_rank: '測試服限定', season1_rank: '第一賽季限定', season2_rank: '第二賽季限定' };
 var TIER_TXT = { 1: '一階', 2: '二階', 3: '三階', 4: '四階' };
 /* v11：顏色跟著鑰匙圖走 — 稀有藍、極稀有冰藍、史詩紫、神話紅、傳奇金、神秘熔岩橘、管理員星辰紫 */
 var RARITY_COLOR = ['', '#58B8FF', '#8FE8FF', '#B26BFF', '#FF4D6D', '#FFD37A', '#FF8A3D', '#9D7BFF'];
@@ -5220,6 +5225,7 @@ var DEX_GROUPS = [
   { type: 'avatar', sub: 'god', name: '管理員頭像', desc: '管理員專屬人物誌' },
   { type: 'avatar', sub: 'test_rank', name: '練習賽限定頭像', desc: '練習賽第一名到第三名限定頭像' },
   { type: 'avatar', sub: 'season1_rank', name: '第一賽季頭像', desc: '第一賽季第一名、第二名、第三名專屬限定頭像' },
+  { type: 'avatar', sub: 'season2_rank', name: '第二賽季頭像', desc: '第二賽季第一名、第二名、第三名專屬限定頭像' },
   { type: 'bg', name: '世界地圖', desc: '去過的地方都會亮起來' },
   { type: 'back', name: '牌背典藏', desc: '翻過來也要好看' },
   { type: 'dex', name: '塗鴉秘寶館', desc: '傳說中的手繪真跡，一張都別放過' }

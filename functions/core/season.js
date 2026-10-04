@@ -5,30 +5,45 @@
 
 const { AppError, seasonId, seasonRange } = require('./util');
 const E = require('./econ');
-const { SEASON_ONE_RANK_AVATARS } = require('./catalog');
+const { SEASON_ONE_RANK_AVATARS, SEASON_TWO_RANK_AVATARS } = require('./catalog');
 const { TITLES } = require('./titles');
 
 const POINTS = { 1: 5, 2: 3, 3: 1 };
 const DEFAULT_RANK_FROM = '2026-W39';   // 這一季之前是練習季，不發積分
 const FIRST_SEASON_ID = '2026-W39';
-const FIRST_SEASON_AVATAR = Object.fromEntries(SEASON_ONE_RANK_AVATARS.map((x) => [x.rank, x]));
+const SECOND_SEASON_ID = '2026-W40';
+const SEASON_AVATAR_REWARDS = Object.freeze({
+  [FIRST_SEASON_ID]: {
+    label: '第一賽季', kind: 'seasonOneAvatar', mailPrefix: 'season-one-avatar',
+    avatars: Object.fromEntries(SEASON_ONE_RANK_AVATARS.map((x) => [x.rank, x]))
+  },
+  [SECOND_SEASON_ID]: {
+    label: '第二賽季', kind: 'seasonTwoAvatar', mailPrefix: 'season-two-avatar',
+    avatars: Object.fromEntries(SEASON_TWO_RANK_AVATARS.map((x) => [x.rank, x]))
+  }
+});
 
-function firstSeasonAvatarMail(sid, practice, row, t) {
-  if (practice || sid !== FIRST_SEASON_ID || !row || !(row.rank >= 1 && row.rank <= 3)) return null;
-  const avatar = FIRST_SEASON_AVATAR[row.rank];
+function seasonAvatarMail(sid, practice, row, t) {
+  const reward = SEASON_AVATAR_REWARDS[sid];
+  if (practice || !reward || !row || !(row.rank >= 1 && row.rank <= 3)) return null;
+  const avatar = reward.avatars[row.rank];
   if (!avatar) return null;
-  const id = 'season-one-avatar-' + sid + '-r' + row.rank + '-' + row.pid;
+  const id = reward.mailPrefix + '-' + sid + '-r' + row.rank + '-' + row.pid;
   return {
     id,
     data: {
       id,
-      title: '第一賽季・第 ' + row.rank + ' 名限定頭像',
-      body: '恭喜你在第一賽季資產排行獲得第 ' + row.rank + ' 名。這款頭像只會發給本季對應名次。',
+      title: reward.label + '・第 ' + row.rank + ' 名限定頭像',
+      body: '恭喜你在' + reward.label + '資產排行獲得第 ' + row.rank + ' 名。這款頭像只會發給本季對應名次。',
       money: 0, stars: 0, items: { [avatar.id]: 1 },
       to: [row.pid], all: false, toList: [row.pid],
-      at: t, by: 'system', kind: 'seasonOneAvatar', seasonId: sid, rank: row.rank
+      at: t, by: 'system', kind: reward.kind, seasonId: sid, rank: row.rank
     }
   };
+}
+
+function firstSeasonAvatarMail(sid, practice, row, t) {
+  return sid === FIRST_SEASON_ID ? seasonAvatarMail(sid, practice, row, t) : null;
 }
 
 /* 排名：打滿手數的人依淨資產排序，同分同名次；沒打滿的排在後面、沒有名次 */
@@ -149,9 +164,9 @@ function createSeason({ db, now, requireAdmin, runInterest, closeTables }) {
       });
       if (cleanup01 && !cleanup01Written) tx.update(db.collection('players').doc('01'), cleanup01);
 
-      if (!practice && sid === FIRST_SEASON_ID) {
+      if (!practice && SEASON_AVATAR_REWARDS[sid]) {
         rows.forEach((r) => {
-          const mail = firstSeasonAvatarMail(sid, practice, r, t);
+          const mail = seasonAvatarMail(sid, practice, r, t);
           if (mail) tx.set(db.collection('mail').doc(mail.id), mail.data);
         });
       }
@@ -225,6 +240,6 @@ function createSeason({ db, now, requireAdmin, runInterest, closeTables }) {
 }
 
 module.exports = {
-  createSeason, rankSeason, firstSeasonAvatarMail,
-  POINTS, DEFAULT_RANK_FROM, FIRST_SEASON_ID
+  createSeason, rankSeason, seasonAvatarMail, firstSeasonAvatarMail,
+  POINTS, DEFAULT_RANK_FROM, FIRST_SEASON_ID, SECOND_SEASON_ID, SEASON_AVATAR_REWARDS
 };
