@@ -276,3 +276,9 @@ exports.marketNewsroom = onSchedule({ schedule: '*/5 7-16 * * 1-5', timeZone: 'A
   const scheduledAt = Date.parse(event.scheduleTime) || Date.now();
   logger.info('market newsroom', await NW.publish(scheduledAt));
 });
+
+/* 領地黑市：全服共用庫存，每半小時固定刷新一次。 */
+exports.estateBlackMarketRefresh = onSchedule({ schedule: '*/30 * * * *', timeZone: 'Asia/Taipei', retryCount: 3 }, async (event) => {
+  const scheduledAt = Date.parse(event.scheduleTime) || Date.now();
+  logger.info('estate black market refresh', await ES.refreshBlackMarket(scheduledAt));
+});

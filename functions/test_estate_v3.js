@@ -3,7 +3,7 @@
 const assert = require('assert');
 const {
   createEstate, seedCity, seedProfile, normalizeCity, publicState,
-  baseRate, rateAt, storageCap, upgradeSpec, maxHoldings, ATTACK_DEBUFF_MS
+  baseRate, rateAt, storageCap, upgradeSpec, maxHoldings, marketStockForSlot, ATTACK_DEBUFF_MS
 } = require('./core/estate_v3');
 const { testStore } = require('./test_store');
 
@@ -13,7 +13,7 @@ const seeded = seedCity(t, admin);
 const b2 = seeded.plots.find((p) => p.id === 'B2');
 const a1 = seeded.plots.find((p) => p.id === 'A1');
 
-assert.strictEqual(seeded.version, 4);
+assert.strictEqual(seeded.version, 5);
 assert.strictEqual(seeded.plots.length, 16);
 assert.strictEqual(b2.stage, 1);
 assert.strictEqual(b2.level, 0);
@@ -31,6 +31,23 @@ assert.strictEqual(maxHoldings(seeded, '27'), 1);
 const finished = normalizeCity(seeded, t, admin);
 Object.assign(finished.plots.find((p) => p.id === 'B2'), { stage: 5, level: 10 });
 assert.strictEqual(maxHoldings(finished, '27'), 2);
+let coreSlots = 0, scrollSlots = 0, crystalSlots = 0;
+for (let slot = 0; slot < 10000; slot++) {
+  const stock = marketStockForSlot(slot);
+  assert.ok(stock.wood >= 10 && stock.wood <= 20);
+  assert.ok(stock.stone >= 10 && stock.stone <= 20);
+  assert.ok(stock.alloy >= 3 && stock.alloy <= 7);
+  assert.ok(stock.gold >= 3 && stock.gold <= 7);
+  assert.ok(stock.crystal >= 0 && stock.crystal <= 3);
+  assert.ok(stock.scroll >= 0 && stock.scroll <= 2);
+  assert.ok(stock.core === 0 || stock.core === 1);
+  if (stock.crystal) crystalSlots++;
+  if (stock.scroll) scrollSlots++;
+  if (stock.core) coreSlots++;
+}
+assert.ok(crystalSlots > 4700 && crystalSlots < 5300);
+assert.ok(scrollSlots > 1300 && scrollSlots < 1700);
+assert.ok(coreSlots > 100 && coreSlots < 200);
 
 (async () => {
   let role = 'player', clock = t;
@@ -63,7 +80,7 @@ assert.strictEqual(maxHoldings(finished, '27'), 2);
   await assert.rejects(estate.blackMarketState({ data: {} }), /管理員/);
   role = 'admin';
   let result = await estate.state({ data: {} });
-  assert.strictEqual(result.state.version, 4);
+  assert.strictEqual(result.state.version, 5);
   assert.strictEqual(result.state.holdings, 1);
   assert.strictEqual(result.state.profile.missiles, 8);
   assert.strictEqual(result.state.profile.blackCoins, 10000);
@@ -88,16 +105,28 @@ assert.strictEqual(maxHoldings(finished, '27'), 2);
   result = await estate.blackMarketState({ data: {} });
   assert.strictEqual(result.market.currencyName, '黑曜幣');
   assert.strictEqual(result.market.items.length, 7);
-  await assert.rejects(estate.blackMarketBuy({ data: { itemId: 'wood', quantity: 2 } }), /只能選/);
+  assert.strictEqual(result.market.shared, true);
+  const woodBefore = result.market.items.find((x) => x.id === 'wood').stock;
+  await assert.rejects(estate.blackMarketBuy({ data: { itemId: 'wood', quantity: 0 } }), /介於/);
   result = await estate.blackMarketBuy({ data: { itemId: 'wood', quantity: 5 } });
   assert.strictEqual(result.cost, 75);
   assert.strictEqual(result.market.balance, 9925);
   assert.strictEqual(result.market.items.find((x) => x.id === 'wood').owned, 123);
-  await assert.rejects(estate.blackMarketBuy({ data: { itemId: 'core', quantity: 10 } }), /不足/);
+  assert.strictEqual(result.market.items.find((x) => x.id === 'wood').stock, woodBefore - 5);
+  await assert.rejects(estate.blackMarketBuy({ data: { itemId: 'core', quantity: 10 } }), /庫存|售完/);
+  await assert.rejects(estate.action({ data: { action: 'sell', lotId: 'B2' } }), /未知/);
+  clock += 30 * 60000;
+  result = await estate.refreshBlackMarket(clock);
+  assert.strictEqual(result.refreshed, true);
+  assert.deepStrictEqual(result.stock, marketStockForSlot(Math.floor(clock / (30 * 60000))));
 
   result = await estate.action({ data: { action: 'mine', lotId: 'B2' } });
   assert.strictEqual(result.state.plots.find((p) => p.id === 'B2').mines, 1);
   assert.strictEqual(result.state.profile.mines, 1);
+  result = await estate.action({ data: { action: 'mine', lotId: 'B2' } });
+  assert.strictEqual(result.state.plots.find((p) => p.id === 'B2').mines, 2);
+  assert.strictEqual(result.state.profile.mines, 0);
+  await assert.rejects(estate.action({ data: { action: 'mine', lotId: 'B2' } }), /最多部署兩枚/);
   await assert.rejects(estate.action({ data: { action: 'attack', lotId: 'B2', weapon: 'missile' } }), /自己的/);
   await assert.rejects(estate.action({ data: { action: 'attack', lotId: 'A1', weapon: 'bomb' } }), /只開放重型飛彈/);
 

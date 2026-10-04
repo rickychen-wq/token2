@@ -1180,6 +1180,7 @@ button.game:active{transform:scale(.99)}
 <style>.seg{min-width:0}.seg button{overflow:hidden;white-space:nowrap}.me-sub{min-width:0;overflow-x:hidden}.title-count{grid-template-columns:repeat(4,minmax(0,1fr))}</style>
 <style>.prof-title{margin:10px 16px 0;padding:10px 12px;text-align:center;border-radius:9px;border:1px solid rgba(99,218,255,.3);background:linear-gradient(90deg,rgba(63,199,255,.08),rgba(166,104,255,.08));color:var(--cy-hi);font-size:13px;font-weight:700}.prof-showcase{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:7px 16px 0}.prof-showcase div{min-width:0;padding:8px 5px;border-radius:7px;text-align:center;background:rgba(3,8,18,.55);border:1px solid var(--edge-soft)}.prof-showcase small,.prof-showcase b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.prof-showcase small{font-size:9px;color:var(--faint)}.prof-showcase b{margin-top:3px;font-size:11px;color:var(--dim)}</style>
 <style>.black-market{position:relative;overflow:hidden;padding:18px;border:1px solid rgba(178,116,255,.24);border-radius:18px;background:radial-gradient(circle at 90% 0,rgba(127,69,216,.2),transparent 40%),linear-gradient(145deg,#0a1524,#111226)}.black-market:before{content:"";position:absolute;inset:0 0 auto;height:2px;background:linear-gradient(90deg,#5ee4ff,#a35cff,#ff6cae)}.black-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.black-kicker{color:#bd8dff;font:900 9px var(--ui);letter-spacing:.18em}.black-head h2{margin:6px 0 3px;font:900 23px var(--ui)}.black-head p{margin:0;color:var(--dim);font-size:11px}.black-balance{flex:0 0 auto;padding:10px 13px;border-radius:13px;text-align:right;background:rgba(132,83,225,.12);border:1px solid rgba(182,124,255,.22)}.black-balance small,.black-balance b{display:block}.black-balance small{color:#9e86c9;font-size:8px}.black-balance b{margin-top:3px;color:#e4d5ff;font:900 16px var(--ui)}.black-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:18px}.black-item{padding:13px;border-radius:14px;background:rgba(5,15,28,.72);border:1px solid rgba(119,209,241,.1)}.black-item-top{display:flex;align-items:center;gap:10px}.black-icon{display:grid;place-items:center;width:42px;height:42px;border-radius:12px;background:linear-gradient(145deg,rgba(63,211,242,.12),rgba(139,81,225,.14));font-size:21px}.black-item-copy{min-width:0}.black-item-copy b,.black-item-copy small{display:block}.black-item-copy b{font-size:13px}.black-item-copy small{margin-top:3px;color:var(--faint);font-size:9px}.black-item-price{display:flex;align-items:center;justify-content:space-between;margin-top:11px;padding-top:10px;border-top:1px solid var(--edge-soft);color:#a993d8;font-size:10px}.black-item-price strong{color:#d8c0ff}.black-qty{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:9px}.black-qty button{padding:8px 3px;border-radius:9px;border:1px solid rgba(172,115,255,.2);color:#d6c9ee;background:rgba(111,70,190,.09);font:800 9px var(--ui)}.black-qty button:disabled{opacity:.4}.black-note{margin-top:13px;padding:11px;border-radius:11px;color:#819aaa;background:rgba(255,255,255,.025);font-size:9px;line-height:1.6}@media(max-width:560px){.black-market{padding:14px}.black-grid{grid-template-columns:1fr}.black-head h2{font-size:19px}.black-balance b{font-size:13px}}</style>
+<style>.black-sold{grid-column:1/-1;padding:9px;text-align:center;color:#7f7892;font-size:9px}</style>
 </head>
 <body class="gate-mode">
 
@@ -1446,7 +1447,7 @@ var S = {
 var MKUI = { state: null, selected: 'TKN', loading: false, error: null, open: null, phase: null };
 var NEWSUI = { state: null, outlet: 'all', articleId: '', loading: false, error: null };
 var TITLEUI = { state: null, loading: false, error: null, cat: 'A' };
-var BLACKUI = { state: null, loading: false, error: null, busy: false };
+var BLACKUI = { state: null, loading: false, error: null, busy: false, timer: null };
 
 /* =====================================================================
    啟動
@@ -2407,11 +2408,18 @@ function loadBlackMarket(force) {
   BLACKUI.loading = true; BLACKUI.error = null;
   call('adminEstateBlackMarketState', {}).then(function (r) {
     BLACKUI.state = r.market; BLACKUI.loading = false;
+    scheduleBlackMarketRefresh();
     if (S.meTab === 'blackmarket') renderMe(true);
   }).catch(function (e) {
     BLACKUI.error = e.message || '黑市連線失敗'; BLACKUI.loading = false;
     if (S.meTab === 'blackmarket') renderMe(true);
   });
+}
+function scheduleBlackMarketRefresh() {
+  clearTimeout(BLACKUI.timer); BLACKUI.timer = null;
+  if (!BLACKUI.state || !BLACKUI.state.nextRefreshAt) return;
+  var delay = Math.max(1000, Number(BLACKUI.state.nextRefreshAt) - Date.now() + 1200);
+  BLACKUI.timer = setTimeout(function () { BLACKUI.state = null; if (S.meTab === 'blackmarket') loadBlackMarket(true); }, Math.min(delay, 2147483647));
 }
 function renderBlackMarket() {
   if (!S.me || S.me.role !== 'admin') return '<div class="empty">只有管理員能進入黑市</div>';
@@ -2419,9 +2427,11 @@ function renderBlackMarket() {
   if (BLACKUI.loading || !BLACKUI.state && !BLACKUI.error) return '<div class="empty">正在打開黑市加密通道…</div>';
   if (BLACKUI.error) return '<div class="empty">' + esc(BLACKUI.error) + '<div class="acts"><button class="btn ghost" type="button" data-black-retry>重新連線</button></div></div>';
   var m = BLACKUI.state;
-  return '<section class="black-market"><div class="black-head"><div><div class="black-kicker">OBSIDIAN EXCHANGE · ADMIN ONLY</div><h2>黑曜黑市</h2><p>獨立材料市場，與星幣、遊戲幣分開計算。</p></div><div class="black-balance"><small>' + esc(m.currencyName) + '</small><b>◈ ' + fmt(m.balance) + '</b></div></div><div class="black-grid">' + (m.items || []).map(function (it) {
-    return '<article class="black-item"><div class="black-item-top"><span class="black-icon">' + esc(it.icon) + '</span><span class="black-item-copy"><b>' + esc(it.name) + '</b><small>' + esc(it.rarity) + ' · 持有 ' + fmt(it.owned) + '</small></span></div><div class="black-item-price"><span>單價</span><strong>◈ ' + fmt(it.price) + '</strong></div><div class="black-qty">' + [1, 5, 10].map(function (n) { return '<button type="button" data-black-buy="' + esc(it.id) + '" data-black-qty="' + n + '" ' + (m.balance < it.price * n || BLACKUI.busy ? 'disabled' : '') + '>買 ' + n + '<br>◈ ' + fmt(it.price * n) + '</button>'; }).join('') + '</div></article>';
-  }).join('') + '</div><div class="black-note">每日／每週任務之後可加入材料獎勵；目前黑市先販售全部七種測試材料。正式開放前會再依你的新版配方重排價格與稀有度。</div></section>';
+  var next = new Date(Number(m.nextRefreshAt || 0)), nextText = isNaN(next.getTime()) ? '每半小時' : String(next.getHours()).padStart(2, '0') + ':' + String(next.getMinutes()).padStart(2, '0');
+  return '<section class="black-market"><div class="black-head"><div><div class="black-kicker">OBSIDIAN EXCHANGE · ADMIN ONLY</div><h2>黑曜黑市</h2><p>全服共用庫存，被其他人搶完就要等下一輪。</p></div><div class="black-balance"><small>' + esc(m.currencyName) + '</small><b>◈ ' + fmt(m.balance) + '</b><small>' + esc(nextText) + ' 刷新</small></div></div><div class="black-grid">' + (m.items || []).map(function (it) {
+    var stock = Number(it.stock || 0), quantities = [1, 5, 10]; if (stock > 0 && quantities.indexOf(stock) < 0) quantities.push(stock); quantities = quantities.filter(function (n) { return n <= stock; }).sort(function (a, b) { return a - b; });
+    return '<article class="black-item"><div class="black-item-top"><span class="black-icon">' + esc(it.icon) + '</span><span class="black-item-copy"><b>' + esc(it.name) + '</b><small>' + esc(it.rarity) + ' · 自己持有 ' + fmt(it.owned) + '</small></span></div><div class="black-item-price"><span>全服庫存 <strong>' + fmt(stock) + '</strong></span><strong>◈ ' + fmt(it.price) + '／個</strong></div><div class="black-qty">' + (quantities.length ? quantities.map(function (n) { return '<button type="button" data-black-buy="' + esc(it.id) + '" data-black-qty="' + n + '" ' + (m.balance < it.price * n || BLACKUI.busy ? 'disabled' : '') + '>' + (n === stock && n !== 1 ? '全買 ' : '買 ') + n + '<br>◈ ' + fmt(it.price * n) + '</button>'; }).join('') : '<span class="black-sold">本輪未出現／已售完</span>') + '</div></article>';
+  }).join('') + '</div><div class="black-note">木材、石材固定補貨 10～20；合金、黃金約 3～7。晶礦、魔法卷軸與星核會依稀有機率決定本輪是否出現。</div></section>';
 }
 function bindBlackMarket() {
   var root = $('vMe'), retry = root.querySelector('[data-black-retry]');
@@ -2429,7 +2439,7 @@ function bindBlackMarket() {
   root.querySelectorAll('[data-black-buy]').forEach(function (b) { b.onclick = function () {
     if (BLACKUI.busy) return; BLACKUI.busy = true; renderMe(true);
     call('adminEstateBlackMarketBuy', { itemId: b.getAttribute('data-black-buy'), quantity: Number(b.getAttribute('data-black-qty')) }).then(function (r) {
-      BLACKUI.state = r.market; toast(r.message, 'good');
+      BLACKUI.state = r.market; scheduleBlackMarketRefresh(); toast(r.message, 'good');
     }).catch(function (e) { toast(e.message, 'bad'); }).then(function () { BLACKUI.busy = false; renderMe(true); });
   }; });
 }
@@ -5449,7 +5459,7 @@ function endSession() {
   MKUI.state = null; MKUI.selected = 'TKN'; MKUI.loading = false; MKUI.error = null; MKUI.open = null; MKUI.phase = null;
   NEWSUI.state = null; NEWSUI.outlet = 'all'; NEWSUI.articleId = ''; NEWSUI.loading = false; NEWSUI.error = null;
   TITLEUI.state = null; TITLEUI.loading = false; TITLEUI.error = null; TITLEUI.cat = 'A';
-  BLACKUI.state = null; BLACKUI.loading = false; BLACKUI.error = null; BLACKUI.busy = false;
+  clearTimeout(BLACKUI.timer); BLACKUI.state = null; BLACKUI.loading = false; BLACKUI.error = null; BLACKUI.busy = false; BLACKUI.timer = null;
   MN.bet = 200; MN.busy = false; MN.last = null; MN.picking = -1; MN.rewardReveal = null;
   CP.bet = 200; CP.pick = []; CP.busy = false; CP.last = null; CP.rewardReveal = null;
   if (window.EstateApp) window.EstateApp.unmount();
@@ -5487,7 +5497,7 @@ function loadEstateEngine() {
   if (!ESTATE_LOAD) ESTATE_LOAD = loadEstateScript('assets/vendor/three-r147/three.min.js', 'estate-three')
     .then(function () { return loadEstateScript('assets/vendor/three-r147/GLTFLoader.js', 'estate-gltf'); })
     .then(function () { return loadEstateScript('assets/vendor/three-r147/OrbitControls.js', 'estate-orbit'); })
-    .then(function () { return loadEstateScript('assets/estate/estate-v2.js?v=4', 'estate-app'); })
+    .then(function () { return loadEstateScript('assets/estate/estate-v2.js?v=5', 'estate-app'); })
     .then(function () { if (!window.EstateApp) throw new Error('3D 城市初始化失敗'); return window.EstateApp; })
     .catch(function (e) { ESTATE_LOAD = null; throw e; });
   return ESTATE_LOAD;

@@ -18,6 +18,7 @@ const RATES = Object.freeze({
 });
 const STORAGE_MINUTES = Object.freeze([0, 30, 60, 120, 240, 720]);
 const MATERIAL_CYCLE_MINUTES = Object.freeze([0, 120, 90, 60, 45, 30]);
+const BLACK_MARKET_REFRESH_MS = 30 * 60 * 1000;
 const BLACK_MARKET = Object.freeze({
   wood: { name: '木材', icon: '🪵', rarity: '普通', price: 15 },
   stone: { name: '石材', icon: '🪨', rarity: '普通', price: 20 },
@@ -27,6 +28,45 @@ const BLACK_MARKET = Object.freeze({
   scroll: { name: '魔法卷軸', icon: '📜', rarity: '神話', price: 450 },
   core: { name: '星核', icon: '✦', rarity: '傳奇', price: 1200 }
 });
+
+function marketRandom(slot) {
+  let x = (Number(slot) ^ 0x9e3779b9) >>> 0;
+  return function next() {
+    x = (x + 0x6d2b79f5) >>> 0;
+    let z = x;
+    z = Math.imul(z ^ (z >>> 15), z | 1);
+    z ^= z + Math.imul(z ^ (z >>> 7), z | 61);
+    return ((z ^ (z >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function marketStockForSlot(slot) {
+  const r = marketRandom(slot), between = (min, max) => min + Math.floor(r() * (max - min + 1));
+  return {
+    wood: between(10, 20),
+    stone: between(10, 20),
+    alloy: between(3, 7),
+    gold: between(3, 7),
+    crystal: r() < 0.5 ? between(1, 3) : 0,
+    scroll: r() < 0.15 ? (r() < 0.75 ? 1 : 2) : 0,
+    core: r() < 0.015 ? 1 : 0
+  };
+}
+
+function ensureBlackMarket(city, t) {
+  const slot = Math.floor(Number(t) / BLACK_MARKET_REFRESH_MS);
+  const old = city.blackMarket || {};
+  if (Number(old.slot) !== slot || !old.stock) {
+    city.blackMarket = {
+      slot,
+      refreshedAt: slot * BLACK_MARKET_REFRESH_MS,
+      nextRefreshAt: (slot + 1) * BLACK_MARKET_REFRESH_MS,
+      stock: marketStockForSlot(slot)
+    };
+  }
+  MATERIALS.forEach((id) => { city.blackMarket.stock[id] = Math.max(0, Math.floor(Number(city.blackMarket.stock[id]) || 0)); });
+  return city.blackMarket;
+}
 
 function plotId(index) {
   return String.fromCharCode(65 + Math.floor(index / 4)) + String(index % 4 + 1);
@@ -66,7 +106,9 @@ function seedCity(t, admin) {
     });
   });
   plots[5] = ownedPlot(5, { pid: admin.pid, name: admin.name, shield: false }, t, 1, 0);
-  return { id: CITY_ID, version: 4, sandbox: true, plots, createdAt: t, updatedAt: t };
+  const city = { id: CITY_ID, version: 5, sandbox: true, plots, createdAt: t, updatedAt: t };
+  ensureBlackMarket(city, t);
+  return city;
 }
 
 function seedProfile(pid, t) {
@@ -91,7 +133,7 @@ function normalizeProfile(raw, pid, t) {
 
 function normalizeCity(raw, t, admin) {
   if (!raw || !Array.isArray(raw.plots) || raw.plots.length !== 16) return seedCity(t, admin);
-  const city = Object.assign({}, raw, { id: CITY_ID, version: 4, sandbox: true });
+  const city = Object.assign({}, raw, { id: CITY_ID, version: 5, sandbox: true });
   city.plots = raw.plots.map((p, i) => {
     const src = p || {}, out = Object.assign(blankPlot(i), src, { id: plotId(i) });
     if (out.status === 'ruined') out.status = out.ownerPid === 'system' ? 'showcase' : 'owned';
@@ -108,6 +150,7 @@ function normalizeCity(raw, t, admin) {
     }
     return out;
   });
+  ensureBlackMarket(city, t);
   return city;
 }
 
@@ -194,13 +237,17 @@ function maxHoldings(city, pid) {
   return city.plots.some((p) => p.ownerPid === pid && p.status === 'owned' && p.stage === 5 && p.level === 10) ? 2 : 1;
 }
 
-function blackMarketState(profile) {
+function blackMarketState(profile, market) {
   return {
     currencyName: '黑曜幣',
     balance: Math.max(0, Math.floor(Number(profile.blackCoins) || 0)),
+    refreshedAt: market.refreshedAt,
+    nextRefreshAt: market.nextRefreshAt,
+    shared: true,
     items: Object.keys(BLACK_MARKET).map((id) => Object.assign({
       id,
-      owned: Math.max(0, Math.floor(Number((profile.materials || {})[id]) || 0))
+      owned: Math.max(0, Math.floor(Number((profile.materials || {})[id]) || 0)),
+      stock: Math.max(0, Math.floor(Number((market.stock || {})[id]) || 0))
     }, BLACK_MARKET[id]))
   };
 }
@@ -213,7 +260,7 @@ function publicState(city, pid, t, profile) {
     storageCap: storageCap(p), nextUpgrade: upgradeSpec(p)
   }));
   return {
-    id: city.id, sandbox: true, version: 4,
+    id: city.id, sandbox: true, version: 5,
     maxHoldings: maxHoldings(city, pid),
     holdings: plots.filter((p) => p.ownerPid === pid && p.status === 'owned').length,
     vacant: plots.filter((p) => p.status === 'vacant').length,
@@ -243,6 +290,7 @@ function createEstate({ db, now, requireAdmin, mutate }) {
   const profileRef = (pid) => ref.collection('profiles').doc(pid);
 
   function prepare(city, profile, admin, t) {
+    ensureBlackMarket(city, t);
     city.plots.forEach((p) => accruePlot(p, profile, admin.pid, t));
     city.updatedAt = t;
     profile.updatedAt = t;
@@ -303,7 +351,7 @@ function createEstate({ db, now, requireAdmin, mutate }) {
     async action(req) {
       const authenticatedAdmin = await requireAdmin(req);
       const d = req.data || {}, action = String(d.action || '');
-      if (!['claim', 'sell', 'mine', 'attack', 'reset'].includes(action)) throw new AppError('未知的領地操作', 'bad-action', 'invalid-argument');
+      if (!['claim', 'mine', 'attack', 'reset'].includes(action)) throw new AppError('未知的領地操作', 'bad-action', 'invalid-argument');
       return transact(req, (city, profile, admin, t) => {
         if (action === 'reset') {
           const reset = seedCity(t, admin), fresh = seedProfile(admin.pid, t);
@@ -319,17 +367,12 @@ function createEstate({ db, now, requireAdmin, mutate }) {
           Object.assign(plot, ownedPlot(city.plots.indexOf(plot), admin, t, 1, 0));
           return { lotId: id, message: '已免費取得 ' + id + '，一階木屋 Lv.0 建造完成' };
         }
-        if (action === 'sell') {
-          ensureOwner(plot, admin);
-          Object.assign(plot, blankPlot(city.plots.indexOf(plot)), { updatedAt: t });
-          return { lotId: id, message: id + ' 已釋出為空地' };
-        }
         if (action === 'mine') {
           ensureOwner(plot, admin);
-          if (plot.mines >= 1) throw new AppError('每棟房屋目前只能部署一枚稀有地雷', 'mine-limit');
+          if (plot.mines >= 2) throw new AppError('每棟房屋最多部署兩枚防禦地雷', 'mine-limit');
           if (profile.mines < 1) throw new AppError('材料庫沒有防禦地雷', 'no-mine');
-          profile.mines -= 1; plot.mines = 1; plot.updatedAt = t;
-          return { lotId: id, message: id + ' 已部署一枚攔截地雷' };
+          profile.mines -= 1; plot.mines += 1; plot.updatedAt = t;
+          return { lotId: id, message: id + ' 已部署防禦地雷（' + plot.mines + ' / 2）' };
         }
         if (action === 'attack') {
           if (!['owned', 'showcase'].includes(plot.status)) throw new AppError('這塊土地目前不能攻擊', 'bad-state');
@@ -391,8 +434,8 @@ function createEstate({ db, now, requireAdmin, mutate }) {
 
     async blackMarketState(req) {
       const admin = await requireAdmin(req);
-      const result = await transact({ data: { action: 'black-market-view' } }, (city, profile) => ({
-        market: blackMarketState(profile)
+      const result = await transact({ data: { action: 'black-market-view' } }, (city, profile, actor, t) => ({
+        market: blackMarketState(profile, ensureBlackMarket(city, t))
       }), admin);
       return { market: result.market };
     },
@@ -402,18 +445,36 @@ function createEstate({ db, now, requireAdmin, mutate }) {
       const itemId = String(d.itemId || ''), quantity = Math.floor(Number(d.quantity) || 0);
       const item = BLACK_MARKET[itemId];
       if (!item) throw new AppError('找不到這項黑市材料', 'bad-market-item', 'invalid-argument');
-      if (![1, 5, 10].includes(quantity)) throw new AppError('購買數量只能選 1、5 或 10', 'bad-market-quantity', 'invalid-argument');
-      const result = await transact({ data: { action: 'black-market-buy', itemId, quantity } }, (city, profile) => {
+      if (quantity < 1 || quantity > 20) throw new AppError('單次購買數量必須介於 1 到 20', 'bad-market-quantity', 'invalid-argument');
+      const result = await transact({ data: { action: 'black-market-buy', itemId, quantity } }, (city, profile, actor, t) => {
+        const market = ensureBlackMarket(city, t), available = Number(market.stock[itemId] || 0);
+        if (available < quantity) throw new AppError(available > 0 ? '全服庫存只剩 ' + available + ' 個' : '這項材料本輪已售完', 'low-market-stock');
         const cost = item.price * quantity;
         if (profile.blackCoins < cost) throw new AppError('黑曜幣不足，還差 ' + (cost - profile.blackCoins), 'low-black-coins');
         profile.blackCoins -= cost;
         profile.materials[itemId] = Number(profile.materials[itemId] || 0) + quantity;
+        market.stock[itemId] -= quantity;
         return {
-          market: blackMarketState(profile), itemId, quantity, cost,
+          market: blackMarketState(profile, market), itemId, quantity, cost,
           message: '已取得 ' + item.name + ' × ' + quantity
         };
       }, admin);
       return { market: result.market, itemId, quantity, cost: result.cost, message: result.message };
+    },
+
+    async refreshBlackMarket(at) {
+      const t = Number(at) || now();
+      let result = { skipped: true };
+      await db.runTransaction(async (tx) => {
+        const snap = await tx.get(ref);
+        if (!snap.exists) return;
+        const city = snap.data(), before = city.blackMarket && city.blackMarket.slot;
+        const market = ensureBlackMarket(city, t);
+        city.updatedAt = t;
+        tx.set(ref, city);
+        result = { skipped: false, refreshed: Number(before) !== Number(market.slot), slot: market.slot, stock: market.stock, nextRefreshAt: market.nextRefreshAt };
+      });
+      return result;
     }
   };
 }
@@ -421,5 +482,6 @@ function createEstate({ db, now, requireAdmin, mutate }) {
 module.exports = {
   createEstate, seedCity, seedProfile, normalizeCity, normalizeProfile, publicState,
   accruePlot, upgradeSpec, baseRate, rateAt, storageCap, materialYield, maxHoldings, blackMarketState,
-  CITY_ID, MATERIALS, MAX_LEVEL, RATES, STORAGE_MINUTES, BLACK_MARKET, ATTACK_DEBUFF_MS, ATTACK_RATE_MULT
+  marketStockForSlot, ensureBlackMarket,
+  CITY_ID, MATERIALS, MAX_LEVEL, RATES, STORAGE_MINUTES, BLACK_MARKET, BLACK_MARKET_REFRESH_MS, ATTACK_DEBUFF_MS, ATTACK_RATE_MULT
 };
