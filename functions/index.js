@@ -46,8 +46,8 @@ const RW = createRewards({ db, now, requireAdmin: A.requireAdmin });
 const FB = createFeedback({ db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin });
 const TI = createTitles({ db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin });
 const EV = createActivities({ db, now, requireAdmin: A.requireAdmin });
-const ES = createEstate({ db, now, requireAdmin: A.requireAdmin, mutate: EC.mutate });
-const TW = createTower({ db, now, requireAdmin: A.requireAdmin, mutate: EC.mutate });
+const ES = createEstate({ db, now, requireAccess: (req) => A.requireTestAccess(req, 'estate'), mutate: EC.mutate });
+const TW = createTower({ db, now, requireAccess: (req) => A.requireTestAccess(req, 'tower'), mutate: EC.mutate });
 const MK = createMarket({
   db, now, requireSession: A.requireSession, requireAdmin: A.requireAdmin,
   mutate: EC.mutate
@@ -144,6 +144,7 @@ exports.adminGrant = wrap(SH.adminGrant);
 exports.adminRevoke = wrap(SH.adminRevoke);
 exports.adminCatalog = wrap(SH.adminCatalog);
 exports.adminSetRole = wrap(A.adminSetRole);
+exports.adminSetTestAccess = wrap(A.adminSetTestAccess);
 
 /* ---------- 小遊戲 ---------- */
 exports.mineStart = wrap(MG.mineStart);

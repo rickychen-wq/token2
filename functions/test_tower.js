@@ -1,17 +1,18 @@
 'use strict';
 
 const assert = require('assert');
-const { createTower, BETS, PAYOUTS, towerMultiplier, towerLanding } = require('./games/tower');
+const { createTower, BETS, PAYOUTS, MAX_LAYER, towerMultiplier, towerLanding } = require('./games/tower');
 
 assert.deepStrictEqual(BETS, [200, 500, 1000, 2000, 5000]);
-assert.strictEqual(towerMultiplier(9), 0);
-assert.strictEqual(towerMultiplier(10), 1);
-assert.strictEqual(towerMultiplier(11), 1.2);
-assert.strictEqual(towerMultiplier(12), 1.5);
-assert.strictEqual(towerMultiplier(13), 1.7);
-assert.strictEqual(towerMultiplier(14), 2);
-assert.strictEqual(towerMultiplier(20), 10);
-assert.strictEqual(PAYOUTS[15], 2.5);
+assert.strictEqual(MAX_LAYER, 30);
+assert.strictEqual(towerMultiplier(19), 0);
+assert.strictEqual(towerMultiplier(20), 1);
+assert.strictEqual(towerMultiplier(21), 1.2);
+assert.strictEqual(towerMultiplier(22), 1.5);
+assert.strictEqual(towerMultiplier(23), 1.7);
+assert.strictEqual(towerMultiplier(24), 2);
+assert.strictEqual(towerMultiplier(30), 10);
+assert.strictEqual(PAYOUTS[25], 2.5);
 assert.deepStrictEqual(towerLanding(62, 50, 0.7), { missed: false, width: 62, center: 50, offset: 0.7, perfect: true });
 assert.deepStrictEqual(towerLanding(62, 50, 10), { missed: false, width: 52, center: 55, offset: 10, perfect: false });
 assert.strictEqual(towerLanding(20, 50, -20).missed, true);
@@ -37,13 +38,13 @@ assert.throws(() => towerLanding(62, 50, 101), /落板位置/);
   assert.strictEqual(r.wallet, 9000);
   assert.strictEqual(r.run.layer, 0);
   await assert.rejects(api.start({ data: { bet: 200 } }), /正在建造/);
-  for (let layer = 1; layer <= 10; layer++) {
+  for (let layer = 1; layer <= 20; layer++) {
     clock += 1000;
     r = await api.drop({ data: { layer, offset: layer === 1 ? 5 : 0.5 } });
   }
-  assert.strictEqual(r.run.layer, 10);
+  assert.strictEqual(r.run.layer, 20);
   assert.strictEqual(r.run.multiplier, 1);
-  await assert.rejects(api.drop({ data: { layer: 10, offset: 0 } }), /處理過/);
+  await assert.rejects(api.drop({ data: { layer: 20, offset: 0 } }), /處理過/);
   r = await api.cashout({ data: {} });
   assert.strictEqual(r.payout, 1000);
   assert.strictEqual(r.profit, 0);
@@ -57,5 +58,15 @@ assert.throws(() => towerLanding(62, 50, 101), /落板位置/);
   r = await api.abandon({ data: {} });
   assert.strictEqual(r.abandoned, true);
   assert.strictEqual(r.wallet, 9300);
+  await api.start({ data: { bet: 200 } });
+  for (let layer = 1; layer <= 30; layer++) {
+    clock += 1000;
+    r = await api.drop({ data: { layer, offset: 0.5 } });
+  }
+  assert.strictEqual(r.completed, true);
+  assert.strictEqual(r.layer, 30);
+  assert.strictEqual(r.multiplier, 10);
+  assert.strictEqual(r.payout, 2000);
+  assert.strictEqual(r.wallet, 11100);
   console.log('tower tests passed');
 })().catch((err) => { console.error(err); process.exitCode = 1; });

@@ -1,5 +1,5 @@
 'use strict';
-/* 高塔疊疊樂：目前是管理員秘密測試版。
+/* 高塔疊疊樂：目前是授權測試版。
    本金、樓層與方塊狀態都保存在當季帳戶；每次落板由 transaction 驗證樓層，避免重送。 */
 
 const { AppError } = require('../core/util');
@@ -9,10 +9,10 @@ const TK = require('../core/tasks');
 const BETS = Object.freeze([200, 500, 1000, 2000, 5000]);
 const START_WIDTH = 62;
 const PERFECT_TOLERANCE = 1.2;
-const MAX_LAYER = 20;
+const MAX_LAYER = 30;
 const PAYOUTS = Object.freeze({
-  10: 1, 11: 1.2, 12: 1.5, 13: 1.7, 14: 2,
-  15: 2.5, 16: 3.2, 17: 4.2, 18: 5.5, 19: 7, 20: 10
+  20: 1, 21: 1.2, 22: 1.5, 23: 1.7, 24: 2,
+  25: 2.5, 26: 3.2, 27: 4.2, 28: 5.5, 29: 7, 30: 10
 });
 
 function cleanBet(value) {
@@ -63,7 +63,8 @@ function publicRun(run) {
   };
 }
 
-function createTower({ now, requireAdmin, mutate }) {
+function createTower({ now, requireAccess, requireAdmin, mutate }) {
+  const authenticate = requireAccess || requireAdmin;
   function finishPlay(acc, raw, pl, setPlayer, t) {
     if (E.recordPlay(acc, t, 'tower', 0) && TK.bump(pl, t, 'play', 1, raw)) {
       setPlayer({ tasks: pl.tasks });
@@ -72,14 +73,14 @@ function createTower({ now, requireAdmin, mutate }) {
 
   return {
     async state(req) {
-      const s = await requireAdmin(req);
+      const s = await authenticate(req);
       let run;
       const r = await mutate(s.pid, (acc) => { run = publicRun(acc.tower); return []; });
       return { run, wallet: r.account.wallet, preview: true, bets: BETS, payouts: PAYOUTS };
     },
 
     async start(req) {
-      const s = await requireAdmin(req);
+      const s = await authenticate(req);
       const bet = cleanBet(req.data && req.data.bet);
       let run;
       const r = await mutate(s.pid, (acc, cfg, t) => {
@@ -97,7 +98,7 @@ function createTower({ now, requireAdmin, mutate }) {
     },
 
     async drop(req) {
-      const s = await requireAdmin(req);
+      const s = await authenticate(req);
       const expected = Number(req.data && req.data.layer), offset = cleanOffset(req.data && req.data.offset);
       let out;
       const r = await mutate(s.pid, (acc, cfg, t, raw, pl, setPlayer) => {
@@ -126,7 +127,7 @@ function createTower({ now, requireAdmin, mutate }) {
           delete acc.tower;
           finishPlay(acc, raw, pl, setPlayer, t);
           out = { ended: true, completed: true, missed: false, block, layer: nextLayer, multiplier: mult, payout, profit: payout - bet, wallet: acc.wallet };
-          return [{ type: 'game', amount: payout, wallet: acc.wallet, bank: acc.bank.balance, loans: acc.loans, note: '高塔疊疊樂・登頂 20 層' }];
+          return [{ type: 'game', amount: payout, wallet: acc.wallet, bank: acc.bank.balance, loans: acc.loans, note: '高塔疊疊樂・登頂 ' + MAX_LAYER + ' 層' }];
         }
         out = { ended: false, missed: false, block, run: publicRun(run), perfect: landed.perfect, wallet: acc.wallet };
         return [];
@@ -136,13 +137,13 @@ function createTower({ now, requireAdmin, mutate }) {
     },
 
     async cashout(req) {
-      const s = await requireAdmin(req);
+      const s = await authenticate(req);
       let out;
       const r = await mutate(s.pid, (acc, cfg, t, raw, pl, setPlayer) => {
         const run = acc.tower;
         if (!run || !run.active) throw new AppError('目前沒有可以結算的高塔', 'no-tower');
         const mult = towerMultiplier(run.layer);
-        if (mult <= 0) throw new AppError('第 10 層開始才能帶走本金', 'tower-no-payout');
+        if (mult <= 0) throw new AppError('第 20 層開始才能帶走本金', 'tower-no-payout');
         const bet = Number(run.bet || 0), payout = Math.floor(bet * mult), layer = Number(run.layer || 0);
         acc.wallet += payout;
         delete acc.tower;
@@ -155,7 +156,7 @@ function createTower({ now, requireAdmin, mutate }) {
     },
 
     async abandon(req) {
-      const s = await requireAdmin(req);
+      const s = await authenticate(req);
       let out;
       const r = await mutate(s.pid, (acc, cfg, t, raw, pl, setPlayer) => {
         const run = acc.tower;

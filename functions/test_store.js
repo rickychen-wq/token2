@@ -7,6 +7,15 @@ function testStore(initial) {
   let seq = 0, tail = Promise.resolve(), writes = 0;
   const ref = (path) => ({
     path, id: path.split('/').pop(),
+    async get() {
+      const data = copy(docs.get(path));
+      return { exists: data !== undefined, data: () => copy(data) };
+    },
+    async set(data) { docs.set(path, copy(data)); writes++; },
+    async update(data) {
+      if (!docs.has(path)) throw new Error('更新的文件不存在');
+      docs.set(path, Object.assign({}, docs.get(path), copy(data))); writes++;
+    },
     collection: (name) => ref(path + '/' + name),
     doc: (id) => ref(path + '/' + (id || 'auto-' + (++seq)))
   });

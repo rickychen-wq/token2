@@ -79,6 +79,11 @@ assert.ok(coreSlots > 100 && coreSlots < 200);
   await assert.rejects(estate.action({ data: {} }), /管理員/);
   await assert.rejects(estate.blackMarketState({ data: {} }), /管理員/);
   role = 'admin';
+  const testerEstate = createEstate({
+    db: store.db, now: () => clock, mutate: fakeMutate,
+    requireAccess: async () => ({ pid: '01', player: { pid: '01', name: 'Tester', role: 'player' } })
+  });
+  await assert.rejects(testerEstate.action({ data: { action: 'reset' } }), /只有管理員能重設/);
   let result = await estate.state({ data: {} });
   assert.strictEqual(result.state.version, 5);
   assert.strictEqual(result.state.holdings, 1);

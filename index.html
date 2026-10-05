@@ -67,13 +67,13 @@ input{font:inherit;color:inherit}
 /* v13：表單裡的勾選欄 */
 .fld label.chk{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--fg);margin-bottom:4px;cursor:pointer}
 .fld label.chk input[type=checkbox]{width:20px;height:20px;flex:0 0 20px;margin:0;accent-color:var(--cy)}
-.fld input{
+.fld input,.fld select{
   width:100%;height:50px;padding:0 14px;border-radius:4px;font-size:16px;
   background:rgba(3,8,18,.72);border:1px solid var(--edge);color:var(--fg);
-  transition:border-color .15s,box-shadow .15s;
+  transition:border-color .15s,box-shadow .15s;color-scheme:dark;
 }
 .fld input::placeholder{color:#4A6275}
-.fld input:focus{outline:none;border-color:var(--edge-hot);box-shadow:0 0 0 3px rgba(63,199,255,.12)}
+.fld input:focus,.fld select:focus{outline:none;border-color:var(--edge-hot);box-shadow:0 0 0 3px rgba(63,199,255,.12)}
 .fld .help{font-size:12px;color:var(--faint);margin-top:6px}
 
 /* ---------- 啟動畫面 ---------- */
@@ -1450,6 +1450,10 @@ var NEWSUI = { state: null, outlet: 'all', articleId: '', loading: false, error:
 var TITLEUI = { state: null, loading: false, error: null, cat: 'A' };
 var BLACKUI = { state: null, loading: false, error: null, busy: false, timer: null };
 var BLACK_MATERIAL_IMG = { wood: 'assets/estate/materials/wood.webp', stone: 'assets/estate/materials/stone.webp', alloy: 'assets/estate/materials/alloy.webp', gold: 'assets/estate/materials/gold.webp', crystal: 'assets/estate/materials/crystal.webp', scroll: 'assets/estate/materials/scroll.webp', core: 'assets/estate/materials/core.webp' };
+var TEST_FEATURES = [
+  { id: 'estate', name: '私人領地', desc: '開放 3D 房地產、建造中心與黑曜黑市' },
+  { id: 'tower', name: '高塔疊疊樂', desc: '開放尚在測試中的 30 層高塔遊戲' }
+];
 
 /* =====================================================================
    啟動
@@ -2411,7 +2415,7 @@ function renderShop() {
 }
 
 function loadBlackMarket(force) {
-  if (!S.me || S.me.role !== 'admin' || BLACKUI.loading || (!force && BLACKUI.state)) return;
+  if (!hasTestAccess('estate') || BLACKUI.loading || (!force && BLACKUI.state)) return;
   BLACKUI.loading = true; BLACKUI.error = null;
   call('adminEstateBlackMarketState', {}).then(function (r) {
     BLACKUI.state = r.market; BLACKUI.loading = false;
@@ -2429,13 +2433,13 @@ function scheduleBlackMarketRefresh() {
   BLACKUI.timer = setTimeout(function () { BLACKUI.state = null; if (document.querySelector('[data-black-market-host]')) loadBlackMarket(true); }, Math.min(delay, 2147483647));
 }
 function renderBlackMarket() {
-  if (!S.me || S.me.role !== 'admin') return '<div class="empty">只有管理員能進入黑市</div>';
+  if (!hasTestAccess('estate')) return '<div class="empty">目前沒有房地產測試權限</div>';
   if (!BLACKUI.state && !BLACKUI.loading && !BLACKUI.error) setTimeout(function () { loadBlackMarket(true); }, 0);
   if (BLACKUI.loading || !BLACKUI.state && !BLACKUI.error) return '<div class="empty">正在打開黑市加密通道…</div>';
   if (BLACKUI.error) return '<div class="empty">' + esc(BLACKUI.error) + '<div class="acts"><button class="btn ghost" type="button" data-black-retry>重新連線</button></div></div>';
   var m = BLACKUI.state;
   var next = new Date(Number(m.nextRefreshAt || 0)), nextText = isNaN(next.getTime()) ? '每半小時' : String(next.getHours()).padStart(2, '0') + ':' + String(next.getMinutes()).padStart(2, '0');
-  return '<section class="black-market"><div class="black-head"><div><div class="black-kicker">OBSIDIAN EXCHANGE · ADMIN ONLY</div><h2>黑曜黑市</h2><p>全服共用庫存，被其他人搶完就要等下一輪。</p></div><div class="black-balance"><small>' + esc(m.currencyName) + '</small><b>◈ ' + fmt(m.balance) + '</b><small>' + esc(nextText) + ' 刷新</small></div></div><div class="black-grid">' + (m.items || []).map(function (it) {
+  return '<section class="black-market"><div class="black-head"><div><div class="black-kicker">OBSIDIAN EXCHANGE · TEST ACCESS</div><h2>黑曜黑市</h2><p>全服共用庫存，被其他人搶完就要等下一輪。</p></div><div class="black-balance"><small>' + esc(m.currencyName) + '</small><b>◈ ' + fmt(m.balance) + '</b><small>' + esc(nextText) + ' 刷新</small></div></div><div class="black-grid">' + (m.items || []).map(function (it) {
     var stock = Number(it.stock || 0), quantities = [1, 5, 10]; if (stock > 0 && quantities.indexOf(stock) < 0) quantities.push(stock); quantities = quantities.filter(function (n) { return n <= stock; }).sort(function (a, b) { return a - b; });
     var img = BLACK_MATERIAL_IMG[it.id];
     return '<article class="black-item' + (stock ? '' : ' sold') + '"><div class="black-item-top"><span class="black-icon">' + (img ? '<img src="' + esc(img) + '" alt="">' : esc(it.icon)) + '</span><span class="black-item-copy"><b>' + esc(it.name) + '</b><small>' + esc(it.rarity) + ' · 自己持有 ' + fmt(it.owned) + '</small><span class="black-stock-track"><i style="--stock:' + Math.min(100, stock / 20 * 100) + '%"></i></span></span></div><div class="black-item-price"><span>全服庫存 <strong>' + fmt(stock) + '</strong></span><strong>◈ ' + fmt(it.price) + '／個</strong></div><div class="black-qty">' + (quantities.length ? quantities.map(function (n) { return '<button type="button" data-black-buy="' + esc(it.id) + '" data-black-qty="' + n + '" ' + (m.balance < it.price * n || BLACKUI.busy ? 'disabled' : '') + '>' + (n === stock && n !== 1 ? '全買 ' : '買 ') + n + '<br>◈ ' + fmt(it.price * n) + '</button>'; }).join('') : '<span class="black-sold">本輪未出現／已售完</span>') + '</div></article>';
@@ -2460,7 +2464,7 @@ function bindBlackMarket(root) {
   }; });
 }
 function openBlackMarketFromEstate() {
-  if (!S.me || S.me.role !== 'admin') return;
+  if (!hasTestAccess('estate')) return;
   openSheet('<div class="black-portal-head"><span>ENCRYPTED DISTRICT VENDOR</span><button class="black-close" type="button" data-close aria-label="關閉">×</button></div><div data-black-market-host>' + renderBlackMarket() + '</div>', function (sh) {
     sh.classList.add('black-market-panel');
     sh.querySelector('[data-close]').onclick = closeSheet;
@@ -5355,6 +5359,7 @@ function enterApp(profile) {
     if (S.players) S.players[profile.pid] = S.player;
     S.me.name = S.player.name;
     S.me.role = S.player.role;
+    S.me.testAccess = Array.isArray(S.player.testAccess) ? S.player.testAccess.slice() : [];
     paintTop();
     render();
   }, function () {}));
@@ -5507,6 +5512,13 @@ function paintTop() {
   ensureTowerAccess();
 }
 
+function hasTestAccess(feature) {
+  if (!S.me) return false;
+  if (S.me.role === 'admin') return true;
+  var access = S.player && Array.isArray(S.player.testAccess) ? S.player.testAccess : S.me.testAccess;
+  return Array.isArray(access) && access.indexOf(feature) >= 0;
+}
+
 var ESTATE_LOAD = null;
 function loadEstateScript(src, id) {
   return new Promise(function (resolve, reject) {
@@ -5530,8 +5542,8 @@ function loadEstateEngine() {
 }
 function ensureEstateAccess() {
   if (!S.me) return;
-  var admin = S.me.role === 'admin', tab = document.querySelector('[data-tab="estate"]'), view = $('vEstate');
-  if (!admin) {
+  var allowed = hasTestAccess('estate'), tab = document.querySelector('[data-tab="estate"]'), view = $('vEstate');
+  if (!allowed) {
     if (S.tab === 'estate') switchTab('home');
     if (tab) tab.remove();
     if (view) view.remove();
@@ -5557,13 +5569,13 @@ function estateAvatarHTML(pid) {
   return playerAvatar(p, 38);
 }
 function renderEstateSecret() {
-  if (!S.me || S.me.role !== 'admin') { switchTab('home'); return; }
+  if (!hasTestAccess('estate')) { switchTab('home'); return; }
   var root = $('vEstate');
   if (!root) { ensureEstateAccess(); root = $('vEstate'); }
   if (!window.EstateApp) {
     root.innerHTML = '<div class="estate-boot"><span></span><b>正在建立秘密領地</b><small>第一次會載入 3D 引擎與目前階級模型</small></div>';
     loadEstateEngine().then(function (app) {
-      if (S.tab === 'estate' && S.me && S.me.role === 'admin') app.mount(root, { me: S.me, player: S.player, roster: S.roster, account: S.acc, api: call, avatarHTML: estateAvatarHTML, onAccount: function (acc) { S.acc = acc; }, onBlackMarket: openBlackMarketFromEstate, onExit: function () { switchTab('home'); } });
+      if (S.tab === 'estate' && hasTestAccess('estate')) app.mount(root, { me: S.me, player: S.player, roster: S.roster, account: S.acc, api: call, avatarHTML: estateAvatarHTML, onAccount: function (acc) { S.acc = acc; }, onBlackMarket: openBlackMarketFromEstate, onExit: function () { switchTab('home'); } });
     }).catch(function (e) { root.innerHTML = '<div class="estate-boot error"><b>領地載入失敗</b><small>' + esc(e.message) + '</small><button class="btn ghost" type="button" data-estate-retry>重試</button></div>'; var b = root.querySelector('[data-estate-retry]'); if (b) b.onclick = function () { renderEstateSecret(); }; });
     return;
   }
@@ -5573,8 +5585,8 @@ function renderEstateSecret() {
 var TOWER_LOAD = null;
 function ensureTowerAccess() {
   if (!S.me) return;
-  var admin = S.me.role === 'admin', view = $('vTower');
-  if (!admin) {
+  var allowed = hasTestAccess('tower'), view = $('vTower');
+  if (!allowed) {
     if (S.tab === 'tower') switchTab('home');
     if (view) view.remove();
     return;
@@ -5586,18 +5598,18 @@ function ensureTowerAccess() {
 }
 function loadTowerApp() {
   if (window.TowerApp) return Promise.resolve(window.TowerApp);
-  if (!TOWER_LOAD) TOWER_LOAD = loadEstateScript('assets/tower/tower.js?v=1', 'tower-app')
+  if (!TOWER_LOAD) TOWER_LOAD = loadEstateScript('assets/tower/tower.js?v=2', 'tower-app')
     .then(function () { if (!window.TowerApp) throw new Error('高塔遊戲初始化失敗'); return window.TowerApp; })
     .catch(function (e) { TOWER_LOAD = null; throw e; });
   return TOWER_LOAD;
 }
 function renderTowerSecret() {
-  if (!S.me || S.me.role !== 'admin') { switchTab('home'); return; }
+  if (!hasTestAccess('tower')) { switchTab('home'); return; }
   var root = $('vTower'); if (!root) { ensureTowerAccess(); root = $('vTower'); }
   if (!window.TowerApp) {
     root.innerHTML = '<div class="estate-boot"><span></span><b>正在架設霓虹高塔</b><small>管理員秘密測試場</small></div>';
     loadTowerApp().then(function (app) {
-      if (S.tab === 'tower' && S.me && S.me.role === 'admin') app.mount(root, { me: S.me, account: S.acc, api: call, toast: toast, onExit: function () { switchTab('home'); } });
+      if (S.tab === 'tower' && hasTestAccess('tower')) app.mount(root, { me: S.me, account: S.acc, api: call, toast: toast, onExit: function () { switchTab('home'); } });
     }).catch(function (e) { toast(e.message || '高塔載入失敗', 'bad'); switchTab('home'); });
     return;
   }
@@ -5609,8 +5621,8 @@ document.querySelectorAll('.tab').forEach(function (b) {
 });
 
 function switchTab(t) {
-  if (t === 'estate' && (!S.me || S.me.role !== 'admin')) t = 'home';
-  if (t === 'tower' && (!S.me || S.me.role !== 'admin')) t = 'home';
+  if (t === 'estate' && !hasTestAccess('estate')) t = 'home';
+  if (t === 'tower' && !hasTestAccess('tower')) t = 'home';
   S.tab = t;
   var tabKey = ['bj', 'big2', 'mine', 'cipher', 'gate', 'slot', 'dice', 'market', 'news', 'tower'].indexOf(t) >= 0 ? 'home' : t;
   document.querySelectorAll('.tab').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === tabKey); });
@@ -5751,7 +5763,7 @@ function renderHome(force) {
     '<button class="game mini-g" data-go="gate"><div class="game-suit">🐉</div><div class="game-txt"><h3>射龍門</h3><p>射進兩柱中間</p></div></button>' +
     '<button class="game mini-g" data-go="slot"><div class="game-suit">🎰</div><div class="game-txt"><h3>拉霸機</h3><p>拉一把試手氣</p></div></button>' +
     '<button class="game mini-g" data-go="dice"><div class="game-suit">🎲</div><div class="game-txt"><h3>骰寶</h3><p>大小單雙豹子</p></div></button>' +
-    (S.me.role === 'admin' ? '<button class="game mini-g" data-go="tower"><div class="game-suit">▥</div><div class="game-txt"><h3>高塔疊疊樂</h3><p>抓準落點・越高倍率越高</p></div></button>' : '') +
+    (hasTestAccess('tower') ? '<button class="game mini-g" data-go="tower"><div class="game-suit">▥</div><div class="game-txt"><h3>高塔疊疊樂</h3><p>30 層極限・20 層開始保本</p></div></button>' : '') +
   '</div>';
 
   if (put('vHome', h, force)) {
@@ -6412,6 +6424,7 @@ function renderMe(force) {
     var open = !!(S.cfg && S.cfg.registrationOpen);
     h += '<div class="sec-h"><h2>管理員</h2></div><div class="grp">' +
       '<button class="row" data-act="activities"><span class="k">管理員活動<small>限時獎金加倍、降低陷阱機率、提高特殊寶物機率</small></span><span class="chev">›</span></button>' +
+      '<button class="row" data-act="testAccess"><span class="k">測試權限<small>指定玩家測試私人領地或尚未公開的小遊戲，也能隨時收回</small></span><span class="chev">›</span></button>' +
       '<button class="row" data-act="catalog"><span class="k">商品管理<small>名字、價格、上架、限時、限量、寶箱內容</small></span><span class="chev">›</span></button>' +
       '<button class="row" data-act="announce"><span class="k">公告<small>' + (S.cfg && S.cfg.announce ? '目前：' + esc(S.cfg.announce.text.slice(0, 24)) : '顯示在所有人畫面最上方') + '</small></span><span class="chev">›</span></button>' +
       '<button class="row" data-act="mail"><span class="k">寄信<small>全服或指定玩家，可以附資產、星幣、物品</small></span><span class="chev">›</span></button>' +
@@ -6436,8 +6449,9 @@ function renderMe(force) {
     h += '<div class="sec-h"><h2>名單</h2><span>' + S.roster.length + ' 人</span></div><div class="grp">';
     if (!S.roster.length) h += '<div class="empty">還沒有玩家</div>';
     S.roster.forEach(function (p) {
+      var access = Array.isArray(p.testAccess) ? p.testAccess : [];
       var tag = p.role === 'admin' ? '<span class="tag gold">管理員</span>'
-        : p.claimed ? '' : '<span class="tag warn">待設密碼</span>';
+        : (p.claimed ? '' : '<span class="tag warn">待設密碼</span>') + (access.length ? '<span class="tag cy">TEST ' + access.length + '</span>' : '');
       var ac = accOf(p.pid);
       h += '<button class="row" data-pl="' + esc(p.pid) + '">' +
         '<span class="pl-no">' + esc(p.pid) + '</span>' +
@@ -6471,6 +6485,7 @@ function bindMe() {
       else if (a === 'interest') sheetInterest();
       else if (a === 'games') sheetGames();
       else if (a === 'activities') sheetActivities();
+      else if (a === 'testAccess') sheetTestAccess();
       else if (a === 'poker') sheetPokerSettings();
       else if (a === 'settle') sheetSettle();
       else if (a === 'seasoncfg') sheetSeasonConfig();
@@ -6606,6 +6621,43 @@ function findRoster(pid) {
   return null;
 }
 
+function sheetTestAccess(selectedPid) {
+  var players = S.roster.filter(function (p) { return p.role !== 'admin' && p.pid !== S.me.pid; });
+  if (!players.length) {
+    openSheet('<h3>測試權限</h3><div class="empty">目前沒有可以指定的普通玩家</div><div class="acts"><button class="btn ghost" type="button" data-close>關閉</button></div>', function (sh) { sh.querySelector('[data-close]').onclick = closeSheet; });
+    return;
+  }
+  var initial = players.some(function (p) { return p.pid === selectedPid; }) ? selectedPid : players[0].pid;
+  var options = players.map(function (p) { return '<option value="' + esc(p.pid) + '"' + (p.pid === initial ? ' selected' : '') + '>#' + esc(p.pid) + '　' + esc(p.name) + '</option>'; }).join('');
+  openSheet('<h3>測試權限</h3><p class="desc">只開放選定的測試項目，不會取得管理員後台。關閉開關後會立即從該玩家畫面移除。</p><div class="fld"><label for="testAccessPid">玩家</label><select id="testAccessPid">' + options + '</select></div><div class="grp" data-test-access-list></div><div class="acts" style="margin-top:14px"><button class="btn ghost" type="button" data-close>關閉</button></div>', function (sh) {
+    var select = sh.querySelector('#testAccessPid'), list = sh.querySelector('[data-test-access-list]');
+    function paint() {
+      var player = findRoster(select.value), access = player && Array.isArray(player.testAccess) ? player.testAccess : [];
+      list.innerHTML = TEST_FEATURES.map(function (feature) {
+        var on = access.indexOf(feature.id) >= 0;
+        return '<div class="row"><span class="k">' + esc(feature.name) + '<small>' + esc(feature.desc) + '</small></span><button class="switch" type="button" role="switch" aria-label="' + esc(feature.name) + '測試權限" aria-checked="' + on + '" data-test-feature="' + esc(feature.id) + '"></button></div>';
+      }).join('');
+      list.querySelectorAll('[data-test-feature]').forEach(function (sw) {
+        sw.onclick = function () {
+          var pid = select.value, feature = sw.getAttribute('data-test-feature'), enabled = sw.getAttribute('aria-checked') !== 'true';
+          sw.disabled = true;
+          call('adminSetTestAccess', { pid: pid, feature: feature, enabled: enabled }).then(function (r) {
+            var target = findRoster(pid);
+            if (target) target.testAccess = Array.isArray(r.testAccess) ? r.testAccess.slice() : [];
+            if (S.players && S.players[pid]) S.players[pid].testAccess = target ? target.testAccess.slice() : [];
+            paint(); renderMe(true);
+            var item = TEST_FEATURES.find(function (x) { return x.id === feature; });
+            toast('#' + pid + ' ' + (enabled ? '已開放' : '已收回') + '「' + (item ? item.name : feature) + '」測試權限', 'good');
+          }).catch(function (e) { sw.disabled = false; toast(e.message, 'bad'); });
+        };
+      });
+    }
+    select.onchange = paint;
+    sh.querySelector('[data-close]').onclick = closeSheet;
+    paint();
+  });
+}
+
 function sheetPlayer(pid) {
   var p = findRoster(pid);
   if (!p) return;
@@ -6625,6 +6677,7 @@ function sheetPlayer(pid) {
       '<button class="row" data-p="adjust"><span class="k">調整資產<small>增加或扣除錢包裡的錢，會記在流水帳</small></span><span class="chev">›</span></button>' +
       '<button class="row" data-p="grant"><span class="k">發放星幣或物品<small>頭像、背景、卡背、個人特效、鑰匙、寶箱、道具都可以</small></span><span class="chev">›</span></button>' +
       '<button class="row" data-p="revoke"><span class="k">收回物品<small>誤發或退款時使用</small></span><span class="chev">›</span></button>' +
+      (!self && p.role !== 'admin' ? '<button class="row" data-p="test"><span class="k">測試權限<small>' + ((p.testAccess || []).length ? '目前已開放 ' + (p.testAccess || []).length + ' 項，可隨時收回' : '開放私人領地或測試中的小遊戲') + '</small></span><span class="chev">›</span></button>' : '') +
       (self ? '' : '<button class="row" data-p="role"><span class="k">' + (p.role === 'admin' ? '取消管理員' : '設為管理員') + '<small>管理員擁有全部後台權限</small></span><span class="chev">›</span></button>') +
       (PK.st && PK.st.seats.some(function (x) { return x && x.pid === pid; }) ? '<button class="row red" data-p="kick"><span class="k">請離牌桌<small>牌局中會先蓋牌，打完帶回錢包</small></span></button>' : '') +
       '<button class="row" data-p="ledger"><span class="k">流水帳<small>本季最近 40 筆，只有管理員看得到</small></span><span class="chev">›</span></button>' +
@@ -6638,6 +6691,8 @@ function sheetPlayer(pid) {
     sh.querySelector('[data-p=ledger]').onclick = function () { sheetLedger(p); };
     sh.querySelector('[data-p=grant]').onclick = function () { sheetGrant(S.players[p.pid] || p); };
     sh.querySelector('[data-p=revoke]').onclick = function () { sheetRevoke(S.players[p.pid] || p); };
+    var test = sh.querySelector('[data-p=test]');
+    if (test) test.onclick = function () { sheetTestAccess(p.pid); };
     var rl = sh.querySelector('[data-p=role]');
     if (rl) rl.onclick = function () {
       var to = p.role === 'admin' ? 'player' : 'admin';

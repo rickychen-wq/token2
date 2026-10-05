@@ -12,6 +12,16 @@ const MAX_FAILS = 5;
 const LOCK_MS = 5 * 60 * 1000;
 const SCRYPT = { N: 16384, r: 8, p: 1 };
 const ADMIN_SEASON_TWO_AVATAR_IDS = SEASON_TWO_RANK_AVATARS.map((x) => x.id);
+const TEST_FEATURES = Object.freeze(['estate', 'tower']);
+
+function normalizeTestAccess(value) {
+  const list = Array.isArray(value) ? value : [];
+  return TEST_FEATURES.filter((feature) => list.includes(feature));
+}
+
+function hasTestAccess(player, feature) {
+  return !!(player && (player.role === 'admin' || normalizeTestAccess(player.testAccess).includes(feature)));
+}
 
 /* 管理員圖鑑原本會在稱號頁同步；新賽季頭像改成任何有效連線都會立即補齊。 */
 function grantAdminSeasonTwoAvatars(player) {
@@ -41,6 +51,7 @@ function verifyPw(pw, salt, hash) {
 function newPlayer(pid, name, role, claimed, t) {
   return {
     pid, name, role, claimed, createdAt: t,
+    testAccess: [],
     equipped: { avatar: null, frame: null, title: null, badge: null, dex: [], effect: null },
     unlocked: { avatars: [], frames: [], titles: [], badges: [], effects: [] },
     achievements: {},
@@ -56,7 +67,7 @@ function newPlayer(pid, name, role, claimed, t) {
 }
 
 function publicProfile(p) {
-  return { pid: p.pid, name: p.name, role: p.role };
+  return { pid: p.pid, name: p.name, role: p.role, testAccess: normalizeTestAccess(p.testAccess) };
 }
 
 function createAuth({ db, auth, now }) {
@@ -102,9 +113,17 @@ function createAuth({ db, auth, now }) {
     return s;
   }
 
+  async function requireTestAccess(req, feature) {
+    const s = await requireSession(req);
+    if (!TEST_FEATURES.includes(feature)) throw new AppError('未知的測試功能', 'bad-test-feature', 'invalid-argument');
+    if (!hasTestAccess(s.player, feature)) throw new AppError('你目前沒有這項測試權限', 'no-test-access', 'permission-denied');
+    return s;
+  }
+
   return {
     requireSession,
     requireAdmin,
+    requireTestAccess,
 
     /* 註冊。資料庫還沒有設定檔時，第一個註冊的人成為主辦 */
     async register(req) {
@@ -270,6 +289,25 @@ function createAuth({ db, auth, now }) {
       return { pid, role };
     },
 
+    async adminSetTestAccess(req) {
+      const s = await requireAdmin(req);
+      const d = req.data || {}, pid = cleanPid(d.pid), feature = String(d.feature || '');
+      if (!TEST_FEATURES.includes(feature)) throw new AppError('未知的測試功能', 'bad-test-feature', 'invalid-argument');
+      if (pid === s.pid) throw new AppError('管理員本來就擁有全部測試權限', 'self');
+      let testAccess;
+      await db.runTransaction(async (tx) => {
+        const ref = playerRef(pid), snap = await tx.get(ref);
+        if (!snap.exists) throw new AppError('找不到這個編號', 'not-found');
+        const player = snap.data();
+        if (player.role === 'admin') throw new AppError('管理員本來就擁有全部測試權限', 'already-admin');
+        const next = new Set(normalizeTestAccess(player.testAccess));
+        if (d.enabled) next.add(feature); else next.delete(feature);
+        testAccess = TEST_FEATURES.filter((x) => next.has(x));
+        tx.update(ref, { testAccess, testAccessUpdatedAt: now(), testAccessUpdatedBy: s.pid });
+      });
+      return { pid, feature, enabled: !!d.enabled, testAccess };
+    },
+
     async adminRenamePlayer(req) {
       await requireAdmin(req);
       const d = req.data || {};
@@ -283,4 +321,7 @@ function createAuth({ db, auth, now }) {
   };
 }
 
-module.exports = { createAuth, hashPw, verifyPw, grantAdminSeasonTwoAvatars, ADMIN_SEASON_TWO_AVATAR_IDS };
+module.exports = {
+  createAuth, hashPw, verifyPw, grantAdminSeasonTwoAvatars, ADMIN_SEASON_TWO_AVATAR_IDS,
+  TEST_FEATURES, normalizeTestAccess, hasTestAccess
+};

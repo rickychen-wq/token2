@@ -285,9 +285,16 @@ function ensureOwner(plot, admin) {
   if (plot.ownerPid !== admin.pid || plot.status !== 'owned') throw new AppError('這不是你的土地', 'not-owner', 'permission-denied');
 }
 
-function createEstate({ db, now, requireAdmin, mutate }) {
+function createEstate({ db, now, requireAccess, requireAdmin, mutate }) {
   const ref = db.collection('estateSandbox').doc(CITY_ID);
   const profileRef = (pid) => ref.collection('profiles').doc(pid);
+  const authenticate = requireAccess || requireAdmin;
+  async function authActor(req) {
+    const session = await authenticate(req);
+    return session && session.player
+      ? Object.assign({}, session.player, { pid: session.pid, player: session.player })
+      : session;
+  }
 
   function prepare(city, profile, admin, t) {
     ensureBlackMarket(city, t);
@@ -297,7 +304,7 @@ function createEstate({ db, now, requireAdmin, mutate }) {
   }
 
   async function transact(req, fn, authenticatedAdmin) {
-    const admin = authenticatedAdmin || await requireAdmin(req), t = now();
+    const admin = authenticatedAdmin || await authActor(req), t = now();
     let out;
     await db.runTransaction(async (tx) => {
       const [snap, profileSnap] = await Promise.all([tx.get(ref), tx.get(profileRef(admin.pid))]);
@@ -335,7 +342,7 @@ function createEstate({ db, now, requireAdmin, mutate }) {
 
   return {
     async state(req) {
-      const admin = await requireAdmin(req), t = now();
+      const admin = await authActor(req), t = now();
       let state;
       await db.runTransaction(async (tx) => {
         const [snap, profileSnap] = await Promise.all([tx.get(ref), tx.get(profileRef(admin.pid))]);
@@ -349,11 +356,12 @@ function createEstate({ db, now, requireAdmin, mutate }) {
     },
 
     async action(req) {
-      const authenticatedAdmin = await requireAdmin(req);
+      const authenticatedAdmin = await authActor(req);
       const d = req.data || {}, action = String(d.action || '');
       if (!['claim', 'mine', 'attack', 'reset'].includes(action)) throw new AppError('未知的領地操作', 'bad-action', 'invalid-argument');
       return transact(req, (city, profile, admin, t) => {
         if (action === 'reset') {
+          if (admin.role && admin.role !== 'admin') throw new AppError('只有管理員能重設整座測試城市', 'not-admin', 'permission-denied');
           const reset = seedCity(t, admin), fresh = seedProfile(admin.pid, t);
           city.plots = reset.plots; city.createdAt = t;
           Object.assign(profile, fresh);
@@ -402,7 +410,7 @@ function createEstate({ db, now, requireAdmin, mutate }) {
 
     async economy(req) {
       if (typeof mutate !== 'function') throw new AppError('經濟系統尚未連接', 'economy-unavailable');
-      const admin = await requireAdmin(req), d = req.data || {}, action = String(d.action || '');
+      const admin = await authActor(req), d = req.data || {}, action = String(d.action || '');
       if (!['collect', 'upgrade'].includes(action)) throw new AppError('未知的經濟操作', 'bad-action', 'invalid-argument');
       const id = cleanLotId(d.lotId), meta = economyMeta(admin, id);
       const r = await mutate(admin.pid, (acc, cfg, t, raw, pl, setPlayer, extra) => {
@@ -433,7 +441,7 @@ function createEstate({ db, now, requireAdmin, mutate }) {
     },
 
     async blackMarketState(req) {
-      const admin = await requireAdmin(req);
+      const admin = await authActor(req);
       const result = await transact({ data: { action: 'black-market-view' } }, (city, profile, actor, t) => ({
         market: blackMarketState(profile, ensureBlackMarket(city, t))
       }), admin);
@@ -441,7 +449,7 @@ function createEstate({ db, now, requireAdmin, mutate }) {
     },
 
     async blackMarketBuy(req) {
-      const admin = await requireAdmin(req), d = req.data || {};
+      const admin = await authActor(req), d = req.data || {};
       const itemId = String(d.itemId || ''), quantity = Math.floor(Number(d.quantity) || 0);
       const item = BLACK_MARKET[itemId];
       if (!item) throw new AppError('找不到這項黑市材料', 'bad-market-item', 'invalid-argument');
