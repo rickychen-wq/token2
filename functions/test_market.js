@@ -7,6 +7,7 @@ const {
   freshState, positionRawEquity, positionEquity, maintenanceMargin,
   shouldLiquidate, leverageCloseFee, liquidationPrice, settlePortfolio,
   tickState, buildEventPlan, freshEngine, normalizeEngine, makeIntelBatch, applyIntelImpacts, intelSlotKey, isIntelWindow,
+  adminEventSchedule,
   rollEngineDay, runScheduled, moveStock, ensureDay, STOCKS,
   MAINTENANCE_MARGIN_RATE, MAX_LEVERAGE_MARGIN, MAX_LEVERAGE_POSITIONS, TICK_CAP, EVENT_TICK_CAP, DAY_LIMIT,
   EVENT_MIN_PER_DAY, EVENT_MAX_PER_DAY, EVENT_SIZE_MIN, EVENT_SIZE_MAX, EVENT_LOW_MIN, EVENT_LOW_MAX
@@ -138,6 +139,24 @@ assert.strictEqual(isIntelWindow(MON_0700 + 60 * 60000), true);
 assert.strictEqual(isIntelWindow(MON_0700 + 90 * 60000), true);
 assert.strictEqual(isIntelWindow(MON_0700 + 9 * 60 * 60000), true);
 assert.strictEqual(isIntelWindow(MON_0700 + 9.5 * 60 * 60000), false, '16:30 不應發布情報');
+
+/* 管理員排程摘要：使用台灣交易日、依時間排序，並保留狀態與風聲資料 */
+{
+  const engine = freshEngine(MON_0700);
+  engine.day = '20261005';
+  engine.events = [
+    { id: 'late', symbol: 'ROY', dir: 'down', size: 0.2224, slot: 101, hintSlot: 93, hintDir: 'down', hinted: 0, applied: 0, headline: '午後事件' },
+    { id: 'early', symbol: 'DRG', dir: 'up', size: 0.3241, slot: 21, hintSlot: 12, hintDir: 'down', hinted: 1, applied: 0, headline: '早盤事件' }
+  ];
+  const schedule = adminEventSchedule(engine, MON_0700);
+  assert.strictEqual(schedule.day, '20261005');
+  assert.deepStrictEqual(schedule.events.map((e) => e.id), ['early', 'late']);
+  assert.strictEqual(schedule.events[0].time, '08:45');
+  assert.strictEqual(schedule.events[0].hintTime, '08:00');
+  assert.strictEqual(schedule.events[0].percent, 32.41);
+  assert.strictEqual(schedule.events[0].hinted, true);
+  assert.strictEqual(adminEventSchedule(engine, MON_0700 + 86400000).events.length, 0, '隔天不能看到昨天排程');
+}
 
 /* 大事件爆出那一次更新：方向正確、幅度受 ±10% 限制，並且有新聞 */
 {

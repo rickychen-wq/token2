@@ -89,6 +89,22 @@ function slotClock(slot) {
   return String(Math.floor(mins / 60)).padStart(2, '0') + ':' + String(mins % 60).padStart(2, '0');
 }
 
+function adminEventSchedule(engine, t) {
+  const day = shockDayKey(t);
+  const events = engine && engine.day === day && Array.isArray(engine.events) ? engine.events : [];
+  return {
+    day,
+    events: events.map((e) => ({
+      id: String(e.id || ''), symbol: String(e.symbol || ''), dir: e.dir === 'down' ? 'down' : 'up',
+      percent: round2(Math.max(0, Number(e.size) || 0) * 100),
+      slot: Number(e.slot) || 0, hintSlot: Number(e.hintSlot) || 0,
+      time: slotClock(Number(e.slot) || 0), hintTime: slotClock(Number(e.hintSlot) || 0),
+      hintDir: e.hintDir === 'down' ? 'down' : 'up', hinted: !!e.hinted, applied: !!e.applied,
+      headline: String(e.headline || '')
+    })).sort((a, b) => a.slot - b.slot)
+  };
+}
+
 function intelSlotKey(t) {
   const d = new Date(t + TW_OFFSET);
   return d.getUTCFullYear() + String(d.getUTCMonth() + 1).padStart(2, '0') + String(d.getUTCDate()).padStart(2, '0') + '-' +
@@ -1035,14 +1051,11 @@ function createMarket({ db, now, requireSession, requireAdmin, mutate }) {
     const [snap, engSnap] = await Promise.all([signalsRef().get(), engineRef().get()]);
     const data = snap.exists ? snap.data() : {};
     const rows = Array.isArray(data.rows) ? data.rows.slice(0, 150) : [];
-    const engine = normalizeEngine(engSnap.exists ? engSnap.data() : null, now());
-    const today = shockDayKey(now());
-    const events = engine.day === today ? engine.events.map((e) => ({
-      symbol: e.symbol, dir: e.dir, percent: round2(e.size * 100), time: slotClock(e.slot), hintTime: slotClock(e.hintSlot),
-      hintDir: e.hintDir, hinted: !!e.hinted, applied: !!e.applied, headline: e.headline
-    })) : [];
+    const at = now();
+    const engine = normalizeEngine(engSnap.exists ? engSnap.data() : null, at);
+    const schedule = adminEventSchedule(engine, at);
     const rumors = engine.rumors.map((r) => ({ symbol: r.symbol, title: r.title, truth: r.truth, resolveAt: r.resolveAt }));
-    return { rows, latestSlot: String(data.latestSlot || (rows[0] && rows[0].slot) || ''), events, rumors };
+    return { rows, latestSlot: String(data.latestSlot || (rows[0] && rows[0].slot) || ''), day: schedule.day, events: schedule.events, rumors, generatedAt: at };
   }
 
   async function closeWeek(t) {
@@ -1191,7 +1204,7 @@ function createMarket({ db, now, requireSession, requireAdmin, mutate }) {
 module.exports = {
   createMarket, freshState, normalizeState, normalizePortfolio, portfolioValue, settlePortfolio,
   positionRawEquity, positionEquity, maintenanceMargin, shouldLiquidate, leverageCloseFee, liquidationPrice,
-  isMarketOpen, isIntelWindow, tickState, shockDayKey, shockSlot, slotClock, buildEventPlan, rollEngineDay, runScheduled,
+  isMarketOpen, isIntelWindow, tickState, shockDayKey, shockSlot, slotClock, adminEventSchedule, buildEventPlan, rollEngineDay, runScheduled,
   normalizeEngine, freshEngine, addDrift, moveStock, ensureDay, dayBand, upChance, applyIntelImpacts,
   makeIntel, makeIntelBatch, intelSlotKey, liquidateBusted, STOCKS, TIERS,
   TOTAL_SHARES, PLAYER_SHARE_RATE, HISTORY_LIMIT, MAINTENANCE_MARGIN_RATE,
