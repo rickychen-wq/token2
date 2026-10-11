@@ -137,7 +137,6 @@ input{font:inherit;color:inherit}
 .admin-intro-sub{margin-top:11px;opacity:0;color:#6d8398;font:800 9px var(--ui);letter-spacing:.42em;text-indent:.42em;animation:adminNameIn .45s 2.08s ease-out forwards}
 .admin-intro-scan{position:absolute;left:50%;top:50%;width:15px;height:2px;opacity:0;background:#fff;box-shadow:0 0 16px 6px #20e5ff,0 0 32px 13px #ff35b4;transform:translate(-50%,-50%);animation:adminScan 1s 1.18s ease-out forwards}
 .admin-intro-particles{position:absolute;inset:0;pointer-events:none}.admin-intro-particles i{position:absolute;left:50%;top:50%;width:var(--s);height:var(--s);border-radius:50%;opacity:0;background:var(--c);box-shadow:0 0 8px var(--c);transform:translate(-50%,-50%);animation:adminParticle 1.25s var(--d) cubic-bezier(.15,.7,.2,1) forwards}
-.admin-intro-skip{position:absolute;right:max(18px,var(--safe-r));top:calc(18px + var(--safe-t));z-index:8;padding:8px 11px;border-radius:999px;color:#7790a7;background:rgba(3,10,22,.5);border:1px solid rgba(120,207,235,.16);font:800 9px var(--ui);letter-spacing:.1em}
 .admin-intro.on{animation:adminIntroOut .42s 3.78s ease-in forwards}
 @keyframes adminTrace{to{stroke-dashoffset:0}}
 @keyframes adminFill{0%{fill:transparent}65%{fill:#fff;stroke:#fff;filter:drop-shadow(0 0 20px rgba(255,255,255,.9))}100%{fill:#f8fbff;stroke:#f8fbff;filter:drop-shadow(-5px 0 0 rgba(31,229,255,.78)) drop-shadow(5px 0 0 rgba(255,50,178,.72))}}
@@ -148,7 +147,7 @@ input{font:inherit;color:inherit}
 @keyframes adminBgBreath{0%{transform:scale(1);filter:brightness(.45)}55%{filter:brightness(1)}100%{transform:scale(1.08);filter:brightness(1.45)}}
 @keyframes adminGridIn{0%,15%{opacity:0}45%{opacity:.7}85%{opacity:.18}100%{opacity:0}}
 @keyframes adminIntroOut{to{opacity:0;visibility:hidden}}
-@media(prefers-reduced-motion:reduce){.admin-intro.on{animation:adminIntroOut .25s .8s ease forwards}.admin-intro-core{animation:none;opacity:1;transform:scale(1)}.admin-tk use{animation:none!important;stroke-dashoffset:0!important}.admin-tk .white{fill:#fff}.admin-tk-slash{animation:none;stroke-dashoffset:0}.admin-intro-name,.admin-intro-sub{animation:none;opacity:1;transform:none}.admin-intro-grid,.admin-intro::before{animation:none}}
+@media(prefers-reduced-motion:reduce){.admin-intro.on{animation:adminIntroOut .42s 3.78s ease forwards}.admin-intro-core{animation:none;opacity:1;transform:scale(1)}.admin-tk use{animation:none!important;stroke-dashoffset:0!important}.admin-tk .white{fill:#fff}.admin-tk-slash{animation:none;stroke-dashoffset:0}.admin-intro-name,.admin-intro-sub{animation:none;opacity:1;transform:none}.admin-intro-grid,.admin-intro::before{animation:none}}
 
 /* ---------- 六角頭像 ---------- */
 .hex{position:relative;flex:none;display:flex;align-items:center;justify-content:center}
@@ -1184,7 +1183,7 @@ button.game:active{transform:scale(.99)}
   .sheet.on{transform:translateY(-50%);opacity:1}
   .sheet-grip{display:none}
 }
-@media (prefers-reduced-motion:reduce){*:not(.profile-domain):not(.profile-domain *),*:not(.profile-domain):not(.profile-domain *)::before,*:not(.profile-domain):not(.profile-domain *)::after{animation:none!important;transition:none!important}}
+@media (prefers-reduced-motion:reduce){*:not(.profile-domain):not(.profile-domain *):not(.admin-intro):not(.admin-intro *),*:not(.profile-domain):not(.profile-domain *):not(.admin-intro):not(.admin-intro *)::before,*:not(.profile-domain):not(.profile-domain *):not(.admin-intro):not(.admin-intro *)::after{animation:none!important;transition:none!important}}
 /* ---------- 成就與稱號 ---------- */
 .title-gate,.title-hero{position:relative;overflow:hidden;border:1px solid rgba(138,217,255,.24);border-radius:14px;background:radial-gradient(circle at 85% 10%,rgba(126,82,255,.25),transparent 42%),linear-gradient(145deg,rgba(12,31,53,.96),rgba(5,13,27,.96));padding:22px;margin-bottom:14px}
 .title-gate:before,.title-hero:before{content:'';position:absolute;inset:0;background:linear-gradient(110deg,transparent 25%,rgba(113,219,255,.07) 45%,transparent 65%);transform:translateX(-100%);animation:titleSweep 5s linear infinite;pointer-events:none}
@@ -1234,7 +1233,6 @@ button.game:active{transform:scale(.99)}
     <div class="admin-intro-name">TOKEN <span>2.0</span></div>
     <div class="admin-intro-sub">TOKEN NETWORK</div>
   </div>
-  <button type="button" class="admin-intro-skip" id="adminIntroSkip">略過</button>
 </div>
 
 <main id="gate" class="gate" hidden>
@@ -1532,7 +1530,9 @@ function startup(u) {
   u.getIdTokenResult().then(function (t) {
     if (!t.claims.pid) return showGate();
     bootMsg('');
-    return call('authSession').then(enterApp, function (e) {
+    return call('authSession').then(function (profile) {
+      return playAdminIntro(profile).then(function () { enterApp(profile); });
+    }, function (e) {
       if (!EXPIRED[e.reason]) toast(e.message, 'bad');
       showGate();
     });
@@ -1687,12 +1687,9 @@ function playAdminIntro(profile) {
       intro.hidden = true;
       intro.classList.remove('on');
       intro.setAttribute('aria-hidden', 'true');
-      $('adminIntroSkip').onclick = null;
       resolve();
     }
-    $('adminIntroSkip').onclick = finish;
-    var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    adminIntroTimer = setTimeout(finish, reduced ? 1100 : 4250);
+    adminIntroTimer = setTimeout(finish, 4250);
   });
 }
 
