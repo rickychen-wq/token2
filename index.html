@@ -1232,7 +1232,7 @@ button.game:active{transform:scale(.99)}
       <path class="admin-tk-slash" d="M126 174L183 126L212 145L276 92"/>
     </svg>
     <div class="admin-intro-name">TOKEN <span>2.0</span></div>
-    <div class="admin-intro-sub">ADMIN ACCESS</div>
+    <div class="admin-intro-sub">TOKEN NETWORK</div>
   </div>
   <button type="button" class="admin-intro-skip" id="adminIntroSkip">略過</button>
 </div>
@@ -1666,7 +1666,7 @@ function seedAdminIntroParticles() {
 }
 
 function playAdminIntro(profile) {
-  if (!profile || profile.role !== 'admin') return Promise.resolve();
+  if (!profile) return Promise.resolve();
   var intro = $('adminIntro');
   if (!intro) return Promise.resolve();
   clearTimeout(adminIntroTimer);
