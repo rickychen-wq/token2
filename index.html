@@ -5633,8 +5633,9 @@ function loadEstateScript(src, id) {
 function loadEstateEngine() {
   if (window.EstateApp) return Promise.resolve(window.EstateApp);
   if (!ESTATE_LOAD) ESTATE_LOAD = loadEstateScript('assets/vendor/three-r147/three.min.js', 'estate-three')
+    .then(function () { return loadEstateScript('assets/vendor/three-r147/GLTFLoader.js', 'estate-gltf'); })
     .then(function () { return loadEstateScript('assets/vendor/three-r147/OrbitControls.js', 'estate-orbit'); })
-    .then(function () { return loadEstateScript('assets/estate/estate-v2.js?v=7', 'estate-app'); })
+    .then(function () { return loadEstateScript('assets/estate/estate-v2.js?v=8', 'estate-app'); })
     .then(function () { if (!window.EstateApp) throw new Error('3D 城市初始化失敗'); return window.EstateApp; })
     .catch(function (e) { ESTATE_LOAD = null; throw e; });
   return ESTATE_LOAD;
