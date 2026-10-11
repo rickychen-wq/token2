@@ -12,6 +12,7 @@ const POINTS = { 1: 5, 2: 3, 3: 1 };
 const DEFAULT_RANK_FROM = '2026-W39';   // 這一季之前是練習季，不發積分
 const FIRST_SEASON_ID = '2026-W39';
 const SECOND_SEASON_ID = '2026-W40';
+const THIRD_SEASON_ID = '2026-W41';
 const SEASON_AVATAR_REWARDS = Object.freeze({
   [FIRST_SEASON_ID]: {
     label: '第一賽季', kind: 'seasonOneAvatar', mailPrefix: 'season-one-avatar',
@@ -20,6 +21,12 @@ const SEASON_AVATAR_REWARDS = Object.freeze({
   [SECOND_SEASON_ID]: {
     label: '第二賽季', kind: 'seasonTwoAvatar', mailPrefix: 'season-two-avatar',
     avatars: Object.fromEntries(SEASON_TWO_RANK_AVATARS.map((x) => [x.rank, x]))
+  }
+});
+const SEASON_BLACK_COIN_REWARDS = Object.freeze({
+  [THIRD_SEASON_ID]: {
+    label: '第三賽季', kind: 'seasonThreeBlackCoins', mailPrefix: 'season-three-black-coins',
+    amounts: Object.freeze({ 1: 200, 2: 100, 3: 50 })
   }
 });
 
@@ -44,6 +51,29 @@ function seasonAvatarMail(sid, practice, row, t) {
 
 function firstSeasonAvatarMail(sid, practice, row, t) {
   return sid === FIRST_SEASON_ID ? seasonAvatarMail(sid, practice, row, t) : null;
+}
+
+function seasonBlackCoinMail(sid, practice, row, t) {
+  const reward = SEASON_BLACK_COIN_REWARDS[sid];
+  if (practice || !reward || !row || !(row.rank >= 1 && row.rank <= 3)) return null;
+  const amount = reward.amounts[row.rank];
+  if (!amount) return null;
+  const id = reward.mailPrefix + '-' + sid + '-r' + row.rank + '-' + row.pid;
+  return {
+    id,
+    data: {
+      id,
+      title: reward.label + '・第 ' + row.rank + ' 名獎勵',
+      body: '恭喜你在' + reward.label + '資產排行獲得第 ' + row.rank + ' 名！本季不發放排行限定頭像，改為贈送黑曜幣 ' + amount + ' 枚。黑曜幣會在私人領地正式開放後，用於黑市購買建房材料。',
+      money: 0, stars: 0, blackCoins: amount, items: {},
+      to: [row.pid], all: false, toList: [row.pid],
+      at: t, by: 'system', kind: reward.kind, seasonId: sid, rank: row.rank
+    }
+  };
+}
+
+function seasonRankMail(sid, practice, row, t) {
+  return seasonAvatarMail(sid, practice, row, t) || seasonBlackCoinMail(sid, practice, row, t);
 }
 
 /* 排名：打滿手數的人依淨資產排序，同分同名次；沒打滿的排在後面、沒有名次 */
@@ -164,9 +194,9 @@ function createSeason({ db, now, requireAdmin, runInterest, closeTables }) {
       });
       if (cleanup01 && !cleanup01Written) tx.update(db.collection('players').doc('01'), cleanup01);
 
-      if (!practice && SEASON_AVATAR_REWARDS[sid]) {
+      if (!practice && (SEASON_AVATAR_REWARDS[sid] || SEASON_BLACK_COIN_REWARDS[sid])) {
         rows.forEach((r) => {
-          const mail = seasonAvatarMail(sid, practice, r, t);
+          const mail = seasonRankMail(sid, practice, r, t);
           if (mail) tx.set(db.collection('mail').doc(mail.id), mail.data);
         });
       }
@@ -240,6 +270,7 @@ function createSeason({ db, now, requireAdmin, runInterest, closeTables }) {
 }
 
 module.exports = {
-  createSeason, rankSeason, seasonAvatarMail, firstSeasonAvatarMail,
-  POINTS, DEFAULT_RANK_FROM, FIRST_SEASON_ID, SECOND_SEASON_ID, SEASON_AVATAR_REWARDS
+  createSeason, rankSeason, seasonAvatarMail, firstSeasonAvatarMail, seasonBlackCoinMail, seasonRankMail,
+  POINTS, DEFAULT_RANK_FROM, FIRST_SEASON_ID, SECOND_SEASON_ID, THIRD_SEASON_ID,
+  SEASON_AVATAR_REWARDS, SEASON_BLACK_COIN_REWARDS
 };

@@ -3001,12 +3001,13 @@ function rewardText(m) {
   var parts = [];
   if (m.money) parts.push('資產 ' + fmt(m.money));
   if (m.stars) parts.push('★ ' + fmt(m.stars));
+  if (m.blackCoins) parts.push('黑曜幣 ' + fmt(m.blackCoins));
   Object.keys(m.items || {}).forEach(function (id) { if (ITEM[id]) parts.push(ITEM[id].name + ' × ' + m.items[id]); });
   return parts.join('、');
 }
 function sheetMail() {
   var list = myMail();
-  var h = '<h3>信箱</h3><p class="desc">領取後獎勵會直接放進錢包、星幣或包包</p>';
+  var h = '<h3>信箱</h3><p class="desc">領取後獎勵會直接放進錢包、星幣、黑曜幣或包包</p>';
   if (!list.length) h += '<div class="empty rk-empty">目前沒有信件</div>';
   else h += '<div class="mail-list">' + list.map(function (m) {
     var got = !!MAIL.claimed[m.id], rw = rewardText(m);

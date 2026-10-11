@@ -6,10 +6,12 @@ const E = require('./econ');
 const T = require('./tasks');
 const { loadCatalog } = require('./catalog');
 const { grant, playerPatch, fuseBowls } = require('./shop');
+const { normalizeProfile, CITY_ID } = require('./estate_v3');
 
 function createMail({ db, now, requireSession, requireAdmin }) {
   const mailRef = (id) => db.collection('mail').doc(id);
   const playerRef = (pid) => db.collection('players').doc(pid);
+  const estateProfileRef = (pid) => db.collection('estateSandbox').doc(CITY_ID).collection('profiles').doc(pid);
   const cfgRef = () => db.collection('config').doc('app');
 
   return {
@@ -72,6 +74,8 @@ function createMail({ db, now, requireSession, requireAdmin }) {
         const p = pSnap.data();
         const cat = await loadCatalog(db, tx);
         let acc = null, accRef = null, cfg = null;
+        const blackCoins = Math.max(0, Math.floor(Number(m.blackCoins) || 0));
+        let estateProfile = null, estateRef = null;
         if (m.money > 0) {
           const cfgSnap = await tx.get(cfgRef());
           cfg = E.cfgOf(cfgSnap.exists ? cfgSnap.data() : null);
@@ -79,6 +83,13 @@ function createMail({ db, now, requireSession, requireAdmin }) {
           const aSnap = await tx.get(accRef);
           acc = aSnap.exists ? aSnap.data() : E.newAccount(s.pid, cfg, t);
           E.rollDaily(acc, t, cfg);
+        }
+        if (blackCoins > 0) {
+          estateRef = estateProfileRef(s.pid);
+          const estateSnap = await tx.get(estateRef);
+          estateProfile = normalizeProfile(estateSnap.exists ? estateSnap.data() : null, s.pid, t);
+          estateProfile.blackCoins += blackCoins;
+          estateProfile.updatedAt = t;
         }
         let salvage = 0, gotCard = false;
         if (m.stars > 0) p.stars = (p.stars || 0) + m.stars;
@@ -100,8 +111,9 @@ function createMail({ db, now, requireSession, requireAdmin }) {
           tx.set(accRef.collection('ledger').doc(), { type: 'mail', amount: m.money, wallet: acc.wallet, bank: acc.bank.balance, loans: acc.loans, at: t, by: 'mail', note: m.title });
           repaid.forEach((e) => tx.set(accRef.collection('ledger').doc(), Object.assign(e, { at: t, by: 'mail', note: null })));
         }
+        if (estateProfile) tx.set(estateRef, estateProfile);
         tx.set(cRef, { at: t });
-        return { money: m.money, stars: m.stars, items: m.items, salvage, fused };
+        return { money: m.money, stars: m.stars, blackCoins, items: m.items, salvage, fused };
       });
     }
   };

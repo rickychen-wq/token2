@@ -1,7 +1,8 @@
 'use strict';
 const assert = require('assert');
 const {
-  FIRST_SEASON_ID, SECOND_SEASON_ID, firstSeasonAvatarMail, seasonAvatarMail
+  FIRST_SEASON_ID, SECOND_SEASON_ID, THIRD_SEASON_ID,
+  firstSeasonAvatarMail, seasonAvatarMail, seasonBlackCoinMail, seasonRankMail
 } = require('./core/season');
 const { merge } = require('./core/catalog');
 const { grantAdminSeasonTwoAvatars, ADMIN_SEASON_TWO_AVATAR_IDS } = require('./core/auth');
@@ -31,6 +32,20 @@ for (let rank = 1; rank <= 3; rank++) {
 assert.strictEqual(seasonAvatarMail(SECOND_SEASON_ID, false, { pid: '14', rank: 4 }, at), null);
 assert.strictEqual(seasonAvatarMail(SECOND_SEASON_ID, true, { pid: '11', rank: 1 }, at), null);
 assert.strictEqual(seasonAvatarMail('2026-W41', false, { pid: '11', rank: 1 }, at), null);
+
+const blackCoinAmounts = { 1: 200, 2: 100, 3: 50 };
+for (let rank = 1; rank <= 3; rank++) {
+  const mail = seasonBlackCoinMail(THIRD_SEASON_ID, false, { pid: '2' + rank, rank }, at);
+  assert(mail, 'season 3 rank ' + rank + ' mail');
+  assert.strictEqual(mail.data.blackCoins, blackCoinAmounts[rank]);
+  assert.deepStrictEqual(mail.data.items, {}, 'season 3 must not grant an avatar or other item');
+  assert.deepStrictEqual(mail.data.toList, ['2' + rank]);
+  assert.strictEqual(mail.data.kind, 'seasonThreeBlackCoins');
+  assert.ok(mail.data.body.includes('私人領地'));
+  assert.deepStrictEqual(seasonRankMail(THIRD_SEASON_ID, false, { pid: '2' + rank, rank }, at), mail);
+}
+assert.strictEqual(seasonBlackCoinMail(THIRD_SEASON_ID, false, { pid: '24', rank: 4 }, at), null);
+assert.strictEqual(seasonBlackCoinMail(THIRD_SEASON_ID, true, { pid: '21', rank: 1 }, at), null);
 
 const catalog = merge(null);
 for (let rank = 1; rank <= 3; rank++) {
