@@ -77,13 +77,8 @@ input{font:inherit;color:inherit}
 .fld .help{font-size:12px;color:var(--faint);margin-top:6px}
 
 /* ---------- 啟動畫面 ---------- */
-.boot{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;background:var(--void)}
-.boot .mark{font-size:34px;animation:breathe 1.8s ease-in-out infinite}
-.boot-bar{width:120px;height:2px;border-radius:2px;background:var(--edge-soft);overflow:hidden;position:relative}
-.boot-bar::after{content:'';position:absolute;top:0;bottom:0;width:40%;background:var(--cy);box-shadow:0 0 10px var(--cy);animation:slide 1.1s ease-in-out infinite}
-.boot-msg{font-size:13px;color:var(--faint);min-height:20px;text-align:center;padding:0 24px}
-@keyframes breathe{50%{opacity:.55}}
-@keyframes slide{from{left:-40%}to{left:100%}}
+.boot{position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:#02030a}
+.boot-msg{font-size:13px;color:var(--faint);text-align:center;padding:0 24px}
 
 /* ---------- 登入 ---------- */
 .gate{position:relative;z-index:1;min-height:100%;display:flex;justify-content:center;padding:calc(64px + var(--safe-t)) 22px calc(40px + var(--safe-b))}
@@ -1215,8 +1210,6 @@ button.game:active{transform:scale(.99)}
 <body class="gate-mode">
 
 <div id="boot" class="boot">
-  <div class="mark"><span class="t">TOKEN</span><span class="v">2.0</span></div>
-  <div class="boot-bar"></div>
   <div class="boot-msg" id="bootMsg"></div>
 </div>
 
@@ -1531,7 +1524,7 @@ function startup(u) {
     if (!t.claims.pid) return showGate();
     bootMsg('');
     return call('authSession').then(function (profile) {
-      return playAdminIntro(profile).then(function () { enterApp(profile); });
+      return playAdminIntro(profile, function () { enterApp(profile); });
     }, function (e) {
       if (!EXPIRED[e.reason]) toast(e.message, 'bad');
       showGate();
@@ -1665,12 +1658,20 @@ function seedAdminIntroParticles() {
   root.innerHTML = h;
 }
 
-function playAdminIntro(profile) {
-  if (!profile) return Promise.resolve();
+function playAdminIntro(profile, onReady) {
+  if (!profile) {
+    if (typeof onReady === 'function') onReady();
+    return Promise.resolve();
+  }
   var intro = $('adminIntro');
-  if (!intro) return Promise.resolve();
+  if (!intro) {
+    if (typeof onReady === 'function') onReady();
+    return Promise.resolve();
+  }
   clearTimeout(adminIntroTimer);
   seedAdminIntroParticles();
+  $('boot').hidden = true;
+  $('gate').hidden = true;
   intro.classList.remove('on');
   intro.hidden = true;
   intro.setAttribute('aria-hidden', 'false');
@@ -1678,6 +1679,7 @@ function playAdminIntro(profile) {
   intro.hidden = false;
   void intro.offsetWidth;
   intro.classList.add('on');
+  if (typeof onReady === 'function') onReady();
   return new Promise(function (resolve) {
     var finished = false;
     function finish() {
@@ -1716,7 +1718,7 @@ $('gateForm').addEventListener('submit', function (ev) {
   }).then(function (profile) {
     LS.set('lastPid', pid);
     $('gPw').value = ''; $('gPw2').value = ''; $('gName').value = '';
-    return playAdminIntro(profile).then(function () {
+    return playAdminIntro(profile, function () {
       busy(btn, false);
       enterApp(profile);
       if (mode === 'bootstrap') toast('你是管理員了，到「我的」可以管理帳號', 'good');
