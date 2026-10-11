@@ -121,6 +121,35 @@ input{font:inherit;color:inherit}
 .reveal .pad{padding-top:10px}
 .gate-foot{margin-top:28px;text-align:center;font-size:12px;color:#4A6275}
 
+/* ---------- 管理員登入動畫 ---------- */
+.admin-intro{position:fixed;inset:0;z-index:90;display:grid;place-items:center;overflow:hidden;background:#02030a;color:#fff;isolation:isolate}
+.admin-intro::before{content:"";position:absolute;inset:-18%;z-index:-3;background:radial-gradient(circle at 24% 22%,rgba(0,226,255,.14),transparent 30%),radial-gradient(circle at 78% 74%,rgba(255,39,179,.15),transparent 31%),linear-gradient(145deg,#02050d,#080313 58%,#02040a);animation:adminBgBreath 4.2s ease-in-out both}
+.admin-intro::after{content:"";position:absolute;inset:0;z-index:5;pointer-events:none;opacity:.16;background:repeating-linear-gradient(180deg,transparent 0 3px,rgba(255,255,255,.035) 4px),linear-gradient(90deg,transparent,rgba(255,255,255,.045),transparent);mix-blend-mode:screen}
+.admin-intro-grid{position:absolute;inset:0;z-index:-2;opacity:0;background-image:linear-gradient(rgba(63,218,255,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(255,62,186,.06) 1px,transparent 1px);background-size:34px 34px;transform:perspective(520px) rotateX(67deg) translateY(28%);transform-origin:center bottom;animation:adminGridIn 4.2s ease-out both}
+.admin-intro-core{position:relative;width:min(78vw,390px);text-align:center;filter:drop-shadow(0 0 18px rgba(0,218,255,.2));animation:adminCoreFinish 4.2s cubic-bezier(.76,0,.24,1) both}
+.admin-tk{display:block;width:100%;overflow:visible}.admin-tk use{fill:transparent;stroke-linecap:square;stroke-linejoin:miter;stroke-dasharray:1080;stroke-dashoffset:1080}
+.admin-tk .cyan{stroke:#21e9ff;stroke-width:7;transform:translate(-4px,2px);filter:drop-shadow(0 0 8px #00d9ff);animation:adminTrace 1.55s .25s cubic-bezier(.55,.08,.25,1) forwards}
+.admin-tk .pink{stroke:#ff42bd;stroke-width:7;transform:translate(4px,-2px);filter:drop-shadow(0 0 8px #ff2eae);animation:adminTrace 1.55s .38s cubic-bezier(.55,.08,.25,1) forwards}
+.admin-tk .white{stroke:#eefcff;stroke-width:4;animation:adminTrace 1.35s .6s cubic-bezier(.55,.08,.25,1) forwards,adminFill .48s 1.72s ease-out forwards}
+.admin-tk-slash{fill:none;stroke:#fff;stroke-width:10;stroke-dasharray:190;stroke-dashoffset:190;filter:drop-shadow(0 0 7px #24e7ff) drop-shadow(0 0 10px #ff39b4);animation:adminTrace .48s 1.55s ease-out forwards}
+.admin-intro-name{margin-top:-4px;opacity:0;transform:translateY(12px);font:900 clamp(18px,5vw,25px) var(--ui);letter-spacing:.32em;text-indent:.32em;text-shadow:-2px 0 0 #22dff6,2px 0 0 #ff45b7;animation:adminNameIn .5s 1.85s ease-out forwards}
+.admin-intro-name span{color:#7decff;font-size:.42em;vertical-align:1.1em;letter-spacing:.08em}
+.admin-intro-sub{margin-top:11px;opacity:0;color:#6d8398;font:800 9px var(--ui);letter-spacing:.42em;text-indent:.42em;animation:adminNameIn .45s 2.08s ease-out forwards}
+.admin-intro-scan{position:absolute;left:50%;top:50%;width:15px;height:2px;opacity:0;background:#fff;box-shadow:0 0 16px 6px #20e5ff,0 0 32px 13px #ff35b4;transform:translate(-50%,-50%);animation:adminScan 1s 1.18s ease-out forwards}
+.admin-intro-particles{position:absolute;inset:0;pointer-events:none}.admin-intro-particles i{position:absolute;left:50%;top:50%;width:var(--s);height:var(--s);border-radius:50%;opacity:0;background:var(--c);box-shadow:0 0 8px var(--c);transform:translate(-50%,-50%);animation:adminParticle 1.25s var(--d) cubic-bezier(.15,.7,.2,1) forwards}
+.admin-intro-skip{position:absolute;right:max(18px,var(--safe-r));top:calc(18px + var(--safe-t));z-index:8;padding:8px 11px;border-radius:999px;color:#7790a7;background:rgba(3,10,22,.5);border:1px solid rgba(120,207,235,.16);font:800 9px var(--ui);letter-spacing:.1em}
+.admin-intro.on{animation:adminIntroOut .42s 3.78s ease-in forwards}
+@keyframes adminTrace{to{stroke-dashoffset:0}}
+@keyframes adminFill{0%{fill:transparent}65%{fill:#fff;stroke:#fff;filter:drop-shadow(0 0 20px rgba(255,255,255,.9))}100%{fill:#f8fbff;stroke:#f8fbff;filter:drop-shadow(-5px 0 0 rgba(31,229,255,.78)) drop-shadow(5px 0 0 rgba(255,50,178,.72))}}
+@keyframes adminNameIn{to{opacity:1;transform:translateY(0)}}
+@keyframes adminScan{0%{opacity:0;width:8px}30%{opacity:1}100%{opacity:0;width:min(98vw,560px)}}
+@keyframes adminParticle{0%,50%{opacity:0}58%{opacity:1}100%{opacity:0;transform:translate(calc(-50% + var(--x)),calc(-50% + var(--y))) scale(.25)}}
+@keyframes adminCoreFinish{0%{transform:scale(.72);opacity:0}9%{opacity:1}45%,72%{transform:scale(1);opacity:1}78%{transform:scale(.96)}92%{transform:scale(6);opacity:1;filter:blur(0) brightness(1.8)}100%{transform:scale(10);opacity:0;filter:blur(3px) brightness(2.5)}}
+@keyframes adminBgBreath{0%{transform:scale(1);filter:brightness(.45)}55%{filter:brightness(1)}100%{transform:scale(1.08);filter:brightness(1.45)}}
+@keyframes adminGridIn{0%,15%{opacity:0}45%{opacity:.7}85%{opacity:.18}100%{opacity:0}}
+@keyframes adminIntroOut{to{opacity:0;visibility:hidden}}
+@media(prefers-reduced-motion:reduce){.admin-intro.on{animation:adminIntroOut .25s .8s ease forwards}.admin-intro-core{animation:none;opacity:1;transform:scale(1)}.admin-tk use{animation:none!important;stroke-dashoffset:0!important}.admin-tk .white{fill:#fff}.admin-tk-slash{animation:none;stroke-dashoffset:0}.admin-intro-name,.admin-intro-sub{animation:none;opacity:1;transform:none}.admin-intro-grid,.admin-intro::before{animation:none}}
+
 /* ---------- 六角頭像 ---------- */
 .hex{position:relative;flex:none;display:flex;align-items:center;justify-content:center}
 .hex svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
@@ -1192,6 +1221,22 @@ button.game:active{transform:scale(.99)}
   <div class="boot-msg" id="bootMsg"></div>
 </div>
 
+<div id="adminIntro" class="admin-intro" hidden aria-hidden="true">
+  <div class="admin-intro-grid"></div>
+  <div class="admin-intro-scan"></div>
+  <div class="admin-intro-particles" id="adminIntroParticles"></div>
+  <div class="admin-intro-core">
+    <svg class="admin-tk" viewBox="45 28 345 205" role="img" aria-label="TK TOKEN 2.0">
+      <defs><path id="adminTkPath" d="M68 55H210V88H158V200H120V88H68ZM225 55H263V112L315 55H363L300 122L367 200H320L263 137V200H225Z"/></defs>
+      <use href="#adminTkPath" class="cyan"/><use href="#adminTkPath" class="pink"/><use href="#adminTkPath" class="white"/>
+      <path class="admin-tk-slash" d="M126 174L183 126L212 145L276 92"/>
+    </svg>
+    <div class="admin-intro-name">TOKEN <span>2.0</span></div>
+    <div class="admin-intro-sub">ADMIN ACCESS</div>
+  </div>
+  <button type="button" class="admin-intro-skip" id="adminIntroSkip">略過</button>
+</div>
+
 <main id="gate" class="gate" hidden>
   <div class="gate-in">
     <div class="mark"><span class="t">TOKEN</span><span class="v">2.0</span></div>
@@ -1604,6 +1649,53 @@ function onPid() {
   });
 }
 
+var adminIntroTimer = null;
+function seedAdminIntroParticles() {
+  var root = $('adminIntroParticles');
+  if (!root) return;
+  var colors = ['#20e8ff', '#ff42bd', '#ffffff'];
+  var h = '';
+  for (var i = 0; i < 34; i++) {
+    var angle = Math.PI * 2 * i / 34 + (i % 4) * .11;
+    var distance = 120 + (i * 37 % 180);
+    var x = Math.round(Math.cos(angle) * distance), y = Math.round(Math.sin(angle) * distance);
+    var size = 2 + i % 4, delay = (1.42 + (i % 7) * .045).toFixed(2) + 's';
+    h += '<i style="--x:' + x + 'px;--y:' + y + 'px;--s:' + size + 'px;--d:' + delay + ';--c:' + colors[i % colors.length] + '"></i>';
+  }
+  root.innerHTML = h;
+}
+
+function playAdminIntro(profile) {
+  if (!profile || profile.role !== 'admin') return Promise.resolve();
+  var intro = $('adminIntro');
+  if (!intro) return Promise.resolve();
+  clearTimeout(adminIntroTimer);
+  seedAdminIntroParticles();
+  intro.classList.remove('on');
+  intro.hidden = true;
+  intro.setAttribute('aria-hidden', 'false');
+  void intro.offsetWidth;
+  intro.hidden = false;
+  void intro.offsetWidth;
+  intro.classList.add('on');
+  return new Promise(function (resolve) {
+    var finished = false;
+    function finish() {
+      if (finished) return;
+      finished = true;
+      clearTimeout(adminIntroTimer);
+      intro.hidden = true;
+      intro.classList.remove('on');
+      intro.setAttribute('aria-hidden', 'true');
+      $('adminIntroSkip').onclick = null;
+      resolve();
+    }
+    $('adminIntroSkip').onclick = finish;
+    var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    adminIntroTimer = setTimeout(finish, reduced ? 1100 : 4250);
+  });
+}
+
 $('gateForm').addEventListener('submit', function (ev) {
   ev.preventDefault();
   var mode = G.mode, pid = G.pid, btn = $('gateBtn');
@@ -1627,9 +1719,11 @@ $('gateForm').addEventListener('submit', function (ev) {
   }).then(function (profile) {
     LS.set('lastPid', pid);
     $('gPw').value = ''; $('gPw2').value = ''; $('gName').value = '';
-    busy(btn, false);
-    enterApp(profile);
-    if (mode === 'bootstrap') toast('你是管理員了，到「我的」可以管理帳號', 'good');
+    return playAdminIntro(profile).then(function () {
+      busy(btn, false);
+      enterApp(profile);
+      if (mode === 'bootstrap') toast('你是管理員了，到「我的」可以管理帳號', 'good');
+    });
   }).catch(function (e) {
     busy(btn, false);
     toast(e.message, 'bad');
