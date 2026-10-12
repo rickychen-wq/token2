@@ -15,6 +15,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800&family=Rajdhani:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 <link href="assets/fx/token-fx.css?v=15.2" rel="stylesheet">
+<link href="assets/admin-ui-v2.css?v=1" rel="stylesheet">
 <style>
 :root{
   --void:#04070F; --deep:#070D1A;
@@ -1214,6 +1215,14 @@ button.game:active{transform:scale(.99)}
 <style>.sheet.black-market-panel{width:min(920px,calc(100% - 20px));max-height:92dvh;padding:14px;background:radial-gradient(circle at 78% -8%,rgba(146,61,255,.2),transparent 35%),linear-gradient(155deg,#070d18,#0d1324 48%,#110b20);border-color:rgba(189,112,255,.3);box-shadow:0 -30px 90px rgba(0,0,0,.72),0 0 55px rgba(111,48,204,.16)}.black-portal-head{display:flex;align-items:center;justify-content:space-between;margin:0 2px 10px}.black-portal-head span{color:#7d7197;font:800 9px var(--ui);letter-spacing:.16em}.black-close{width:34px;height:34px;border-radius:10px;border:1px solid rgba(190,126,255,.2);color:#cdb9e8;background:rgba(105,62,174,.1);font-size:18px}.black-market:after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(180deg,transparent 0 4px,rgba(164,103,255,.018) 5px)}.black-item{position:relative;overflow:hidden;transition:transform .18s,border-color .18s,box-shadow .18s}.black-item:hover{transform:translateY(-2px);border-color:rgba(177,112,255,.28);box-shadow:0 12px 35px rgba(4,0,16,.35)}.black-item.sold{opacity:.62}.black-icon{width:58px;height:58px;overflow:hidden;padding:0}.black-icon img{display:block;width:100%;height:100%;object-fit:cover}.black-item-copy b{font-size:14px}.black-stock-track{display:block;height:3px;margin-top:9px;overflow:hidden;border-radius:99px;background:rgba(255,255,255,.05)}.black-stock-track i{display:block;height:100%;width:var(--stock);background:linear-gradient(90deg,#6ce8ff,#b866ff);box-shadow:0 0 10px #a767ff}.black-qty button:not(:disabled):hover{color:#fff;border-color:rgba(200,141,255,.55);background:rgba(142,78,235,.22)}@media(max-width:560px){.sheet.black-market-panel{width:100%;max-height:94dvh;padding:10px}.black-icon{width:52px;height:52px}}</style>
 </head>
 <body class="gate-mode">
+
+<div class="admin-v2-atmosphere" aria-hidden="true">
+  <i class="admin-v2-grid"></i>
+  <i class="admin-v2-orbit orbit-a"></i>
+  <i class="admin-v2-orbit orbit-b"></i>
+  <i class="admin-v2-flare flare-a"></i>
+  <i class="admin-v2-flare flare-b"></i>
+</div>
 
 <div id="boot" class="boot">
   <div class="boot-msg" id="bootMsg"></div>
@@ -5607,6 +5616,7 @@ function endSession() {
 }
 
 function paintTop() {
+  document.body.classList.toggle('admin-ui-v2', !!(S.me && S.me.role === 'admin'));
   $('topName').textContent = S.me.name;
   $('topPid').textContent = '#' + (S.player && S.player.vanity ? S.player.vanity : S.me.pid);
   ensureEstateAccess();
@@ -5790,6 +5800,14 @@ function renderHome(force) {
   var p = S.player || { name: S.me.name, pid: S.me.pid, role: S.me.role, stats: {} };
   var st = p.stats || {}, a = S.acc, c = econ();
   var h = '';
+  var adminV2 = p.role === 'admin';
+  if (adminV2) {
+    var moduleCount = hasTestAccess('tower') ? 9 : 8;
+    h += '<section class="admin-command-hero"><div class="command-copy"><span class="command-kicker"><i></i> PRIVATE INTERFACE · ADMIN PREVIEW</span>' +
+      '<h1>歡迎回到<span>指揮核心</span></h1><p>資產、情報與遊戲模組已接入同一個控制層。</p></div>' +
+      '<div class="command-core" aria-hidden="true"><i class="core-ring r1"></i><i class="core-ring r2"></i><i class="core-dot"></i><b>TK</b></div>' +
+      '<div class="command-status"><div><small>NETWORK</small><b><i></i>ONLINE</b></div><div><small>SEASON</small><b>' + esc(S.sid || '—') + '</b></div><div><small>MODULES</small><b>' + moduleCount + '</b></div></div></section>';
+  }
   h += activityBanner('gate') + activityBanner('mine');
 
   h += '<div class="idcard">' + bannerHTML(p, 74) + '<div class="id-row">' +
@@ -5847,7 +5865,9 @@ function renderHome(force) {
     '<h3>星界新聞網</h3><p>四家媒體追同一事件。讀文章、比來源，自己判斷市場真正發生了什麼。</p>' +
     '<span class="news-count">' + (newsCount ? newsCount + ' 篇追蹤報導' : '獨家新聞台') + '</span></button>';
 
-  h += '<div class="sec-h"><h2>遊戲</h2></div>';
+  h += adminV2
+    ? '<div class="sec-h game-section-head"><div><small>PLAY PROTOCOL</small><h2>遊戲模組</h2></div><span>選擇連線入口</span></div>'
+    : '<div class="sec-h"><h2>遊戲</h2></div>';
   var seated = PK.st ? PK.st.seats.filter(Boolean).length : 0;
   var playing = PK.st && PK.st.hand.phase !== 'idle';
   h += '<button class="game" id="goPoker"><div class="game-bg">♠</div>' +
