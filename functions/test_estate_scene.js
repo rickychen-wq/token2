@@ -32,7 +32,10 @@ for (const level of [1, 2, 3]) {
 assert.ok(source.includes("data-estate-model-level"), 'admin model level selector must exist');
 assert.ok(source.includes('E.loader.load('), 'estate scene must load the approved stage-one models');
 assert.ok(!source.includes('proxyBuilding'), 'legacy proxy houses must not return');
+assert.ok(source.includes('aria-label="返回主畫面"'), 'estate exit must expose a clear main-screen label');
+assert.ok(source.includes('.estate-exit svg'), 'estate exit must use a centered SVG icon');
+assert.ok(source.includes('env(safe-area-inset-top'), 'estate controls must respect the iPhone safe area');
 assert.ok(/loadEstateScript\(['"]assets\/vendor\/three-r147\/GLTFLoader\.js/.test(indexSource), 'estate entry must load GLTFLoader');
-assert.ok(indexSource.includes('assets/estate/estate-v2.js?v=8'), 'estate cache version must be v8');
+assert.ok(indexSource.includes('assets/estate/estate-v2.js?v=9'), 'estate cache version must be v9');
 
 console.log('estate scene tests passed');

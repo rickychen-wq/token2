@@ -2503,7 +2503,9 @@ function shopCard(it) {
 }
 
 function renderShop() {
-  var h = starsChip();
+  var adminV2 = !!(S.me && S.me.role === 'admin');
+  var h = adminV2 ? '<section class="shop-v2-hero"><div class="shop-v2-copy"><span>PRIVATE MARKET · COLLECTION DECK</span><h2>星界精品庫</h2><p>收藏、裝備與限時商品，全部集中在你的私人交易層。</p></div><div class="shop-v2-core" aria-hidden="true"><i></i><b>★</b></div></section>' : '';
+  h += starsChip();
   var cats = [['avatar', '頭像'], ['bg', '背景'], ['chest', '鑰匙'], ['emote', '表情'], ['card', '道具']];
   h += '<div class="chips">' + cats.map(function (c) { return '<button data-sc="' + c[0] + '" class="' + (SHOP.cat === c[0] ? 'on' : '') + '">' + c[1] + '</button>'; }).join('') + '</div>';
   var list;
@@ -2520,7 +2522,7 @@ function renderShop() {
     list = CATALOG.filter(function (x) { return x.type === SHOP.cat && x.onSale; });
   }
   h += list.length ? '<div class="shop-grid">' + list.map(shopCard).join('') + '</div>' : '<div class="empty rk-empty">目前沒有販售中的商品</div>';
-  return h;
+  return adminV2 ? '<div class="shop-v2-page">' + h + '</div>' : h;
 }
 
 function loadBlackMarket(force) {
@@ -5646,7 +5648,7 @@ function loadEstateEngine() {
   if (!ESTATE_LOAD) ESTATE_LOAD = loadEstateScript('assets/vendor/three-r147/three.min.js', 'estate-three')
     .then(function () { return loadEstateScript('assets/vendor/three-r147/GLTFLoader.js', 'estate-gltf'); })
     .then(function () { return loadEstateScript('assets/vendor/three-r147/OrbitControls.js', 'estate-orbit'); })
-    .then(function () { return loadEstateScript('assets/estate/estate-v2.js?v=8', 'estate-app'); })
+    .then(function () { return loadEstateScript('assets/estate/estate-v2.js?v=9', 'estate-app'); })
     .then(function () { if (!window.EstateApp) throw new Error('3D 城市初始化失敗'); return window.EstateApp; })
     .catch(function (e) { ESTATE_LOAD = null; throw e; });
   return ESTATE_LOAD;
@@ -6453,7 +6455,7 @@ function renderTitles() {
   h += '<div class="title-set"><b>' + esc((cats[cat] || {}).name || cat) + '系列 ' + done + ' / ' + rows.length + '</b>・' + esc((cats[cat] || {}).completeEffect || '') + (completed ? '　<span class="tag gold">已集齊</span>' : '') + '</div><div class="title-list">';
   rows.forEach(function (x) {
     var isEq = x.id === st.equippedId, isLive = x.id === st.activeId, isShow = (st.showcase || []).indexOf(x.id) >= 0;
-    h += '<article class="title-card' + (!x.unlocked ? ' locked' : '') + (isEq ? ' equipped' : '') + (x.hidden ? ' hidden-title' : '') + (x.limited ? ' limited-title' : '') + '">' +
+    h += '<article data-title-watermark="' + esc(x.id) + '" class="title-card' + (!x.unlocked ? ' locked' : '') + (isEq ? ' equipped' : '') + (x.hidden ? ' hidden-title' : '') + (x.limited ? ' limited-title' : '') + '">' +
       '<div class="title-top"><span class="title-code">' + esc(x.id) + '</span><div class="title-main"><div class="title-ach">成就・' + esc(x.achievement) + '</div><div class="title-name">' + esc(x.name) + '</div>' +
       '<div class="title-badges">' + (x.hidden ? '<span class="title-badge">隱藏</span>' : '') + (x.limited ? '<span class="title-badge">限定</span>' : '') + (isLive ? '<span class="title-badge live">今日生效</span>' : '') + (isEq ? '<span class="title-badge display">展示中</span>' : '') + (isShow ? '<span class="title-badge show">展示欄</span>' : '') + '</div></div></div>' +
       '<div class="title-detail"><div><label>條件</label><span>' + esc(x.condition) + '</span></div><div><label>效果</label><span>' + esc(x.effect) + '</span></div>' +
@@ -6524,7 +6526,7 @@ function renderMe(force) {
     return '<button role="tab" data-mt="' + x[0] + '" class="' + (mt === x[0] ? 'on' : '') + '">' + x[1] + '</button>';
   }).join('') + '</div>';
   if (mt !== 'acct') {
-    h += '<div class="me-sub">' + (mt === 'titles' ? renderTitles() : mt === 'shop' ? renderShop() : mt === 'bag' ? renderBag() : mt === 'dex' ? renderDex() : renderCloset()) + '</div>';
+    h += '<div class="me-sub me-sub-' + mt + '">' + (mt === 'titles' ? renderTitles() : mt === 'shop' ? renderShop() : mt === 'bag' ? renderBag() : mt === 'dex' ? renderDex() : renderCloset()) + '</div>';
     if (put('vMe', h, force)) { bindMeTabs(); if (mt === 'titles') bindTitles(); else if (mt === 'dex') bindDex(); else bindShopCloset(); }
     return;
   }
