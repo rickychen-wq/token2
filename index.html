@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800&family=Rajdhani:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 <link href="assets/fx/token-fx.css?v=15.2" rel="stylesheet">
-<link href="assets/admin-ui-v2.css?v=1" rel="stylesheet">
+<link href="assets/admin-ui-v2.css?v=2" rel="stylesheet">
 <style>
 :root{
   --void:#04070F; --deep:#070D1A;
@@ -2503,8 +2503,7 @@ function shopCard(it) {
 }
 
 function renderShop() {
-  var adminV2 = !!(S.me && S.me.role === 'admin');
-  var h = adminV2 ? '<section class="shop-v2-hero"><div class="shop-v2-copy"><span>PRIVATE MARKET · COLLECTION DECK</span><h2>星界精品庫</h2><p>收藏、裝備與限時商品，全部集中在你的私人交易層。</p></div><div class="shop-v2-core" aria-hidden="true"><i></i><b>★</b></div></section>' : '';
+  var h = '<section class="shop-v2-hero"><div class="shop-v2-copy"><span>STELLAR MARKET · COLLECTION DECK</span><h2>星界精品庫</h2><p>收藏、裝備與限時商品，全部集中在你的星界交易層。</p></div><div class="shop-v2-core" aria-hidden="true"><i></i><b>★</b></div></section>';
   h += starsChip();
   var cats = [['avatar', '頭像'], ['bg', '背景'], ['chest', '鑰匙'], ['emote', '表情'], ['card', '道具']];
   h += '<div class="chips">' + cats.map(function (c) { return '<button data-sc="' + c[0] + '" class="' + (SHOP.cat === c[0] ? 'on' : '') + '">' + c[1] + '</button>'; }).join('') + '</div>';
@@ -2522,7 +2521,7 @@ function renderShop() {
     list = CATALOG.filter(function (x) { return x.type === SHOP.cat && x.onSale; });
   }
   h += list.length ? '<div class="shop-grid">' + list.map(shopCard).join('') + '</div>' : '<div class="empty rk-empty">目前沒有販售中的商品</div>';
-  return adminV2 ? '<div class="shop-v2-page">' + h + '</div>' : h;
+  return '<div class="shop-v2-page">' + h + '</div>';
 }
 
 function loadBlackMarket(force) {
@@ -5618,7 +5617,8 @@ function endSession() {
 }
 
 function paintTop() {
-  document.body.classList.toggle('admin-ui-v2', !!(S.me && S.me.role === 'admin'));
+  document.body.classList.add('admin-ui-v2');
+  document.body.classList.toggle('admin-role', !!(S.me && S.me.role === 'admin'));
   $('topName').textContent = S.me.name;
   $('topPid').textContent = '#' + (S.player && S.player.vanity ? S.player.vanity : S.me.pid);
   ensureEstateAccess();
@@ -5803,13 +5803,11 @@ function renderHome(force) {
   var st = p.stats || {}, a = S.acc, c = econ();
   var h = '';
   var adminV2 = p.role === 'admin';
-  if (adminV2) {
-    var moduleCount = hasTestAccess('tower') ? 9 : 8;
-    h += '<section class="admin-command-hero"><div class="command-copy"><span class="command-kicker"><i></i> PRIVATE INTERFACE · ADMIN PREVIEW</span>' +
-      '<h1>歡迎回到<span>指揮核心</span></h1><p>資產、情報與遊戲模組已接入同一個控制層。</p></div>' +
-      '<div class="command-core" aria-hidden="true"><i class="core-ring r1"></i><i class="core-ring r2"></i><i class="core-dot"></i><b>TK</b></div>' +
-      '<div class="command-status"><div><small>NETWORK</small><b><i></i>ONLINE</b></div><div><small>SEASON</small><b>' + esc(S.sid || '—') + '</b></div><div><small>MODULES</small><b>' + moduleCount + '</b></div></div></section>';
-  }
+  var moduleCount = hasTestAccess('tower') ? 9 : 8;
+  h += '<section class="admin-command-hero"><div class="command-copy"><span class="command-kicker"><i></i>' + (adminV2 ? 'ADMIN COMMAND · LIVE NETWORK' : 'TOKEN NETWORK · LIVE INTERFACE') + '</span>' +
+    '<h1>歡迎回到<span>' + (adminV2 ? '指揮核心' : '星界核心') + '</span></h1><p>資產、情報與遊戲模組已接入同一個星界控制層。</p></div>' +
+    '<div class="command-core" aria-hidden="true"><i class="core-ring r1"></i><i class="core-ring r2"></i><i class="core-dot"></i><b>TK</b></div>' +
+    '<div class="command-status"><div><small>NETWORK</small><b><i></i>ONLINE</b></div><div><small>SEASON</small><b>' + esc(S.sid || '—') + '</b></div><div><small>MODULES</small><b>' + moduleCount + '</b></div></div></section>';
   h += activityBanner('gate') + activityBanner('mine');
 
   h += '<div class="idcard">' + bannerHTML(p, 74) + '<div class="id-row">' +
@@ -5867,9 +5865,7 @@ function renderHome(force) {
     '<h3>星界新聞網</h3><p>四家媒體追同一事件。讀文章、比來源，自己判斷市場真正發生了什麼。</p>' +
     '<span class="news-count">' + (newsCount ? newsCount + ' 篇追蹤報導' : '獨家新聞台') + '</span></button>';
 
-  h += adminV2
-    ? '<div class="sec-h game-section-head"><div><small>PLAY PROTOCOL</small><h2>遊戲模組</h2></div><span>選擇連線入口</span></div>'
-    : '<div class="sec-h"><h2>遊戲</h2></div>';
+  h += '<div class="sec-h game-section-head"><div><small>PLAY PROTOCOL</small><h2>遊戲模組</h2></div><span>選擇連線入口</span></div>';
   var seated = PK.st ? PK.st.seats.filter(Boolean).length : 0;
   var playing = PK.st && PK.st.hand.phase !== 'idle';
   h += '<button class="game" id="goPoker"><div class="game-bg">♠</div>' +

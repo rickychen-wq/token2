@@ -1,5 +1,5 @@
-/* TOKEN 2.0 — 管理員專屬介面預覽
-   只在 body.admin-ui-v2 下生效，方便獨立測試與完整回退。 */
+/* TOKEN 2.0 — 全玩家新版介面
+   登入後由 body.admin-ui-v2 啟用；管理員另加 body.admin-role。 */
 
 body.admin-ui-v2 {
   --admin-ink: #05060b;
@@ -89,7 +89,7 @@ body.admin-ui-v2 .top {
 body.admin-ui-v2 .top-in { max-width: 900px; }
 body.admin-ui-v2 .top .mark { font-size: 19px; }
 body.admin-ui-v2 .top .mark::after {
-  content: "ADMIN COMMAND";
+  content: "TOKEN NETWORK";
   margin-left: 10px;
   padding: 4px 7px;
   border: 1px solid rgba(255, 101, 196, .28);
@@ -100,6 +100,7 @@ body.admin-ui-v2 .top .mark::after {
   letter-spacing: .16em;
   vertical-align: middle;
 }
+body.admin-ui-v2.admin-role .top .mark::after { content: "ADMIN COMMAND"; }
 body.admin-ui-v2 .top-me { color: #93a1bd; }
 body.admin-ui-v2 .top-me b { color: #f2f6ff; }
 body.admin-ui-v2 .bell {
